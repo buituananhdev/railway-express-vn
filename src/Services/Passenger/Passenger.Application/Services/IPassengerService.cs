@@ -5,6 +5,7 @@ namespace Passenger.Application.Services
     public interface IPassengerService
     {
         Task AddPassengerAsync(AddPassengerDto passengerDto);
-        Task<PassengerDto> GetPassengerByIDAsync(Guid Id);
+        Task<PassengerDto> GetPassengerByIDAsync(Guid id);
+        Task<PassengerDto> GetPassengerByEmailAsync(string email);
     }
 }

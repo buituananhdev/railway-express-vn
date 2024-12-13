@@ -22,6 +22,13 @@ namespace Passenger.API.Controllers
             return Ok(passenger);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetPassengerById([FromQuery] string email)
+        {
+            var passenger = await _passengerService.GetPassengerByEmailAsync(email);
+            return Ok(passenger);
+        }
+
         [HttpPost]
         public async Task<IActionResult> AddPassenger([FromBody] AddPassengerDto passengerDto)
         {

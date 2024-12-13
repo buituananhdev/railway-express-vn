@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Common.Application.Repositories;
 using Passenger.Application.Dtos;
+using Passenger.Domain.Specifications;
 
 namespace Passenger.Application.Services
 {
@@ -28,11 +29,24 @@ namespace Passenger.Application.Services
             }
         }
 
-        public async Task<PassengerDto> GetPassengerByIDAsync(Guid Id)
+        public async Task<PassengerDto> GetPassengerByEmailAsync(string email)
         {
             try
             {
-                var passenger = await _passengerRepository.GetByIdAsync(Id);
+                var passenger = await _passengerRepository.FirstOrDefaultAsync<PassengerDto>(new EmailSpecification(email!));
+                return passenger;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<PassengerDto> GetPassengerByIDAsync(Guid id)
+        {
+            try
+            {
+                var passenger = await _passengerRepository.GetByIdAsync(id);
                 return _mapper.Map<PassengerDto>(passenger);
             }
             catch (Exception ex)
