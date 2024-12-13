@@ -1,0 +1,13 @@
+﻿using Common.Infrastructure;
+using Microsoft.EntityFrameworkCore;
+
+namespace Passenger.Infrastructure
+{
+    public partial class PassengerContext : DbContext, IDataContext
+    {
+        public PassengerContext(DbContextOptions<PassengerContext> options) : base(options) { }
+        DbSet<T> IDataContext.Set<T>() => Set<T>();
+
+        public virtual DbSet<Passenger.Domain.Entities.Passenger> Passengers { get; set; }
+    }
+}
