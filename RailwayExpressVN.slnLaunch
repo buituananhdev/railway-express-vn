@@ -3,32 +3,12 @@
     "Name": "New Profile",
     "Projects": [
       {
-        "Name": "src\\Services\\Admin\\Admin.API\\Admin.API.csproj",
-        "Action": "Start",
-        "DebugTarget": "http"
-      },
-      {
-        "Name": "src\\Services\\Booking\\Booking.API\\Booking.API.csproj",
-        "Action": "Start",
-        "DebugTarget": "http"
-      },
-      {
-        "Name": "src\\Services\\Notification\\Notification.API\\Notification.API.csproj",
-        "Action": "Start",
-        "DebugTarget": "http"
-      },
-      {
         "Name": "src\\Services\\Passenger\\Passenger.API\\Passenger.API.csproj",
         "Action": "Start",
         "DebugTarget": "http"
       },
       {
-        "Name": "src\\Services\\Payment\\Payment.API\\Payment.API.csproj",
-        "Action": "Start",
-        "DebugTarget": "http"
-      },
-      {
-        "Name": "src\\Services\\TrainSchedule\\TrainSchedule.API\\TrainSchedule.API.csproj",
+        "Name": "src\\Gateway\\ApiGateway\\ApiGateway.csproj",
         "Action": "Start",
         "DebugTarget": "http"
       }
