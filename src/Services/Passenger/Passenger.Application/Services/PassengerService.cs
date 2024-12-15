@@ -20,12 +20,13 @@ namespace Passenger.Application.Services
         {
             try
             {
-                await _passengerRepository.AddAsync(_mapper.Map<Domain.Entities.Passenger>(passengerDto));
+                var passenger = _mapper.Map<Domain.Entities.Passenger>(passengerDto);
+                await _passengerRepository.AddAsync(passenger);
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                throw;
             }
         }
 
@@ -38,7 +39,7 @@ namespace Passenger.Application.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                throw;
             }
         }
 
@@ -51,7 +52,7 @@ namespace Passenger.Application.Services
             }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                throw;
             }
         }
     }
