@@ -10,7 +10,8 @@ namespace Passenger.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<IDataContext, PassengerContext>();
+            services.AddScoped<IDataContext>(provider => provider.GetRequiredService<PassengerContext>());
+
             services.AddDbContext<PassengerContext>(options =>
             {
                 var connectionString = configuration.GetConnectionString("MySQL")   
