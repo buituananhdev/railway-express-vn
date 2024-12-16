@@ -16,6 +16,7 @@ namespace Admin.Application.Services.TrainService
             _adminUnitOfWork = adminUnitOfWork;
             _mapper = mapper;
         }
+
         public async Task AddTrainAsync(AddTrainDto trainDto)
         {
             try
