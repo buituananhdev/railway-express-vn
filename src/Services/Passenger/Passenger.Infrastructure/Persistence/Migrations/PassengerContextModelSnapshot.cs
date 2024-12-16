@@ -8,7 +8,7 @@ using Passenger.Infrastructure;
 
 #nullable disable
 
-namespace Passenger.Infrastructure.Migrations
+namespace Passenger.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PassengerContext))]
     partial class PassengerContextModelSnapshot : ModelSnapshot

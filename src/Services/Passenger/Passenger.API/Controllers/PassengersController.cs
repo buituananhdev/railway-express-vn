@@ -5,7 +5,7 @@ using Passenger.Application.Services;
 
 namespace Passenger.API.Controllers
 {
-    [Route("passengers")]
+    [Route("v1")]
     [ApiController]
     public class PassengersController : ControllerBase
     {

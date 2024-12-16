@@ -9,11 +9,11 @@ using Passenger.Infrastructure;
 
 #nullable disable
 
-namespace Passenger.Infrastructure.Migrations
+namespace Passenger.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PassengerContext))]
-    [Migration("20241213073040_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20241216043245_AddTablePassenger")]
+    partial class AddTablePassenger
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

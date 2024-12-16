@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Passenger.Application;
 using Common.Infrastructure;
+using Passenger.Infrastructure.Repositories;
+using Passenger.Application.Repositories;
 
 namespace Passenger.Infrastructure
 {

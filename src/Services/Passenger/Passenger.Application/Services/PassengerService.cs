@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Common.Application.Repositories;
 using Passenger.Application.Dtos;
+using Passenger.Application.Repositories;
 using Passenger.Domain.Specifications;
 
 namespace Passenger.Application.Services

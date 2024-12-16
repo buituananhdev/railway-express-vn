@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using Common.Infrastructure.Repositories;
-using Passenger.Application;
+using Passenger.Application.Repositories;
 
-namespace Passenger.Infrastructure
+namespace Passenger.Infrastructure.Repositories
 {
-    public class PassengerRepository : BaseRepository<Passenger.Domain.Entities.Passenger>, IPassengerRepository
+    public class PassengerRepository : BaseRepository<Domain.Entities.Passenger>, IPassengerRepository
     {
         public PassengerRepository(PassengerContext context, IMapper mapper) : base(context, mapper)
         {
