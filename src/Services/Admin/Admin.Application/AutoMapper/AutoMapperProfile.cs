@@ -48,6 +48,40 @@ namespace Admin.Application.AutoMapper
             CreateMap<AddTrainCarDto, TrainCar>()
                 .ForMember(dest => dest.Train, opt => opt.Ignore())
                 .ForMember(dest => dest.Seats, opt => opt.Ignore());
+
+            // Station -> StationDto
+            CreateMap<Station, StationDto>();
+
+            // StationDto -> Station
+            CreateMap<StationDto, Station>()
+                .ForMember(dest => dest.DepartureTrainSchedules, opt => opt.Ignore())
+                .ForMember(dest => dest.ArrivalTrainSchedules, opt => opt.Ignore());
+
+            // Station -> AddStationDto
+            CreateMap<Station, AddStationDto>();
+
+            // AddStationDto -> Station
+            CreateMap<AddStationDto, Station>()
+                .ForMember(dest => dest.TrainAtStation, opt => opt.Ignore())
+                .ForMember(dest => dest.DepartureTrainSchedules, opt => opt.Ignore())
+                .ForMember(dest => dest.ArrivalTrainSchedules, opt => opt.Ignore());
+
+            // TrainSchedule -> TrainScheduleDto
+            CreateMap<TrainSchedule, TrainScheduleDto>()
+                .ForMember(dest => dest.DepartureStation, opt => opt.MapFrom(src => src.DepartureStation))
+                .ForMember(dest => dest.ArrivalStation, opt => opt.MapFrom(src => src.ArrivalStation));
+
+            // TrainScheduleDto -> TrainSchedule
+            CreateMap<TrainScheduleDto, TrainSchedule>()
+                .ForMember(dest => dest.DepartureStationId, opt => opt.Ignore())
+                .ForMember(dest => dest.ArrivalStationId, opt => opt.Ignore())
+                .ForMember(dest => dest.DepartureStation, opt => opt.Ignore())
+                .ForMember(dest => dest.ArrivalStation, opt => opt.Ignore());
+
+            // AddTrainScheduleDto -> TrainSchedule
+            CreateMap<AddTrainScheduleDto, TrainSchedule>()
+                .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
+                .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId));
         }
     }
 }
