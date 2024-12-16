@@ -1,4 +1,6 @@
-﻿using Common.Infrastructure;
+﻿using Admin.Application.Repositories;
+using Admin.Infrastructure.Repositories;
+using Common.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,8 +11,6 @@ namespace Admin.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<IDataContext>(provider => provider.GetRequiredService<AdminContext>());
-
             services.AddDbContext<AdminContext>(options =>
             {
                 var connectionString = configuration.GetConnectionString("MySQL")   
@@ -20,6 +20,17 @@ namespace Admin.Infrastructure
                 options.UseMySql(
                     connectionString, ServerVersion.AutoDetect(connectionString));
             });
+
+            services.AddScoped<ITrainRepository, TrainRepository>();
+            services.AddScoped<ITrainCarRepository, TrainCarRepository>();
+            services.AddScoped<ITrainStatusRepository, TrainStatusRepository>();
+            services.AddScoped<ITrainScheduleRepository, TrainScheduleRepository>();
+            services.AddScoped<IStationRepository, StationRepository>();
+            services.AddScoped<ISeatRepository, SeatRepository>();
+
+            services.AddScoped<IAdminUnitOfWork, AdminUnitOfWork>();
+
+            services.AddScoped<IDataContext>(provider => provider.GetRequiredService<AdminContext>());
 
             return services;
         }
