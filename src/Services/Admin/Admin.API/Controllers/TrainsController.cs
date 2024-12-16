@@ -22,11 +22,20 @@ namespace Admin.API.Controllers
             return Ok();
         }
 
+        [HttpPost("traincar")]
+        public async Task<IActionResult> AddTrainCar([FromBody] AddTrainCarDto trainCarDto)
+        {
+            await _trainService.AddTrainCarAsync(trainCarDto);
+            return Ok();
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetTrains()
         {
             var trains = await _trainService.GetTrainsAsync();
             return Ok(trains);
         }
+
+
     }
 }

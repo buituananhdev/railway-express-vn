@@ -6,5 +6,7 @@ namespace Admin.Application.Services.TrainService
     {
         Task AddTrainAsync(AddTrainDto trainDto);
         Task<List<TrainDto>> GetTrainsAsync();
+
+        Task AddTrainCarAsync(AddTrainCarDto trainCarDto);
     }
 }

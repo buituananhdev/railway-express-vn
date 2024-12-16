@@ -40,5 +40,19 @@ namespace Admin.Application.Services.TrainService
                 throw;
             }
         }
+
+        public async Task AddTrainCarAsync(AddTrainCarDto trainCarDto)
+        {
+            try
+            {
+                var tranCar = _mapper.Map<TrainCar>(trainCarDto);
+                await _adminUnitOfWork.TrainCarRepository.AddAsync(tranCar);
+                await _adminUnitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
     }
 }
