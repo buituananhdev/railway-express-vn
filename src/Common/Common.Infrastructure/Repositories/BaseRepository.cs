@@ -24,6 +24,7 @@ namespace Common.Infrastructure.Repositories
         {
             return _dbSet.AsNoTracking()
                 .ApplySpecification(spec)
+                .ApplyIncludes(includes)
                 .ApplyOrder(orderBy)
                 .FirstOrDefaultAsync();
         }
@@ -62,6 +63,7 @@ namespace Common.Infrastructure.Repositories
         {
             return _dbSet.AsNoTracking()
                 .ApplySpecification(spec)
+                .ApplyIncludes(includes)
                 .ApplyOrder(orderBy)
                 .ApplyPaging(page, size)
                 .ToListAsync();
