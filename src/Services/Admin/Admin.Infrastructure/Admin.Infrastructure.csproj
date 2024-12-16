@@ -13,11 +13,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\Admin.Application\Admin.Application.csproj" />
     <ProjectReference Include="..\Admin.Domain\Admin.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Repositories\" />
   </ItemGroup>
 
 </Project>
