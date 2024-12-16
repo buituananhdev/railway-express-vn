@@ -7,7 +7,18 @@
     <UserSecretsId>70adb14e-5096-4094-aea3-00c5775b9cc5</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Admin.Application\Admin.Application.csproj" />
+    <ProjectReference Include="..\Admin.Infrastructure\Admin.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
