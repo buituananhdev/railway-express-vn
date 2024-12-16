@@ -40,6 +40,14 @@ namespace Admin.Application.AutoMapper
                 .ForMember(dest => dest.TrainId, opt => opt.Ignore())
                 .ForMember(dest => dest.Train, opt => opt.Ignore())
                 .ForMember(dest => dest.StationId, opt => opt.Ignore());
+
+            // TrainCar -> AddTrainCarDto
+            CreateMap<TrainCar, AddTrainCarDto>();
+
+            // AddTrainCarDto -> TrainCar
+            CreateMap<AddTrainCarDto, TrainCar>()
+                .ForMember(dest => dest.Train, opt => opt.Ignore())
+                .ForMember(dest => dest.Seats, opt => opt.Ignore());
         }
     }
 }
