@@ -2,6 +2,7 @@
 using Admin.Application.Repositories;
 using Admin.Domain.Entities;
 using AutoMapper;
+using System.Linq.Expressions;
 
 namespace Admin.Application.Services.TrainService
 {
@@ -23,7 +24,8 @@ namespace Admin.Application.Services.TrainService
 
                 await _adminUnitOfWork.TrainRepository.AddAsync(train);
                 await _adminUnitOfWork.SaveChangesAsync();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw;
             }
@@ -31,15 +33,11 @@ namespace Admin.Application.Services.TrainService
 
         public async Task<List<TrainDto>> GetTrainsAsync()
         {
-            try
-            {
-                var trains = await _adminUnitOfWork.TrainRepository.ToListAsync();
-                return _mapper.Map<List<TrainDto>>(trains);
-            } catch (Exception ex)
-            {
-                throw;
-            }
+            var trains = await _adminUnitOfWork.TrainRepository
+                .ToListAsync(includes: new List<Expression<Func<Train, object>>> { train => train.TrainCars! });
+            return _mapper.Map<List<TrainDto>>(trains);
         }
+
 
         public async Task AddTrainCarAsync(AddTrainCarDto trainCarDto)
         {
