@@ -26,8 +26,12 @@ namespace Admin.Application.Services.StationService
 
         public async Task<List<StationDto>> GetStations()
         {
+            Func<IQueryable<Station>, IOrderedQueryable<Station>> orderBy = query =>
+                query.OrderBy(station => station.StationOrder);
+
+            var includes = new List<Expression<Func<Station, object>>> { station => station.TrainAtStation! };
             var stations = await _adminUnitOfWork.StationRepository
-                .ToListAsync(includes: new List<Expression<Func<Station, object>>> { station => station.TrainAtStation! });
+                .ToListAsync(includes: includes, orderBy: orderBy);
 
             return _mapper.Map<List<StationDto>>(stations);
         }

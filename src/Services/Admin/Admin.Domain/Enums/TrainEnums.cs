@@ -14,8 +14,8 @@ namespace Admin.Domain.Enums
 
     public enum SeatType
     {
-        Business,
-        Economy
+        Standard,
+        Business
     }
 
     public enum TrainStatus
