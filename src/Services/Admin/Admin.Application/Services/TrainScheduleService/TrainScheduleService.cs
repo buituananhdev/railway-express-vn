@@ -1,7 +1,9 @@
 ﻿using Admin.Application.Dtos;
 using Admin.Application.Repositories;
 using Admin.Domain.Entities;
+using Admin.Domain.Specifications;
 using AutoMapper;
+using Common.Domain.Specifications;
 using System.Linq.Expressions;
 
 namespace Admin.Application.Services.TrainScheduleService
@@ -24,10 +26,24 @@ namespace Admin.Application.Services.TrainScheduleService
             await _adminUnitOfWork.SaveChangesAsync();
         }
 
-        public async Task<List<TrainScheduleDto>> GetTrainSchedulesAsync()
+        public async Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(Guid fromStation, Guid toStation)
         {
+            var includes = new List<Expression<Func<TrainSchedule, object>>>
+                {
+                    schedule => schedule.DepartureStation!,
+                    schedule => schedule.ArrivalStation!
+                };
+
+            var specification = new AndSpecification<TrainSchedule>(
+                new DepartureStationIdSpecification(fromStation),
+                new ArrivalStationIdSpecification(toStation)
+            );
+
             var schedules = await _adminUnitOfWork.TrainScheduleRepository
-                .ToListAsync(includes: new List<Expression<Func<TrainSchedule, object>>> { schedule => schedule.DepartureStation!, schedule => schedule.ArrivalStation! });
+                .ToListAsync(
+                    spec: specification,
+                    includes: includes
+                );
 
             return _mapper.Map<List<TrainScheduleDto>>(schedules);
         }

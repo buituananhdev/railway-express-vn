@@ -23,9 +23,9 @@ namespace Admin.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetTrainSchedulesAsync()
+        public async Task<IActionResult> GetTrainSchedulesAsync([FromQuery] Guid fromStation, [FromQuery] Guid toStation)
         {
-            var trainSchedules = await _trainScheduleService.GetTrainSchedulesAsync();
+            var trainSchedules = await _trainScheduleService.GetTrainSchedulesAsync(fromStation, toStation);
             return Ok(trainSchedules);
         }
     }
