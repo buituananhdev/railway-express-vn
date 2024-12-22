@@ -5,6 +5,6 @@ namespace Admin.Application.Services.TrainScheduleService
     public interface ITrainScheduleService
     {
         Task AddTrainScheduleAsync(AddTrainScheduleDto trainScheduleDto);
-        Task<List<TrainScheduleDto>> GetTrainSchedulesAsync();
+        Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(Guid fromStation, Guid toStation);
     }
 }
