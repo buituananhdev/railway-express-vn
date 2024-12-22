@@ -42,6 +42,19 @@ builder.Services.AddAuthentication(x =>
 
 var app = builder.Build();
 
+app.UseCors(builder =>
+{
+    builder.WithOrigins(app.Configuration["AllowedHosts"] ?? "localhost")
+           .AllowAnyMethod()
+           .AllowAnyHeader()
+           .AllowCredentials();
+
+    builder.WithOrigins("http://localhost:5173")
+           .AllowAnyMethod()
+           .AllowAnyHeader()
+           .AllowCredentials();
+});
+
 // Add Swagger documentation
 if (app.Environment.IsDevelopment())
 {
