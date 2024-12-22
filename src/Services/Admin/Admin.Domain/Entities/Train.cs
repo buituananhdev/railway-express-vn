@@ -9,5 +9,6 @@ namespace Admin.Domain.Entities
         public Track Track { get; set; }
         public ICollection<TrainCar>? TrainCars { get; set; }
         public TrainStatus? Status { get; set; }
+        public ICollection<TrainSchedule> TrainSchedules { get; set; }
     }
 }

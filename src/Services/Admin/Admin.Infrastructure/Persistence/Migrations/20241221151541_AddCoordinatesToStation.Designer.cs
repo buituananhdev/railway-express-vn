@@ -4,6 +4,7 @@ using Admin.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Admin.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AdminContext))]
-    partial class AdminContextModelSnapshot : ModelSnapshot
+    [Migration("20241221151541_AddCoordinatesToStation")]
+    partial class AddCoordinatesToStation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -156,9 +159,6 @@ namespace Admin.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("DepartureTime")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid>("TrainId")
-                        .HasColumnType("char(36)");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -167,8 +167,6 @@ namespace Admin.Infrastructure.Persistence.Migrations
                     b.HasIndex("ArrivalStationId");
 
                     b.HasIndex("DepartureStationId");
-
-                    b.HasIndex("TrainId");
 
                     b.ToTable("TrainSchedules");
                 });
@@ -254,17 +252,9 @@ namespace Admin.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Admin.Domain.Entities.Train", "Train")
-                        .WithMany("TrainSchedules")
-                        .HasForeignKey("TrainId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("ArrivalStation");
 
                     b.Navigation("DepartureStation");
-
-                    b.Navigation("Train");
                 });
 
             modelBuilder.Entity("Admin.Domain.Entities.TrainStatus", b =>
@@ -308,8 +298,6 @@ namespace Admin.Infrastructure.Persistence.Migrations
                     b.Navigation("Status");
 
                     b.Navigation("TrainCars");
-
-                    b.Navigation("TrainSchedules");
                 });
 
             modelBuilder.Entity("Admin.Domain.Entities.TrainCar", b =>
