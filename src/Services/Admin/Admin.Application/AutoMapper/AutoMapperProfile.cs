@@ -68,13 +68,19 @@ namespace Admin.Application.AutoMapper
 
             // TrainSchedule -> TrainScheduleDto
             CreateMap<TrainSchedule, TrainScheduleDto>()
-                .ForMember(dest => dest.DepartureStation, opt => opt.MapFrom(src => src.DepartureStation))
-                .ForMember(dest => dest.ArrivalStation, opt => opt.MapFrom(src => src.ArrivalStation));
+                .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
+                .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId))
+                .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime))
+                .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime))
+                .ForMember(dest => dest.Price, opt => opt.Ignore())
+                .ForMember(dest => dest.Train, opt => opt.MapFrom(src => src.Train));
 
             // TrainScheduleDto -> TrainSchedule
             CreateMap<TrainScheduleDto, TrainSchedule>()
-                .ForMember(dest => dest.DepartureStationId, opt => opt.Ignore())
-                .ForMember(dest => dest.ArrivalStationId, opt => opt.Ignore())
+                .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
+                .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId))
+                .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime))
+                .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime))
                 .ForMember(dest => dest.DepartureStation, opt => opt.Ignore())
                 .ForMember(dest => dest.ArrivalStation, opt => opt.Ignore());
 
