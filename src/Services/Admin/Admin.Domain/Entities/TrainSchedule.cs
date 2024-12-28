@@ -12,5 +12,6 @@ namespace Admin.Domain.Entities
         public Station ArrivalStation { get; set; }
         public DateTime DepartureTime { get; set; }
         public DateTime ArrivalTime { get; set; }
+        public bool IsReturnTrip { get; set; }
     }
 }

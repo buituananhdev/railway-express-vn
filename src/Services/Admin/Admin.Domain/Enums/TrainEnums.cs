@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Admin.Domain.Enums
+﻿namespace Admin.Domain.Enums
 {
     public enum Track
     {
         Track1 = 1,
         Track2 = 2,
+        Track3 = 3
     }
 
     public enum SeatType

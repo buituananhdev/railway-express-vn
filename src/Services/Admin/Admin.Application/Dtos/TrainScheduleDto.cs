@@ -2,9 +2,12 @@
 {
     public class TrainScheduleDto
     {
-        public StationDto DepartureStation { get; set; }
-        public StationDto ArrivalStation { get; set; }
+        public TrainDto Train { get; set; }
+        public Guid DepartureStationId { get; set; }
+        public Guid ArrivalStationId { get; set; }
         public DateTime DepartureTime { get; set; }
         public DateTime ArrivalTime { get; set; }
+        public int Duration { get; set; }
+        public Decimal Price { get; set; }
     }
 }

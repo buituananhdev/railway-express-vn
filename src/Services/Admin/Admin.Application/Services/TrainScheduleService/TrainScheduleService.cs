@@ -45,7 +45,46 @@ namespace Admin.Application.Services.TrainScheduleService
                     includes: includes
                 );
 
-            return _mapper.Map<List<TrainScheduleDto>>(schedules);
+            var trainScheduleDtos = new List<TrainScheduleDto>();
+
+            foreach (var schedule in schedules)
+            {
+                var basePrice = 100000m; // Base price.
+                var daysUntilDeparture = (getTrainSchedulesDto.DepartureTime - DateTime.Now).TotalDays;
+
+                // Pricing formula:
+                // - Price increases if the departure date is near the current date.
+                // - Price decreases if it is a round trip.
+                // - Price increases with the number of passengers.
+                var priceMultiplier = 1m;
+                if (daysUntilDeparture <= 7) // If the departure date is within the next 7 days.
+                {
+                    priceMultiplier += 0.5m; // Increase price by 50%.
+                }
+
+                if (getTrainSchedulesDto.ReturnTime.HasValue) // If it is a round trip.
+                {
+                    priceMultiplier -= 0.2m; // Decrease price by 20%.
+                }
+
+                priceMultiplier += getTrainSchedulesDto.NumberOfPassengers * 0.1m; // Increase price by 10% per passenger.
+
+                var finalPrice = basePrice * priceMultiplier;
+
+                trainScheduleDtos.Add(new TrainScheduleDto
+                {
+                    Id = schedule.Id,
+                    DepartureStationId = schedule.DepartureStationId,
+                    ArrivalStationId = schedule.ArrivalStationId,
+                    DepartureTime = schedule.DepartureTime,
+                    ArrivalTime = schedule.ArrivalTime,
+                    Duration = (schedule.ArrivalTime - schedule.DepartureTime).Minutes,
+                    Price = Math.Round(finalPrice, 2),
+                    Train = _mapper.Map<TrainDto>(schedule.Train)
+                });
+            }
+
+            return trainScheduleDtos;
         }
     }
 }
