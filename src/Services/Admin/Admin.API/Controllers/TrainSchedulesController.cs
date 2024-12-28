@@ -22,10 +22,10 @@ namespace Admin.API.Controllers
             return Ok();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetTrainSchedulesAsync([FromQuery] Guid fromStation, [FromQuery] Guid toStation)
+        [HttpPost("get-schedules")]
+        public async Task<IActionResult> GetTrainSchedulesAsync([FromBody] GetTrainSchedulesDto getTrainSchedulesDto)
         {
-            var trainSchedules = await _trainScheduleService.GetTrainSchedulesAsync(fromStation, toStation);
+            var trainSchedules = await _trainScheduleService.GetTrainSchedulesAsync(getTrainSchedulesDto);
             return Ok(trainSchedules);
         }
     }
