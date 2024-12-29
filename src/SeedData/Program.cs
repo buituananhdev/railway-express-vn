@@ -45,10 +45,14 @@ public class SeedData
                 {
                     new Train { TrainName = "VNSE-01", Track = Track.Track1 },
                     new Train { TrainName = "VNSE-02", Track = Track.Track2 },
-                    new Train { TrainName = "VNSE-03", Track = Track.Track1 },
-                    new Train { TrainName = "VNSE-04", Track = Track.Track2 },
-                    new Train { TrainName = "VNSE-05", Track = Track.Track1 },
-                    new Train { TrainName = "VNSE-06", Track = Track.Track2 }
+                    new Train { TrainName = "VNSE-03", Track = Track.Track3 },
+                    new Train { TrainName = "VNSE-04", Track = Track.Track1 },
+                    new Train { TrainName = "VNSE-05", Track = Track.Track2 },
+                    new Train { TrainName = "VNSE-06", Track = Track.Track3 },
+                    new Train { TrainName = "VNSE-07", Track = Track.Track1 },
+                    new Train { TrainName = "VNSE-08", Track = Track.Track2 },
+                    new Train { TrainName = "VNSE-09", Track = Track.Track3 }
+
                 };
 
                 context.Trains.AddRange(trains);
@@ -120,89 +124,36 @@ public class SeedData
         }
     }
 
-    public static void SeedTrainSchedules(AdminContext context)
-    {
-        using (var transaction = context.Database.BeginTransaction()) // Bắt đầu transaction
-        {
-            try
-            {
-                var stations = context.Stations.OrderBy(s => s.StationOrder).ToList();
-                var trains = context.Trains.ToList();
-
-                int totalStations = stations.Count; // Lấy số lượng ga từ cơ sở dữ liệu
-                double trainSpeed = 320; // tốc độ tàu km/h
-
-                TimeSpan startTime = new TimeSpan(4, 0, 0); // 04:00 AM là thời gian xuất phát đầu tiên
-                TimeSpan oneHour = TimeSpan.FromHours(1); // Một giờ đợi giữa các chuyến
-
-                foreach (var train in trains)
-                {
-                    for (int i = 0; i < 2; i++) // 2 đường ray
-                    {
-                        for (int j = 1; j <= 3; j++) // Mỗi đường ray có 3 chuyến tàu
-                        {
-                            var track = (i == 0) ? Track.Track1 : Track.Track2; // Đường ray 1 và 2
-                            var departureTime = startTime;
-
-                            for (int departureIndex = 0; departureIndex < totalStations - 1; departureIndex++)
-                            {
-                                var departureStation = stations[departureIndex];
-                                var arrivalStation = stations[departureIndex + 1];
-
-                                // Lấy khoảng cách thực tế giữa các ga từ cơ sở dữ liệu
-                                double distance = arrivalStation.KilometricPoint - departureStation.KilometricPoint;
-                                if (distance < 0)
-                                    distance = -distance; // Đảm bảo khoảng cách luôn dương
-
-                                int travelTimeMinutes = (int)(distance / trainSpeed * 60);
-                                TimeSpan travelTime = TimeSpan.FromMinutes(travelTimeMinutes);
-
-                                var arrivalTime = departureTime.Add(travelTime);
-                                if (arrivalTime.TotalHours > 838) // Kiểm tra giới hạn TIME của MySQL
-                                    throw new Exception("Arrival time exceeds MySQL TIME limit.");
-
-                                // Tạo TrainSchedule cho chuyến tàu
-                                var trainSchedule = new TrainSchedule
-                                {
-                                    TrainId = train.Id,
-                                    Train = train,
-                                    DepartureStationId = departureStation.Id,
-                                    DepartureStation = departureStation,
-                                    ArrivalStationId = arrivalStation.Id,
-                                    ArrivalStation = arrivalStation,
-                                    DepartureTime = departureTime,
-                                    ArrivalTime = arrivalTime
-                                };
-
-                                context.TrainSchedules.Add(trainSchedule);
-
-                                // Cập nhật thời gian xuất phát của chuyến tiếp theo
-                                departureTime = arrivalTime.Add(oneHour);
-                            }
-                        }
-                    }
-                }
-
-                // Lưu các thay đổi vào cơ sở dữ liệu
-                context.SaveChanges();
-                transaction.Commit();
-            }
-            catch (Exception ex)
-            {
-                transaction.Rollback();
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-        }
-    }
-
-    public static void Main()
+    public static async Task Main()
     {
         var connectionstring = "Server=localhost;Port=3306;Database=RailwayExpresVN_DEV1;Uid=root;Pwd=123456Aa;";
         var options = new DbContextOptionsBuilder<AdminContext>()
             .UseMySql(connectionstring, ServerVersion.AutoDetect(connectionstring))
             .Options;
-        var context = new AdminContext(options);
-        //Seed(context);
-        SeedTrainSchedules(context);
+
+        using (var context = new AdminContext(options))
+        {
+            Seed(context);
+            var calculator = new TrainScheduleCalculator(context);
+            try
+            {
+                // Clear existing schedules (optional)
+                var existingSchedules = await context.TrainSchedules.ToListAsync();
+                if (existingSchedules.Any())
+                {
+                    Console.WriteLine("Xóa lịch trình cũ...");
+                    context.TrainSchedules.RemoveRange(existingSchedules);
+                    await context.SaveChangesAsync();
+                }
+
+                // Insert all schedules
+                await calculator.InsertAllSchedulesToDatabase();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+            }
+        }
     }
 }
