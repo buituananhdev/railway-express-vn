@@ -74,6 +74,7 @@ namespace Admin.Application.Services.TrainScheduleService
 
                 trainScheduleDtos.Add(new TrainScheduleDto
                 {
+                    Id = schedule.Id,
                     DepartureStationId = schedule.DepartureStationId,
                     ArrivalStationId = schedule.ArrivalStationId,
                     DepartureTime = schedule.DepartureTime,
