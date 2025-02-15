@@ -3,14 +3,16 @@
     "Name": "New Profile",
     "Projects": [
       {
-        "Name": "src\\Services\\Passenger\\Passenger.API\\Passenger.API.csproj",
-        "Action": "Start",
-        "DebugTarget": "http"
+        "Path": "src\\Services\\Passenger\\Passenger.API\\Passenger.API.csproj",
+        "Action": "Start"
       },
       {
-        "Name": "src\\Gateway\\ApiGateway\\ApiGateway.csproj",
-        "Action": "Start",
-        "DebugTarget": "http"
+        "Path": "src\\Gateway\\ApiGateway\\ApiGateway.csproj",
+        "Action": "StartWithoutDebugging"
+      },
+      {
+        "Path": "src\\Services\\Authentication\\Auth.API\\Auth.API.csproj",
+        "Action": "Start"
       }
     ]
   }

@@ -1,0 +1,28 @@
+﻿using Grpc.Core;
+using Passenger.API;
+
+namespace Auth.Application.Services;
+public class GreeterGrpcService : IGreeterGrpcService
+{
+    private readonly Greeter.GreeterClient grpcClient;
+
+    public GreeterGrpcService(Greeter.GreeterClient grpcClient)
+    {
+        this.grpcClient = grpcClient;
+    }
+
+    public async Task<string> SayHelloAsync(string name, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await grpcClient.SayHelloAsync(new HelloRequest { Name = name }, cancellationToken: cancellationToken);
+
+            return result.Message;
+        }
+        catch (RpcException ex)
+        {
+            throw;
+        }
+
+    }
+}
