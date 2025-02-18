@@ -20,8 +20,4 @@
 		<ProjectReference Include="..\Passenger.Application\Passenger.Application.csproj" />
 		<ProjectReference Include="..\Passenger.Infrastructure\Passenger.Infrastructure.csproj" />
 	</ItemGroup>
-	<ItemGroup>
-		<Protobuf Include="..\..\..\Common\Common.Infrastructure\Protos\greet.proto" GrpcServices="Server" />
-	</ItemGroup>
-
 </Project>

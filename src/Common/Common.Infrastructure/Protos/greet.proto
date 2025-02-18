@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option csharp_namespace = "Passenger.API";
+option csharp_namespace = "Common.Protos";
 
 package greet;
 

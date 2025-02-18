@@ -11,11 +11,12 @@ namespace Passenger.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddAutoMapper(typeof(DependencyInjection).Assembly);
             services.AddScoped<IDataContext>(provider => provider.GetRequiredService<PassengerContext>());
 
             services.AddDbContext<PassengerContext>(options =>
             {
-                var connectionString = configuration.GetConnectionString("MySQL")   
+                var connectionString = configuration.GetConnectionString("MySQL")
                 ?? throw new InvalidOperationException("Connection string 'MySQL' not found.");
 
                 // Specify the MySQL Server Version explicitly
@@ -24,6 +25,12 @@ namespace Passenger.Infrastructure
             });
 
             services.AddScoped<IPassengerRepository, PassengerRepository>();
+
+
+            services.AddGrpc(options =>
+            {
+                options.EnableDetailedErrors = true;
+            });
 
             return services;
         }

@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option csharp_namespace = "Common.Protos";
+
+package user;
+
+service User {
+  rpc CreateUser (CreateUserRequest) returns (UserGrpcResponse);
+  rpc CheckUser (CheckUserRequest) returns (UserGrpcResponse);
+}
+
+message CreateUserRequest {
+  string fullname = 1;
+  string email = 2;
+  string password = 3;
+  string phonenumber = 4;
+  string address = 5;
+}
+
+message CheckUserRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message UserGrpcResponse {
+  bool isSuccess = 1;
+  string data = 2;
+  string message = 3;
+}
