@@ -22,6 +22,7 @@ namespace Passenger.Application.Services
             try
             {
                 var passenger = _mapper.Map<Domain.Entities.Passenger>(passengerDto);
+                passenger.PasswordHash = BCrypt.Net.BCrypt.HashPassword(passengerDto.Password);
                 await _passengerRepository.AddAsync(passenger);
                 await _unitOfWork.SaveChangesAsync();
             }

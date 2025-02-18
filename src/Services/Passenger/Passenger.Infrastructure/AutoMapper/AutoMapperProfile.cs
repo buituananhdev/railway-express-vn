@@ -2,15 +2,12 @@
 using Common.Protos;
 using Passenger.Application.Dtos;
 
-namespace Passenger.Application.AutoMapper
+namespace Passenger.Infrastructure.AutoMapper
 {
     public class AutoMapperProfile : Profile
     {
         public AutoMapperProfile()
         {
-            CreateMap<Passenger.Domain.Entities.Passenger, PassengerDto>().ReverseMap();
-            CreateMap<Passenger.Domain.Entities.Passenger, AddPassengerDto>().ReverseMap();
-
             CreateMap<CreateUserRequest, AddPassengerDto>().ReverseMap();
         }
     }

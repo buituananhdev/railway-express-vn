@@ -1,5 +1,5 @@
 ﻿using Grpc.Core;
-using Passenger.API;
+using Common.Protos;
 
 namespace Auth.Application.Services;
 public class GreeterGrpcService : IGreeterGrpcService

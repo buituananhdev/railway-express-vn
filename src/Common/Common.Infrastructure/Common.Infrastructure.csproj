@@ -17,8 +17,4 @@
     <ProjectReference Include="..\Common.Domain\Common.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Protos\" />
-  </ItemGroup>
-
 </Project>
