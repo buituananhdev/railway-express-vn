@@ -17,6 +17,10 @@
       {
         "Path": "src\\Services\\Admin\\Admin.API\\Admin.API.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Booking\\Booking.API\\Booking.API.csproj",
+        "Action": "Start"
       }
     ]
   }

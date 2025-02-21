@@ -1,0 +1,12 @@
+﻿using Common.Domain;
+
+namespace Booking.Application.Dtos;
+public class AddTicketDto
+{
+    public Guid PassengerId { get; set; }
+    public Guid TrainId { get; set; }
+    public Guid SeatId { get; set; }
+    public Guid DepartureStationId { get; set; }
+    public Guid ArrivalStationId { get; set; }
+    public decimal TotalPrice { get; set; }
+}
