@@ -17,6 +17,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\..\Common\Common.API\Common.API.csproj" />
 		<ProjectReference Include="..\Passenger.Application\Passenger.Application.csproj" />
 		<ProjectReference Include="..\Passenger.Infrastructure\Passenger.Infrastructure.csproj" />
 	</ItemGroup>
