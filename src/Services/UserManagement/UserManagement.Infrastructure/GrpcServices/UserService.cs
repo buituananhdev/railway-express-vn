@@ -9,11 +9,13 @@ namespace UserManagement.Infrastructure.GrpcServices
     public class UserService : User.UserBase
     {
         private readonly IPassengerService _passengerService;
+        private readonly IUserAccountService _userAccountService;
         private readonly IMapper _mapper;
 
-        public UserService(IPassengerService passengerService, IMapper mapper)
+        public UserService(IPassengerService passengerService, IUserAccountService userAccountService, IMapper mapper)
         {
             _passengerService = passengerService;
+            _userAccountService = userAccountService;
             _mapper = mapper;
         }
 
