@@ -23,6 +23,7 @@ public static class DependencyInjection
                 connectionString, ServerVersion.AutoDetect(connectionString));
         });
 
+        services.AddScoped<IBookingUnitOfWork, BookingUnitOfWork>();
         services.AddScoped<ITicketRepository, TicketRepository>();
 
         return services;
