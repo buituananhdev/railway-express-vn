@@ -10,7 +10,7 @@ using Passenger.Infrastructure;
 
 namespace Passenger.Infrastructure.Persistence.Migrations
 {
-    [DbContext(typeof(PassengerContext))]
+    [DbContext(typeof(UserManagementContext))]
     partial class PassengerContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

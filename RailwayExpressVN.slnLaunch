@@ -3,7 +3,7 @@
     "Name": "New Profile",
     "Projects": [
       {
-        "Path": "src\\Services\\Passenger\\Passenger.API\\Passenger.API.csproj",
+        "Path": "src\\Services\\Passenger\\Passenger.API\\UserManagement.API.csproj",
         "Action": "Start"
       },
       {

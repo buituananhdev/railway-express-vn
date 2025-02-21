@@ -6,7 +6,7 @@ namespace Passenger.Infrastructure.Repositories
 {
     public class PassengerRepository : BaseRepository<Domain.Entities.Passenger>, IPassengerRepository
     {
-        public PassengerRepository(PassengerContext context, IMapper mapper) : base(context, mapper)
+        public PassengerRepository(UserManagementContext context, IMapper mapper) : base(context, mapper)
         {
         }
     }

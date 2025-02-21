@@ -11,7 +11,7 @@ using Passenger.Infrastructure;
 
 namespace Passenger.Infrastructure.Persistence.Migrations
 {
-    [DbContext(typeof(PassengerContext))]
+    [DbContext(typeof(UserManagementContext))]
     [Migration("20241216043245_AddTablePassenger")]
     partial class AddTablePassenger
     {
