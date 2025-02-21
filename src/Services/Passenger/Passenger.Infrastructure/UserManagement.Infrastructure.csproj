@@ -14,8 +14,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
-		<ProjectReference Include="..\Passenger.Application\Passenger.Application.csproj" />
-		<ProjectReference Include="..\Passenger.Domain\Passenger.Domain.csproj" />
+		<ProjectReference Include="..\Passenger.Application\UserManagement.Application.csproj" />
+		<ProjectReference Include="..\Passenger.Domain\UserManagement.Domain.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

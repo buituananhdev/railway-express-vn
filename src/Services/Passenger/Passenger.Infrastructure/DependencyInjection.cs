@@ -12,9 +12,9 @@ namespace Passenger.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddAutoMapper(typeof(DependencyInjection).Assembly);
-            services.AddScoped<IDataContext>(provider => provider.GetRequiredService<PassengerContext>());
+            services.AddScoped<IDataContext>(provider => provider.GetRequiredService<UserManagementContext>());
 
-            services.AddDbContext<PassengerContext>(options =>
+            services.AddDbContext<UserManagementContext>(options =>
             {
                 var connectionString = configuration.GetConnectionString("MySQL")
                 ?? throw new InvalidOperationException("Connection string 'MySQL' not found.");
