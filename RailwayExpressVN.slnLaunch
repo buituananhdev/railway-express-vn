@@ -3,10 +3,6 @@
     "Name": "New Profile",
     "Projects": [
       {
-        "Path": "src\\Services\\Passenger\\Passenger.API\\UserManagement.API.csproj",
-        "Action": "Start"
-      },
-      {
         "Path": "src\\Gateway\\ApiGateway\\ApiGateway.csproj",
         "Action": "StartWithoutDebugging"
       },
@@ -20,6 +16,10 @@
       },
       {
         "Path": "src\\Services\\Booking\\Booking.API\\Booking.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\UserManagement\\UserManagement.API\\UserManagement.API.csproj",
         "Action": "Start"
       }
     ]
