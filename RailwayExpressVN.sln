@@ -41,13 +41,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Notification.Application", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Notification.Infrastructure", "src\Services\Notification\Notification.Infrastructure\Notification.Infrastructure.csproj", "{1D7A58F4-7BDD-41F5-A357-EEC2267A6CB9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.API", "src\Services\Passenger\Passenger.API\UserManagement.API.csproj", "{ECD0970F-2088-4DBE-8BE8-8DC20492662D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.API", "src\Services\UserManagement\UserManagement.API\UserManagement.API.csproj", "{ECD0970F-2088-4DBE-8BE8-8DC20492662D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.Domain", "src\Services\Passenger\Passenger.Domain\UserManagement.Domain.csproj", "{7895E563-1E0C-47A4-B7A1-EDE834F68F51}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.Domain", "src\Services\UserManagement\UserManagement.Domain\UserManagement.Domain.csproj", "{7895E563-1E0C-47A4-B7A1-EDE834F68F51}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.Application", "src\Services\Passenger\Passenger.Application\UserManagement.Application.csproj", "{C53B14C9-948F-4073-B49B-4548AABFDFC6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.Application", "src\Services\UserManagement\UserManagement.Application\UserManagement.Application.csproj", "{C53B14C9-948F-4073-B49B-4548AABFDFC6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.Infrastructure", "src\Services\Passenger\Passenger.Infrastructure\UserManagement.Infrastructure.csproj", "{FD7DDCF7-A44E-4DAA-AA2A-0B2D53E8AB99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.Infrastructure", "src\Services\UserManagement\UserManagement.Infrastructure\UserManagement.Infrastructure.csproj", "{FD7DDCF7-A44E-4DAA-AA2A-0B2D53E8AB99}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Payment.API", "src\Services\Payment\Payment.API\Payment.API.csproj", "{395A781D-C309-41A3-A87E-286D24E99573}"
 EndProject
