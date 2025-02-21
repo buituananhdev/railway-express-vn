@@ -3,5 +3,6 @@
 namespace UserManagement.Application.Services;
 public interface IUserAccountService
 {
-    Task AddUserAccountAsync(AddUserAccountDto userAccountDto);
+    Task AddUserAccountAsync(UserAccountDto userAccountDto);
+    Task<UserAccountDto> GetUserAccountByEmailAsync(string email);
 }
