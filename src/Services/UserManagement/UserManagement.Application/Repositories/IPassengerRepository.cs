@@ -1,9 +1,8 @@
 ﻿using Common.Application.Repositories;
 using UserManagement.Domain.Entities;
 
-namespace UserManagement.Application.Repositories
+namespace UserManagement.Application.Repositories;
+
+public interface IPassengerRepository : IBaseRepository<Passenger>
 {
-    public interface IPassengerRepository : IBaseRepository<Passenger>
-    {
-    }
 }

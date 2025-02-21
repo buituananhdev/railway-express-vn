@@ -24,8 +24,9 @@ namespace UserManagement.Infrastructure
                     connectionString, ServerVersion.AutoDetect(connectionString));
             });
 
+            services.AddScoped<IUserManagementUnitOfWork, UserManagementRepository>();
             services.AddScoped<IPassengerRepository, PassengerRepository>();
-
+            services.AddScoped<IUserAccountRepository, UserAccountRepository>();
 
             services.AddGrpc(options =>
             {
