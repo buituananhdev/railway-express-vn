@@ -8,12 +8,12 @@ namespace UserManagement.Application.Services
 {
     internal class PassengerService : IPassengerService
     {
-        private readonly IPassengerRepository _passengerRepository;
+        private readonly IUserManagementUnitOfWork _userManagementUnitOfWork;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public PassengerService(IPassengerRepository passengerRepository, IMapper mapper, IUnitOfWork unitOfWork)
+        public PassengerService(IUserManagementUnitOfWork userManagementUnitOfWork, IMapper mapper, IUnitOfWork unitOfWork)
         {
-            _passengerRepository = passengerRepository;
+            _userManagementUnitOfWork = userManagementUnitOfWork;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
         }
@@ -23,7 +23,7 @@ namespace UserManagement.Application.Services
             {
                 var passenger = _mapper.Map<Domain.Entities.Passenger>(passengerDto);
                 passenger.PasswordHash = BCrypt.Net.BCrypt.HashPassword(passengerDto.Password);
-                await _passengerRepository.AddAsync(passenger);
+                await _userManagementUnitOfWork.PassengerRepository.AddAsync(passenger);
                 await _unitOfWork.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -36,7 +36,7 @@ namespace UserManagement.Application.Services
         {
             try
             {
-                var passenger = await _passengerRepository.FirstOrDefaultAsync<PassengerDto>(new EmailSpecification(email!));
+                var passenger = await _userManagementUnitOfWork.PassengerRepository.FirstOrDefaultAsync<PassengerDto>(new EmailSpecification(email!));
                 return passenger;
             }
             catch (Exception ex)
@@ -49,7 +49,7 @@ namespace UserManagement.Application.Services
         {
             try
             {
-                var passenger = await _passengerRepository.GetByIdAsync(id);
+                var passenger = await _userManagementUnitOfWork.PassengerRepository.GetByIdAsync(id);
                 return _mapper.Map<PassengerDto>(passenger);
             }
             catch (Exception ex)
