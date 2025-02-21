@@ -1,8 +1,17 @@
-var builder = WebApplication.CreateBuilder(args);
+using Common.Infrastructure;
+using Booking.Infrastructure;
+using Booking.Application;
 
+var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Common services
+builder.Services.AddCommonInfrastructure(builder.Configuration);
+
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(builder.Configuration);
 
 var app = builder.Build();
 
