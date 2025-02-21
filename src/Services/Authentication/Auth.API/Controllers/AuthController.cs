@@ -2,7 +2,7 @@
 using Auth.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ApiGateway.Controllers
+namespace Auth.API.Controllers
 {
     [Route("api/auth")]
     [ApiController]

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Passenger.Application.Dtos;
 using Passenger.Application.Services;
@@ -22,8 +23,9 @@ namespace Passenger.API.Controllers
             return Ok(passenger);
         }
 
+        [Authorize]
         [HttpGet]
-        public async Task<IActionResult> GetPassengerById([FromQuery] string email)
+        public async Task<IActionResult> GetPassengerByEmail([FromQuery] string email)
         {
             var passenger = await _passengerService.GetPassengerByEmailAsync(email);
             return Ok(passenger);

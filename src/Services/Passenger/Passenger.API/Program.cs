@@ -2,9 +2,12 @@ using Common.Infrastructure;
 using Passenger.Infrastructure.GrpcServices;
 using Passenger.Application;
 using Passenger.Infrastructure;
+using Common.API.Extentions;
 
 var builder = WebApplication.CreateBuilder(args);
 // Common services
+builder.UseBaseBuilder();
+
 builder.Services.AddCommonInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
