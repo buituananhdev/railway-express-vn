@@ -3,5 +3,5 @@
 namespace Booking.Application.Services;
 public interface ITicketService
 {
-    Task AddTicketAsync(AddTicketDto addTicketDto);
+    Task<TicketDto> AddTicketAsync(AddTicketDto addTicketDto);
 }

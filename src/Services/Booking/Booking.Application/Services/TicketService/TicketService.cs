@@ -14,13 +14,15 @@ public class TicketService : ITicketService
         _bookingUnitOfWork = bookingUnitOfWork;
         _mapper = mapper;
     }
-    public async Task AddTicketAsync(AddTicketDto addTicketDto)
+    public async Task<TicketDto> AddTicketAsync(AddTicketDto addTicketDto)
     {
         try
         {
             var passenger = _mapper.Map<Ticket>(addTicketDto);
             await _bookingUnitOfWork.TicketRepository.AddAsync(passenger);
             await _bookingUnitOfWork.SaveChangesAsync();
+
+            return _mapper.Map<TicketDto>(passenger);
         }
         catch (Exception ex)
         {
