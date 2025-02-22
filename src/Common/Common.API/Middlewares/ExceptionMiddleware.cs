@@ -28,9 +28,9 @@ public class ExceptionMiddleware
         }
         catch (CustomException ex)
         {
-            context.Response.StatusCode = ex.StatusCode;
+            context.Response.StatusCode = (int)ex.StatusCode;
             context.Response.ContentType = "application/json";
-            var response = new { error_code = ex.ErrorCode, message = ex.Message };
+            var response = new { error_code = ex.ErrorCode.ToString(), message = ex.Message };
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
             _loggerService.LogError(ex.Message, ex);
         }

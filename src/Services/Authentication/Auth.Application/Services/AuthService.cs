@@ -2,8 +2,8 @@
 using Auth.Application.Payloads;
 using Auth.Application.Utils;
 using AutoMapper;
-using Microsoft.Extensions.Configuration;
 using Common.Protos;
+using Microsoft.Extensions.Configuration;
 
 namespace Auth.Application.Services;
 public class AuthService : IAuthService
@@ -21,9 +21,9 @@ public class AuthService : IAuthService
     public async Task<TokenPayload> LoginAsync(LoginDto loginDto)
     {
         var result = await _userGrpcClient.CheckUserAsync(_mapper.Map<CheckUserRequest>(loginDto));
-        if(!result.IsSuccess)
+        if (!result.IsSuccess)
         {
-            throw new UnauthorizedAccessException(result.Message);
+            throw new BadRequestException(result.Message);
         }
 
         var userId = Guid.Parse(result.Data);
@@ -35,9 +35,9 @@ public class AuthService : IAuthService
     public async Task RegisterAsync(RegisterDto registrationDto)
     {
         var result = await _userGrpcClient.CreateUserAsync(_mapper.Map<CreateUserRequest>(registrationDto));
-        if(!result.IsSuccess)
+        if (!result.IsSuccess)
         {
-            throw new Exception(result.Message);
+            throw new BadRequestException(result.Message);
         }
 
         return;

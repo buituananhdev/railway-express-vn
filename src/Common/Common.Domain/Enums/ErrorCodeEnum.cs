@@ -8,5 +8,8 @@ public enum ErrorCodeEnum
     ExistedEmail = 108,
     InvalidToken = 109,
     NotFound = 112,
-    NotAuthorized = 113,
+    Unauthorized = 113,
+    Forbidden = 114,
+    Conflict = 115,
+    InternalServerError = 116,
 }
