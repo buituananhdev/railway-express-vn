@@ -1,6 +1,8 @@
 using Auth.Application;
+using Common.API.Extentions;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.UseBaseBuilder();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
