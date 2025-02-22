@@ -1,8 +1,11 @@
 using Common.Infrastructure;
 using Booking.Infrastructure;
 using Booking.Application;
+using Common.API.Extentions;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.UseBaseBuilder();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

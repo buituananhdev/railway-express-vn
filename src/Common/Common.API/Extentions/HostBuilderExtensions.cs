@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Common.API.Helper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -9,6 +11,10 @@ public static class HostBuilderExtensions
 {
     public static void UseBaseBuilder(this WebApplicationBuilder builder)
     {
+        #region Load common config file
+        builder.Configuration.AddJsonFile(Path.Combine(PathHelper.GetRootDirectory(), "Common", "Common.API", "appsettings.json"), optional: false, reloadOnChange: true);
+        #endregion
+
         var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtSettings:Secret").Value!);
         builder.Services.AddAuthentication(x =>
         {

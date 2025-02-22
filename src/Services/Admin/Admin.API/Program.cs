@@ -1,8 +1,10 @@
-using Admin.Infrastructure;
 using Admin.Application;
+using Admin.Infrastructure;
+using Common.API.Extentions;
 using Common.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.UseBaseBuilder();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
