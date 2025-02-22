@@ -1,6 +1,8 @@
 ﻿using Admin.Application.Repositories;
 using Admin.Infrastructure.Repositories;
+using Common.Application.Repositories;
 using Common.Infrastructure;
+using Common.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminUnitOfWork, AdminUnitOfWork>();
 
         services.AddScoped<IDataContext>(provider => provider.GetRequiredService<AdminContext>());
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }

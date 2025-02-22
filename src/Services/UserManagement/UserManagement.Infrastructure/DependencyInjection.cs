@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Common.Infrastructure;
 using UserManagement.Infrastructure.Repositories;
 using UserManagement.Application.Repositories;
+using Common.Application.Repositories;
+using Common.Infrastructure.Repositories;
 
 namespace UserManagement.Infrastructure;
 public static class DependencyInjection
@@ -12,6 +14,7 @@ public static class DependencyInjection
     {
         services.AddAutoMapper(typeof(DependencyInjection).Assembly);
         services.AddScoped<IDataContext>(provider => provider.GetRequiredService<UserManagementContext>());
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddDbContext<UserManagementContext>(options =>
         {

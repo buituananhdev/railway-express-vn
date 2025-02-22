@@ -59,14 +59,6 @@ app.UseCors(builder =>
            .AllowAnyHeader()
            .AllowCredentials();
 });
-
-// Add Swagger documentation
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseBaseConfig();
 app.MapReverseProxy();
 app.Run();
