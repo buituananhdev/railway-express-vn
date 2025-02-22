@@ -2,6 +2,8 @@ syntax = "proto3";
 
 option csharp_namespace = "Common.Protos";
 
+import "google/protobuf/wrappers.proto";
+
 package user;
 
 service User {
@@ -24,6 +26,6 @@ message CheckUserRequest {
 
 message UserGrpcResponse {
   bool isSuccess = 1;
-  string data = 2;
+  google.protobuf.StringValue data = 2;
   string message = 3;
 }
