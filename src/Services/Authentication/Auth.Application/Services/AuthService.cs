@@ -5,43 +5,41 @@ using AutoMapper;
 using Microsoft.Extensions.Configuration;
 using Common.Protos;
 
-namespace Auth.Application.Services
+namespace Auth.Application.Services;
+public class AuthService : IAuthService
 {
-    public class AuthService : IAuthService
+    private readonly User.UserClient _userGrpcClient;
+    private readonly IMapper _mapper;
+    private readonly IConfiguration _configuration;
+
+    public AuthService(User.UserClient userGrpcClient, IMapper mapper, IConfiguration configuration)
     {
-        private readonly User.UserClient _userGrpcClient;
-        private readonly IMapper _mapper;
-        private readonly IConfiguration _configuration;
-
-        public AuthService(User.UserClient userGrpcClient, IMapper mapper, IConfiguration configuration)
+        _userGrpcClient = userGrpcClient;
+        _mapper = mapper;
+        _configuration = configuration;
+    }
+    public async Task<TokenPayload> LoginAsync(LoginDto loginDto)
+    {
+        var result = await _userGrpcClient.CheckUserAsync(_mapper.Map<CheckUserRequest>(loginDto));
+        if(!result.IsSuccess)
         {
-            _userGrpcClient = userGrpcClient;
-            _mapper = mapper;
-            _configuration = configuration;
-        }
-        public async Task<TokenPayload> LoginAsync(LoginDto loginDto)
-        {
-            var result = await _userGrpcClient.CheckUserAsync(_mapper.Map<CheckUserRequest>(loginDto));
-            if(!result.IsSuccess)
-            {
-                throw new UnauthorizedAccessException(result.Message);
-            }
-
-            var userId = Guid.Parse(result.Data);
-            var token = JwtUtil.GenerateAccessToken(userId, _configuration);
-
-            return token;
+            throw new UnauthorizedAccessException(result.Message);
         }
 
-        public async Task RegisterAsync(RegisterDto registrationDto)
-        {
-            var result = await _userGrpcClient.CreateUserAsync(_mapper.Map<CreateUserRequest>(registrationDto));
-            if(!result.IsSuccess)
-            {
-                throw new Exception(result.Message);
-            }
+        var userId = Guid.Parse(result.Data);
+        var token = JwtUtil.GenerateAccessToken(userId, _configuration);
 
-            return;
+        return token;
+    }
+
+    public async Task RegisterAsync(RegisterDto registrationDto)
+    {
+        var result = await _userGrpcClient.CreateUserAsync(_mapper.Map<CreateUserRequest>(registrationDto));
+        if(!result.IsSuccess)
+        {
+            throw new Exception(result.Message);
         }
+
+        return;
     }
 }

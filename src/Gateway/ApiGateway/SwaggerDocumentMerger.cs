@@ -1,16 +1,14 @@
 ﻿using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Readers;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Collections.Generic;
 
 namespace ApiGateway;
-
 public class SwaggerDocumentMerger : IDocumentFilter
 {
     private readonly IConfiguration _configuration;
     private readonly HttpClient _httpClient;
     private readonly ILogger<SwaggerDocumentMerger> _logger;
-    
+
     public SwaggerDocumentMerger(IConfiguration configuration, ILogger<SwaggerDocumentMerger> logger)
     {
         _configuration = configuration;
@@ -26,7 +24,7 @@ public class SwaggerDocumentMerger : IDocumentFilter
         if (swaggerDoc.Info.Version != "v1") return;
 
         var services = GetServicesFromConfiguration();
-        
+
         foreach (var service in services)
         {
             try
@@ -36,24 +34,24 @@ public class SwaggerDocumentMerger : IDocumentFilter
 
                 using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(swaggerJson));
                 var openApiDocument = new OpenApiStreamReader().Read(stream, out var diagnostic);
-                
+
                 if (diagnostic.Errors.Count > 0)
                 {
-                    _logger.LogWarning("Swagger validation errors for {ServiceUrl}: {Errors}", 
-                        service.Url, 
+                    _logger.LogWarning("Swagger validation errors for {ServiceUrl}: {Errors}",
+                        service.Url,
                         string.Join(", ", diagnostic.Errors));
                     continue;
                 }
 
                 MergePaths(swaggerDoc, openApiDocument, service.PathPrefix);
                 MergeComponents(swaggerDoc, openApiDocument);
-                
+
                 _logger.LogInformation("Successfully merged swagger doc for {ServiceUrl}", service.Url);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("Failed to merge swagger doc for {ServiceUrl}: {Error}", 
-                    service.Url, 
+                _logger.LogWarning("Failed to merge swagger doc for {ServiceUrl}: {Error}",
+                    service.Url,
                     ex.Message);
                 continue; // Skip this service and continue with others
             }
@@ -122,8 +120,8 @@ public class SwaggerDocumentMerger : IDocumentFilter
             }
             catch (Exception ex)
             {
-                _logger.LogWarning("Error processing configuration for cluster {ClusterName}: {Error}", 
-                    cluster.Key, 
+                _logger.LogWarning("Error processing configuration for cluster {ClusterName}: {Error}",
+                    cluster.Key,
                     ex.Message);
                 continue;
             }

@@ -2,7 +2,7 @@
 using Common.Application.Repositories;
 using UserManagement.Application.Dtos;
 using UserManagement.Application.Repositories;
-using UserManagement.Domain.Specifications.Passenger;
+using UserManagement.Domain.Specifications;
 
 namespace UserManagement.Application.Services;
 

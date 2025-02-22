@@ -2,8 +2,7 @@
 using Common.Protos;
 using UserManagement.Application.Dtos;
 using UserManagement.Application.Repositories;
-using UserManagement.Domain.Specifications.Passenger;
-using UserManagement.Domain.Specifications.UserAccount;
+using UserManagement.Domain.Specifications;
 
 namespace UserManagement.Application.Services;
 public class UserAccountService : IUserAccountService

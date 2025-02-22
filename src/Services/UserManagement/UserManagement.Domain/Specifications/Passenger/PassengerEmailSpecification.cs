@@ -1,7 +1,7 @@
 ﻿using Common.Domain.Specifications;
 using System.Linq.Expressions;
 
-namespace UserManagement.Domain.Specifications.Passenger;
+namespace UserManagement.Domain.Specifications;
 public class PassengerEmailSpecification : Specification<UserManagement.Domain.Entities.Passenger>
 {
     private readonly string _email;

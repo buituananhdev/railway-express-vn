@@ -1,10 +1,8 @@
-﻿namespace Admin.Application.Dtos
+﻿namespace Admin.Application.Dtos;
+public class AddStationDto
 {
-    public class AddStationDto
-    {
-        public string StationName { get; set; }
-        public string Location { get; set; }
-        public int StationOrder { get; set; }
-        public string Coordinates { get; set; }
-    }
+    public string StationName { get; set; }
+    public string Location { get; set; }
+    public int StationOrder { get; set; }
+    public string Coordinates { get; set; }
 }

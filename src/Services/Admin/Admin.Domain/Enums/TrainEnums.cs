@@ -1,26 +1,24 @@
-﻿namespace Admin.Domain.Enums
+﻿namespace Admin.Domain.Enums;
+public enum Track
 {
-    public enum Track
-    {
-        Track1 = 1,
-        Track2 = 2,
-        Track3 = 3
-    }
+    Track1 = 1,
+    Track2 = 2,
+    Track3 = 3
+}
 
-    public enum SeatType
-    {
-        Standard,
-        Business
-    }
+public enum SeatType
+{
+    Standard,
+    Business
+}
 
-    public enum TrainStatus
-    {
-        InTransit,
-        AtStation,
-        Delayed,
-        AwaitingDeparture,
-        Reversing,
-        Cancelled,
-        Faulty
-    }
+public enum TrainStatus
+{
+    InTransit,
+    AtStation,
+    Delayed,
+    AwaitingDeparture,
+    Reversing,
+    Cancelled,
+    Faulty
 }

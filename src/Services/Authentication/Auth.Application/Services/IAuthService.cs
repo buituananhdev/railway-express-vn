@@ -1,11 +1,9 @@
 ﻿using Auth.Application.Payloads;
 using Auth.Application.Dtos;
 
-namespace Auth.Application.Services
+namespace Auth.Application.Services;
+public interface IAuthService
 {
-    public interface IAuthService
-    {
-        Task<TokenPayload> LoginAsync(LoginDto loginDto);
-        Task RegisterAsync(RegisterDto registrationDto);
-    }
+    Task<TokenPayload> LoginAsync(LoginDto loginDto);
+    Task RegisterAsync(RegisterDto registrationDto);
 }

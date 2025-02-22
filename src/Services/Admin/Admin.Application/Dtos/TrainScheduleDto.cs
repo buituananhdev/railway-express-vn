@@ -1,15 +1,14 @@
-﻿using Common.Domain;
+﻿using Common.Application.Dtos;
+using Common.Domain;
 
-namespace Admin.Application.Dtos
+namespace Admin.Application.Dtos;
+public class TrainScheduleDto : BaseDto
 {
-    public class TrainScheduleDto : BaseEntity
-    {
-        public TrainDto Train { get; set; }
-        public Guid DepartureStationId { get; set; }
-        public Guid ArrivalStationId { get; set; }
-        public DateTime DepartureTime { get; set; }
-        public DateTime ArrivalTime { get; set; }
-        public int Duration { get; set; }
-        public Decimal Price { get; set; }
-    }
+    public TrainDto Train { get; set; }
+    public Guid DepartureStationId { get; set; }
+    public Guid ArrivalStationId { get; set; }
+    public DateTime DepartureTime { get; set; }
+    public DateTime ArrivalTime { get; set; }
+    public int Duration { get; set; }
+    public Decimal Price { get; set; }
 }

@@ -3,12 +3,10 @@ using Admin.Domain.Entities;
 using AutoMapper;
 using Common.Infrastructure.Repositories;
 
-namespace Admin.Infrastructure.Repositories
+namespace Admin.Infrastructure.Repositories;
+public class StationRepository : BaseRepository<Station>, IStationRepository
 {
-    public class StationRepository : BaseRepository<Station>, IStationRepository
+    public StationRepository(AdminContext context, IMapper mapper) : base(context, mapper)
     {
-        public StationRepository(AdminContext context, IMapper mapper) : base(context, mapper)
-        {
-        }
     }
 }

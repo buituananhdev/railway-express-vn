@@ -2,13 +2,11 @@
 using Common.Protos;
 using UserManagement.Application.Dtos;
 
-namespace UserManagement.Infrastructure.AutoMapper
+namespace UserManagement.Infrastructure.AutoMapper;
+public class AutoMapperProfile : Profile
 {
-    public class AutoMapperProfile : Profile
+    public AutoMapperProfile()
     {
-        public AutoMapperProfile()
-        {
-            CreateMap<CreateUserRequest, AddPassengerDto>().ReverseMap();
-        }
+        CreateMap<CreateUserRequest, AddPassengerDto>().ReverseMap();
     }
 }
