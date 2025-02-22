@@ -1,8 +1,9 @@
 ﻿using System.Text.Json;
+using Common.Application.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace Common.Infrastructure.Caching;
-public class CacheService
+public class CacheService : ICacheService
 {
     private readonly IDistributedCache _distributedCache;
 

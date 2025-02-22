@@ -15,7 +15,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.API\Common.API.csproj" />
-    <ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
     <ProjectReference Include="..\Admin.Application\Admin.Application.csproj" />
     <ProjectReference Include="..\Admin.Infrastructure\Admin.Infrastructure.csproj" />
   </ItemGroup>

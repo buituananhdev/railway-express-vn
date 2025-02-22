@@ -1,22 +1,13 @@
-using Common.Infrastructure;
-using UserManagement.Infrastructure.GrpcServices;
+using Common.API.Extentions;
 using UserManagement.Application;
 using UserManagement.Infrastructure;
-using Common.API.Extentions;
+using UserManagement.Infrastructure.GrpcServices;
 
 var builder = WebApplication.CreateBuilder(args);
-// Common services
 builder.UseBaseBuilder();
-
-builder.Services.AddCommonInfrastructure(builder.Configuration);
-
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
-
 
 var app = builder.Build();
 
@@ -25,16 +16,5 @@ app.MapGrpcService<GreeterService>();
 app.MapGrpcService<UserService>();
 # endregion
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
+app.UseBaseConfig();
 app.Run();

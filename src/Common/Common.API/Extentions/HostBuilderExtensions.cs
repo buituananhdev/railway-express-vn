@@ -1,10 +1,13 @@
-﻿using Common.API.Helper;
+﻿using System.Text;
+using Common.API.Helper;
+using Common.API.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Common.Infrastructure;
 
 namespace Common.API.Extentions;
 public static class HostBuilderExtensions
@@ -15,6 +18,13 @@ public static class HostBuilderExtensions
         builder.Configuration.AddJsonFile(Path.Combine(PathHelper.GetRootDirectory(), "Common", "Common.API", "appsettings.json"), optional: false, reloadOnChange: true);
         #endregion
 
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        builder.Host.UseSerilogLogging();
+        builder.Services.AddCommonInfrastructure(builder.Configuration);
+            
         var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtSettings:Secret").Value!);
         builder.Services.AddAuthentication(x =>
         {
@@ -43,5 +53,24 @@ public static class HostBuilderExtensions
                 }
             };
         });
+
+    }
+
+    public static WebApplication UseBaseConfig(this WebApplication app)
+    {
+        app.UseMiddleware<ExceptionMiddleware>();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+
+        app.UseHttpsRedirection();
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+        return app;
     }
 }

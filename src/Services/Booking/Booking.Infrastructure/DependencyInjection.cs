@@ -1,6 +1,8 @@
 ﻿using Booking.Application.Repositories;
 using Booking.Infrastructure.Repositories;
+using Common.Application.Repositories;
 using Common.Infrastructure;
+using Common.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +14,7 @@ public static class DependencyInjection
     {
         services.AddAutoMapper(typeof(DependencyInjection).Assembly);
         services.AddScoped<IDataContext>(provider => provider.GetRequiredService<BookingContext>());
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddDbContext<BookingContext>(options =>
         {
