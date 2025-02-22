@@ -4,4 +4,5 @@ namespace Booking.Application.Repositories;
 public interface IBookingUnitOfWork : IUnitOfWork
 {
     ITicketRepository TicketRepository { get; }
+    IPassengerInfoRepository PassengerInfoRepository { get; }
 }

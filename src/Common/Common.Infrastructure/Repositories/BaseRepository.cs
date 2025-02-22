@@ -43,6 +43,11 @@ namespace Common.Infrastructure.Repositories
             await _dbSet.AddAsync(entity);
         }
 
+        public virtual async Task AddRangeAsync(IEnumerable<T> entities)
+        {
+            await _dbSet.AddRangeAsync(entities);
+        }
+
         public virtual Task<int> CountAsync(Specification<T>? spec)
         {
             return _dbSet.AsNoTracking().ApplySpecification(spec).CountAsync();
