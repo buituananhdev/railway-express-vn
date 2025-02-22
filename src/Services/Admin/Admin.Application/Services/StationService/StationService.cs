@@ -2,25 +2,26 @@
 using Admin.Application.Repositories;
 using Admin.Domain.Entities;
 using AutoMapper;
+using Common.Application.Interfaces;
+using Common.Application.Pagination;
+using Common.Application.Services;
 using System.Linq.Expressions;
 
 namespace Admin.Application.Services;
-public class StationService : IStationService
+public class StationService : BaseService<Station, AddStationDto, AddStationDto, StationDto>, IStationService
 {
     private readonly IAdminUnitOfWork _adminUnitOfWork;
     private readonly IMapper _mapper;
 
-    public StationService(IAdminUnitOfWork adminUnitOfWork, IMapper mapper)
+    public StationService(
+        IStationRepository repository,
+        IAdminUnitOfWork unitOfWork,
+        IMapper mapper,
+        IPaginationService paginationService
+        ) : base(repository, unitOfWork, mapper, paginationService)
     {
-        _adminUnitOfWork = adminUnitOfWork;
+        _adminUnitOfWork = unitOfWork;
         _mapper = mapper;
-    }
-
-    public async Task AddStationAsync(AddStationDto addStationDto)
-    {
-        var station = _mapper.Map<Station>(addStationDto);
-        await _adminUnitOfWork.StationRepository.AddAsync(station);
-        await _adminUnitOfWork.SaveChangesAsync();
     }
 
     public async Task<List<StationDto>> GetStations()

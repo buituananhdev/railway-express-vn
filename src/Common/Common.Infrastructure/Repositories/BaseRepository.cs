@@ -99,6 +99,15 @@ public class BaseRepository<T> : IBaseRepository<T> where T : class
     {
         return _dbSet.AsNoTracking().ApplySpecification(spec).AnyAsync();
     }
+
+    public IQueryable<T> GetQueryable(
+        Specification<T>? spec = null,
+        List<Expression<Func<T, object>>>? includes = null)
+    {
+        return _dbSet.AsNoTracking()
+            .ApplySpecification(spec)
+            .ApplyIncludes(includes);
+    }
 }
 
 internal static class RepositoryExtensions

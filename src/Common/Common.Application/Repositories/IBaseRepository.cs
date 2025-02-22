@@ -40,4 +40,8 @@ public interface IBaseRepository<T> where T : class
         int? page = null, int? size = null);
 
     Task<bool> AnyAsync(Specification<T>? spec = null);
+
+    IQueryable<T> GetQueryable(
+        Specification<T>? spec = null,
+        List<Expression<Func<T, object>>>? includes = null);
 }

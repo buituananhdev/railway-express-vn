@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Common.Infrastructure;
+using Common.Application;
 
 namespace Common.API.Extentions;
 public static class HostBuilderExtensions
@@ -23,6 +24,7 @@ public static class HostBuilderExtensions
         builder.Services.AddSwaggerGen();
 
         builder.Host.UseSerilogLogging();
+        builder.Services.AddCommonApplication(builder.Configuration);
         builder.Services.AddCommonInfrastructure(builder.Configuration);
             
         var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtSettings:Secret").Value!);
