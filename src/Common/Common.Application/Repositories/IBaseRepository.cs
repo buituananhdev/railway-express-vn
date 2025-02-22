@@ -19,6 +19,7 @@ namespace Common.Application.Repositories
 
         Task AddAsync(T entity);
 
+        Task AddRangeAsync(IEnumerable<T> entities);
         Task<int> CountAsync(Specification<T>? spec = null);
 
         void Update(T entity);
