@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Common.Domain.Specifications;
 
-namespace UserManagement.Domain.Specifications.UserAccount;
+namespace UserManagement.Domain.Specifications;
 public class AccountEmailSpecification : Specification<UserManagement.Domain.Entities.UserAccount>
 {
     private readonly string _email;

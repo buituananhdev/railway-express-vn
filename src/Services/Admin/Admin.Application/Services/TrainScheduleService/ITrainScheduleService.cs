@@ -1,10 +1,8 @@
 ﻿using Admin.Application.Dtos;
 
-namespace Admin.Application.Services.TrainScheduleService
+namespace Admin.Application.Services;
+public interface ITrainScheduleService
 {
-    public interface ITrainScheduleService
-    {
-        Task AddTrainScheduleAsync(AddTrainScheduleDto trainScheduleDto);
-        Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(GetTrainSchedulesDto getTrainSchedulesDto);
-    }
+    Task AddTrainScheduleAsync(AddTrainScheduleDto trainScheduleDto);
+    Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(GetTrainSchedulesDto getTrainSchedulesDto);
 }

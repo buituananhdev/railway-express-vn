@@ -2,15 +2,13 @@
 using AutoMapper;
 using Common.Protos;
 
-namespace Auth.Application.AutoMapper
+namespace Auth.Application.AutoMapper;
+public class AutoMapperProfile : Profile
 {
-    public class AutoMapperProfile : Profile
+    public AutoMapperProfile()
     {
-        public AutoMapperProfile()
-        {
-            CreateMap<LoginDto, CheckUserRequest>().ReverseMap();
+        CreateMap<LoginDto, CheckUserRequest>().ReverseMap();
 
-            CreateMap<RegisterDto, CreateUserRequest>().ReverseMap();
-        }
+        CreateMap<RegisterDto, CreateUserRequest>().ReverseMap();
     }
 }

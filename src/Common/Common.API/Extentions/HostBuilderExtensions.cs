@@ -4,40 +4,38 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace Common.API.Extentions
+namespace Common.API.Extentions;
+public static class HostBuilderExtensions
 {
-    public static class HostBuilderExtensions
+    public static void UseBaseBuilder(this WebApplicationBuilder builder)
     {
-        public static void UseBaseBuilder(this WebApplicationBuilder builder)
+        var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtSettings:Secret").Value!);
+        builder.Services.AddAuthentication(x =>
         {
-            var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtSettings:Secret").Value!);
-            builder.Services.AddAuthentication(x =>
+            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(x =>
+        {
+            x.RequireHttpsMetadata = false;
+            x.SaveToken = true;
+            x.TokenValidationParameters = new TokenValidationParameters
             {
-                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(x =>
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false
+            };
+            x.Events = new JwtBearerEvents
             {
-                x.RequireHttpsMetadata = false;
-                x.SaveToken = true;
-                x.TokenValidationParameters = new TokenValidationParameters
+                OnAuthenticationFailed = context =>
                 {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
-                };
-                x.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = context =>
+                    if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                     {
-                        if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-                        {
-                            context.Response.Headers["Token-Expired"] = "true";
-                        }
-                        return Task.CompletedTask;
+                        context.Response.Headers["Token-Expired"] = "true";
                     }
-                };
-            });
-        }
+                    return Task.CompletedTask;
+                }
+            };
+        });
     }
 }

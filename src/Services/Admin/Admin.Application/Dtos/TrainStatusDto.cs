@@ -1,11 +1,10 @@
 ﻿using Admin.Domain.Entities;
 
-namespace Admin.Application.Dtos
+namespace Admin.Application.Dtos;
+
+public class TrainStatusDto
 {
-    public class TrainStatusDto
-    {
-        public Station Station { get; set; }
-        public Admin.Domain.Enums.TrainStatus Status { get; set; }
-        public string Remarks { get; set; }
-    }
+    public Station Station { get; set; }
+    public Admin.Domain.Enums.TrainStatus Status { get; set; }
+    public string Remarks { get; set; }
 }

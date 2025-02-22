@@ -1,20 +1,18 @@
 ﻿using Common.Domain.Specifications;
 using System.Linq.Expressions;
 
-namespace Admin.Domain.Specifications
+namespace Admin.Domain.Specifications;
+public class DepartureStationIdSpecification : Specification<Admin.Domain.Entities.TrainSchedule>
 {
-    public class DepartureStationIdSpecification : Specification<Admin.Domain.Entities.TrainSchedule>
+    private readonly Guid _departureStationId;
+
+    public DepartureStationIdSpecification(Guid departureStationId)
     {
-        private readonly Guid _departureStationId;
+        _departureStationId = departureStationId;
+    }
 
-        public DepartureStationIdSpecification(Guid departureStationId)
-        {
-            _departureStationId = departureStationId;
-        }
-
-        public override Expression<Func<Admin.Domain.Entities.TrainSchedule, bool>> ToExpression()
-        {
-            return station => station.DepartureStationId == _departureStationId;
-        }
+    public override Expression<Func<Admin.Domain.Entities.TrainSchedule, bool>> ToExpression()
+    {
+        return station => station.DepartureStationId == _departureStationId;
     }
 }

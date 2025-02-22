@@ -2,92 +2,90 @@
 using Admin.Domain.Entities;
 using AutoMapper;
 
-namespace Admin.Application.AutoMapper
+namespace Admin.Application.AutoMapper;
+public class AutoMapperProfile : Profile
 {
-    public class AutoMapperProfile : Profile
+    public AutoMapperProfile()
     {
-        public AutoMapperProfile()
-        {
-            // Train -> TrainDto
-            CreateMap<Train, TrainDto>()
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-                .ForMember(dest => dest.TrainCars, opt => opt.MapFrom(src => src.TrainCars));
+        // Train -> TrainDto
+        CreateMap<Train, TrainDto>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
+            .ForMember(dest => dest.TrainCars, opt => opt.MapFrom(src => src.TrainCars));
 
-            // TrainDto -> Train
-            CreateMap<TrainDto, Train>()
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-                .ForMember(dest => dest.TrainCars, opt => opt.Ignore());
+        // TrainDto -> Train
+        CreateMap<TrainDto, Train>()
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
+            .ForMember(dest => dest.TrainCars, opt => opt.Ignore());
 
-            // AddTrainDto -> Train
-            CreateMap<AddTrainDto, Train>();
+        // AddTrainDto -> Train
+        CreateMap<AddTrainDto, Train>();
 
-            // TrainCar -> TrainCarDto
-            CreateMap<TrainCar, TrainCarDto>();
+        // TrainCar -> TrainCarDto
+        CreateMap<TrainCar, TrainCarDto>();
 
-            // TrainCarDto -> TrainCar
-            CreateMap<TrainCarDto, TrainCar>()
-                .ForMember(dest => dest.TrainId, opt => opt.Ignore())
-                .ForMember(dest => dest.Train, opt => opt.Ignore())
-                .ForMember(dest => dest.Seats, opt => opt.Ignore());
+        // TrainCarDto -> TrainCar
+        CreateMap<TrainCarDto, TrainCar>()
+            .ForMember(dest => dest.TrainId, opt => opt.Ignore())
+            .ForMember(dest => dest.Train, opt => opt.Ignore())
+            .ForMember(dest => dest.Seats, opt => opt.Ignore());
 
-            // TrainStatus -> TrainStatusDto
-            CreateMap<TrainStatus, TrainStatusDto>()
-                .ForMember(dest => dest.Station, opt => opt.MapFrom(src => src.Station))
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+        // TrainStatus -> TrainStatusDto
+        CreateMap<TrainStatus, TrainStatusDto>()
+            .ForMember(dest => dest.Station, opt => opt.MapFrom(src => src.Station))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
 
-            // TrainStatusDto -> TrainStatus
-            CreateMap<TrainStatusDto, TrainStatus>()
-                .ForMember(dest => dest.TrainId, opt => opt.Ignore())
-                .ForMember(dest => dest.Train, opt => opt.Ignore())
-                .ForMember(dest => dest.StationId, opt => opt.Ignore());
+        // TrainStatusDto -> TrainStatus
+        CreateMap<TrainStatusDto, TrainStatus>()
+            .ForMember(dest => dest.TrainId, opt => opt.Ignore())
+            .ForMember(dest => dest.Train, opt => opt.Ignore())
+            .ForMember(dest => dest.StationId, opt => opt.Ignore());
 
-            // TrainCar -> AddTrainCarDto
-            CreateMap<TrainCar, AddTrainCarDto>();
+        // TrainCar -> AddTrainCarDto
+        CreateMap<TrainCar, AddTrainCarDto>();
 
-            // AddTrainCarDto -> TrainCar
-            CreateMap<AddTrainCarDto, TrainCar>()
-                .ForMember(dest => dest.Train, opt => opt.Ignore())
-                .ForMember(dest => dest.Seats, opt => opt.Ignore());
+        // AddTrainCarDto -> TrainCar
+        CreateMap<AddTrainCarDto, TrainCar>()
+            .ForMember(dest => dest.Train, opt => opt.Ignore())
+            .ForMember(dest => dest.Seats, opt => opt.Ignore());
 
-            // Station -> StationDto
-            CreateMap<Station, StationDto>();
+        // Station -> StationDto
+        CreateMap<Station, StationDto>();
 
-            // StationDto -> Station
-            CreateMap<StationDto, Station>()
-                .ForMember(dest => dest.DepartureTrainSchedules, opt => opt.Ignore())
-                .ForMember(dest => dest.ArrivalTrainSchedules, opt => opt.Ignore());
+        // StationDto -> Station
+        CreateMap<StationDto, Station>()
+            .ForMember(dest => dest.DepartureTrainSchedules, opt => opt.Ignore())
+            .ForMember(dest => dest.ArrivalTrainSchedules, opt => opt.Ignore());
 
-            // Station -> AddStationDto
-            CreateMap<Station, AddStationDto>();
+        // Station -> AddStationDto
+        CreateMap<Station, AddStationDto>();
 
-            // AddStationDto -> Station
-            CreateMap<AddStationDto, Station>()
-                .ForMember(dest => dest.TrainAtStation, opt => opt.Ignore())
-                .ForMember(dest => dest.DepartureTrainSchedules, opt => opt.Ignore())
-                .ForMember(dest => dest.ArrivalTrainSchedules, opt => opt.Ignore());
+        // AddStationDto -> Station
+        CreateMap<AddStationDto, Station>()
+            .ForMember(dest => dest.TrainAtStation, opt => opt.Ignore())
+            .ForMember(dest => dest.DepartureTrainSchedules, opt => opt.Ignore())
+            .ForMember(dest => dest.ArrivalTrainSchedules, opt => opt.Ignore());
 
-            // TrainSchedule -> TrainScheduleDto
-            CreateMap<TrainSchedule, TrainScheduleDto>()
-                .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
-                .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId))
-                .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime))
-                .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime))
-                .ForMember(dest => dest.Price, opt => opt.Ignore())
-                .ForMember(dest => dest.Train, opt => opt.MapFrom(src => src.Train));
+        // TrainSchedule -> TrainScheduleDto
+        CreateMap<TrainSchedule, TrainScheduleDto>()
+            .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
+            .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId))
+            .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime))
+            .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime))
+            .ForMember(dest => dest.Price, opt => opt.Ignore())
+            .ForMember(dest => dest.Train, opt => opt.MapFrom(src => src.Train));
 
-            // TrainScheduleDto -> TrainSchedule
-            CreateMap<TrainScheduleDto, TrainSchedule>()
-                .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
-                .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId))
-                .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime))
-                .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime))
-                .ForMember(dest => dest.DepartureStation, opt => opt.Ignore())
-                .ForMember(dest => dest.ArrivalStation, opt => opt.Ignore());
+        // TrainScheduleDto -> TrainSchedule
+        CreateMap<TrainScheduleDto, TrainSchedule>()
+            .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
+            .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId))
+            .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime))
+            .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime))
+            .ForMember(dest => dest.DepartureStation, opt => opt.Ignore())
+            .ForMember(dest => dest.ArrivalStation, opt => opt.Ignore());
 
-            // AddTrainScheduleDto -> TrainSchedule
-            CreateMap<AddTrainScheduleDto, TrainSchedule>()
-                .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
-                .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId));
-        }
+        // AddTrainScheduleDto -> TrainSchedule
+        CreateMap<AddTrainScheduleDto, TrainSchedule>()
+            .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
+            .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId));
     }
 }
