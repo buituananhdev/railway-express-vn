@@ -23,9 +23,16 @@ public class TicketController : ControllerBase
     }
 
     [HttpPost("passenger-details")]
-    public async Task<IActionResult> AddPassengerDetailsAsync(List<AddPassengerInfoDto> passengerInfoDtos)
+    public async Task<IActionResult> AddPassengerDetailsAsync(AddPassengerDetailsDto addPassengerDetailDto)
     {
-        var passengerDetails = await _passengerInfoService.AddPassengerInforsAsync(passengerInfoDtos);
+        var passengerDetails = await _passengerInfoService.AddPassengerDetailsAsync(addPassengerDetailDto);
+        return Ok(passengerDetails);
+    }
+
+    [HttpGet("{ticketId}/passenger-details")]
+    public async Task<IActionResult> GetPassengerDetailsByTicketIdAsync(Guid ticketId)
+    {
+        var passengerDetails = await _passengerInfoService.GetPassengerDetailsByTicketIdAsync(ticketId);
         return Ok(passengerDetails);
     }
 }
