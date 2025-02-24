@@ -60,7 +60,7 @@ public class TrainScheduleCalculator
                 ArrivalStationId = toStation.Id,
                 ArrivalStation = toStation,
                 DepartureTime = departureTimeFromStation,
-                ArrivalTime = arrivalTimeAtFromStation
+                ArrivalTime = arrivalTimeAtToStation
             };
 
 
@@ -148,14 +148,14 @@ public class TrainScheduleCalculator
                     var baseTime = FIRST_DEPARTURE_TIME.AddHours(groupIndex);
 
                     DateTime departureTimeFromStation;
-                    if (IsFirstOrLastStation(fromStation, false))
+                    if (IsFirstOrLastStation(fromStation, true))
                     {
-                        // Ga đầu không có thời gian chờ
                         departureTimeFromStation = baseTime;
                     }
                     else
                     {
-                        var timeToFromStation = CalculateTimeToStation(0, fromStation.KilometricPoint);
+                        // Corrected starting point for return trips
+                        var timeToFromStation = CalculateTimeToStation(1541, fromStation.KilometricPoint);
                         var arrivalTimeAtFromStation = baseTime.Add(timeToFromStation);
                         departureTimeFromStation = arrivalTimeAtFromStation.AddSeconds(STOP_TIME_SECONDS);
                     }
