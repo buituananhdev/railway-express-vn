@@ -16,7 +16,7 @@ public class UserAccountService : IUserAccountService
         _mapper = mapper;
     }
 
-    public async Task AddUserAccountAsync(UserAccountDto userAccountDto)
+    public async Task<UserAccountDto> AddUserAccountAsync(UserAccountDto userAccountDto)
     {
         try
         {
@@ -24,6 +24,8 @@ public class UserAccountService : IUserAccountService
             userAccount.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userAccountDto.PasswordHash);
             await _userManagementUnitOfWork.UserAccountRepository.AddAsync(userAccount);
             await _userManagementUnitOfWork.SaveChangesAsync();
+
+            return _mapper.Map<UserAccountDto>(userAccount);
         }
         catch (Exception ex)
         {

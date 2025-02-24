@@ -1,7 +1,8 @@
-﻿using Common.Domain;
+﻿using Common.Application.Dtos;
+using Common.Domain;
 
 namespace UserManagement.Application.Dtos;
-public class UserAccountDto
+public class UserAccountDto : BaseDto
 {
     public string Email { get; set; }
     public string PasswordHash { get; set; }

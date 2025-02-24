@@ -23,8 +23,6 @@ internal class PassengerService : IPassengerService
     {
         try
         {
-            var passenger = _mapper.Map<Domain.Entities.Passenger>(passengerDto);
-            await _userManagementUnitOfWork.PassengerRepository.AddAsync(passenger);
             var account = new UserAccountDto
             {
                 Email = passengerDto.Email,
@@ -32,7 +30,12 @@ internal class PassengerService : IPassengerService
                 Role = Common.Domain.RoleEnum.Passenger,
                 Status = Common.Domain.StatusEnum.Active
             };
-            await _userAccountService.AddUserAccountAsync(account);
+            var accountDto = await _userAccountService.AddUserAccountAsync(account);
+
+            var passenger = _mapper.Map<Domain.Entities.Passenger>(passengerDto);
+            passenger.UserAccountId = accountDto.Id;
+            await _userManagementUnitOfWork.PassengerRepository.AddAsync(passenger);
+            
             await _unitOfWork.SaveChangesAsync();
         }
         catch (Exception ex)
