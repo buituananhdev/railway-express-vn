@@ -85,13 +85,16 @@ public class SeedData
                 var seats = new List<Seat>();
                 var traincars = context.TrainCars.ToList();
 
-                for (int k = 0; k < traincars.Count; k++)
+                foreach (var traincar in traincars)
                 {
-                    seats.Add(new Seat
+                    for (int seatNum = 1; seatNum <= traincar.TotalSeats; seatNum++)
                     {
-                        TrainCarId = traincars[k].Id,
-                        SeatNumber = $"{traincars[k].CarNumber}-{k + 1:D2}"
-                    });
+                        seats.Add(new Seat
+                        {
+                            TrainCarId = traincar.Id,
+                            SeatNumber = $"{traincar.CarNumber}-{seatNum:D2}"
+                        });
+                    }
                 }
 
                 context.Seats.AddRange(seats);
@@ -126,7 +129,7 @@ public class SeedData
 
     public static async Task Main()
     {
-        var connectionstring = "Server=localhost;Port=3306;Database=RailwayExpresVN_DEV1;Uid=root;Pwd=123456Aa;";
+        var connectionstring = "Server=20.2.249.87;Port=3306;Database=RailwayExpresVN_DEV1;Uid=root;Pwd=your_password;";
         var options = new DbContextOptionsBuilder<AdminContext>()
             .UseMySql(connectionstring, ServerVersion.AutoDetect(connectionstring))
             .Options;
