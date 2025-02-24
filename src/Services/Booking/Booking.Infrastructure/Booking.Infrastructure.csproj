@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -16,7 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.29.3" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Protobuf Include="..\..\..\Common\Common.Infrastructure\Protos\booking.proto" GrpcServices="Server" />
+  </ItemGroup>
 </Project>
