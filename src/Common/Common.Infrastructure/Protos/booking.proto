@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option csharp_namespace = "Common.Protos";
+
+import "google/protobuf/timestamp.proto";
+
+package booking;
+
+service BookingGrpcService {
+  rpc BatchCheckSeatStatus (BatchCheckSeatStatusRequest) returns (BatchCheckSeatStatusResponse);
+}
+
+message BatchCheckSeatStatusRequest {
+  repeated string seatIds = 1;
+  string scheduleId = 2;
+  google.protobuf.Timestamp journeyDate = 3;
+}
+
+message BatchCheckSeatStatusResponse  {
+  map<string, bool> seatStatuses = 1;
+}

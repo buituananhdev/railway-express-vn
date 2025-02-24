@@ -30,6 +30,11 @@ public static class DependencyInjection
         services.AddScoped<ITicketRepository, TicketRepository>();
         services.AddScoped<IPassengerInfoRepository, PassengerInfoRepository>();
 
+        services.AddGrpc(options =>
+        {
+            options.EnableDetailedErrors = true;
+        });
+
         return services;
     }
 }

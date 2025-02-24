@@ -87,5 +87,12 @@ public class AutoMapperProfile : Profile
         CreateMap<AddTrainScheduleDto, TrainSchedule>()
             .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => src.DepartureStationId))
             .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId));
+
+
+        // Seat -> SeatDto
+        CreateMap<Seat, SeatDto>()
+            .ForMember(dest => dest.Status, opt => opt.Ignore());
+
+        CreateMap<SeatDto, Seat>();
     }
 }

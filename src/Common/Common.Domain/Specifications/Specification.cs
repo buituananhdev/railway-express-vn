@@ -74,6 +74,31 @@ public class OrSpecification<T> : Specification<T>
     }
 }
 
+public class AndSpecificationMultiple<T> : Specification<T>
+{
+    private readonly IEnumerable<Specification<T>> _specifications;
+
+    public AndSpecificationMultiple(IEnumerable<Specification<T>> specifications)
+    {
+        _specifications = specifications;
+    }
+
+    public override Expression<Func<T, bool>> ToExpression()
+    {
+        var paramExpr = Expression.Parameter(typeof(T));
+        Expression body = _specifications.First().ToExpression().Body;
+
+        foreach (var specification in _specifications.Skip(1))
+        {
+            var nextExpression = specification.ToExpression();
+            body = Expression.AndAlso(body, nextExpression.Body);
+            body = new ParameterReplacer(paramExpr).Visit(body);
+        }
+
+        return Expression.Lambda<Func<T, bool>>(body, paramExpr);
+    }
+}
+
 internal class ParameterReplacer : ExpressionVisitor
 {
 
