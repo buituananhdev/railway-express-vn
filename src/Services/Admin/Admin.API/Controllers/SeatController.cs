@@ -1,4 +1,5 @@
-﻿using Admin.Application.Services;
+﻿using Admin.Application.Dtos;
+using Admin.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Admin.API.Controllers;
@@ -18,5 +19,12 @@ public class SeatController : ControllerBase
     {
         var seats = await _seatService.GetSeatsByTrainCarAndScheduleAsync(trainCarId, trainScheduleId, journeyDate);
         return Ok(seats);
+    }
+
+    [HttpPost("lock")]
+    public async Task<IActionResult> LockSeats(LockSeatDto lockSeatDto)
+    {
+        await _seatService.LockSeatsAsync(lockSeatDto);
+        return Ok();
     }
 }
