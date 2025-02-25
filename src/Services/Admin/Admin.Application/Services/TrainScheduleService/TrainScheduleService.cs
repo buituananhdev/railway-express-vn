@@ -49,27 +49,23 @@ public class TrainScheduleService : ITrainScheduleService
 
         foreach (var schedule in schedules)
         {
-            var basePrice = 100000m; // Base price.
+            decimal basePrice = CalculateBasePrice(schedule.Distance);
+
             var daysUntilDeparture = (getTrainSchedulesDto.DepartureTime - DateTime.Now).TotalDays;
+            decimal priceMultiplier = 1m;
 
-            // Pricing formula:
-            // - Price increases if the departure date is near the current date.
-            // - Price decreases if it is a round trip.
-            // - Price increases with the number of passengers.
-            var priceMultiplier = 1m;
-            if (daysUntilDeparture <= 7) // If the departure date is within the next 7 days.
+            if (daysUntilDeparture <= 7)
             {
-                priceMultiplier += 0.5m; // Increase price by 50%.
+                priceMultiplier += 0.5m;
             }
 
-            if (getTrainSchedulesDto.ReturnTime.HasValue) // If it is a round trip.
+            if (getTrainSchedulesDto.ReturnTime.HasValue)
             {
-                priceMultiplier -= 0.2m; // Decrease price by 20%.
+                priceMultiplier -= 0.2m;
             }
 
-            priceMultiplier += getTrainSchedulesDto.NumberOfPassengers * 0.1m; // Increase price by 10% per passenger.
-
-            var finalPrice = basePrice * priceMultiplier;
+            decimal economyPrice = basePrice * priceMultiplier;
+            decimal businessPrice = economyPrice * 1.3m;
 
             trainScheduleDtos.Add(new TrainScheduleDto
             {
@@ -79,11 +75,23 @@ public class TrainScheduleService : ITrainScheduleService
                 DepartureTime = schedule.DepartureTime,
                 ArrivalTime = schedule.ArrivalTime,
                 Duration = (schedule.ArrivalTime - schedule.DepartureTime).Minutes,
-                Price = Math.Round(finalPrice, 2),
+                Distance = schedule.Distance,
+                FromPrice = Math.Round(economyPrice, 2),
+                ToPrice = Math.Round(businessPrice, 2),
                 Train = _mapper.Map<TrainDto>(schedule.Train)
             });
         }
 
         return trainScheduleDtos;
+    }
+
+    private decimal CalculateBasePrice(int distance)
+    {
+        if (distance < 10) return distance * 2000m;
+        if (distance <= 25) return distance * 1700m;
+        if (distance <= 50) return distance * 1500m;
+        if (distance <= 100) return distance * 1300m;
+        if (distance <= 500) return distance * 1200m;
+        return distance * 1000m;
     }
 }
