@@ -71,7 +71,8 @@ public class AutoMapperProfile : Profile
             .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => src.ArrivalStationId))
             .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime))
             .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime))
-            .ForMember(dest => dest.Price, opt => opt.Ignore())
+            .ForMember(dest => dest.FromPrice, opt => opt.Ignore())
+            .ForMember(dest => dest.ToPrice, opt => opt.Ignore())
             .ForMember(dest => dest.Train, opt => opt.MapFrom(src => src.Train));
 
         // TrainScheduleDto -> TrainSchedule

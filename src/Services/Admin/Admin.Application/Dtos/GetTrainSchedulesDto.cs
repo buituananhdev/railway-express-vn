@@ -5,5 +5,4 @@ public class GetTrainSchedulesDto
     public Guid ArrivalStationId { get; set; }
     public DateTime DepartureTime { get; set; }
     public DateTime? ReturnTime { get; set; } = null;
-    public int NumberOfPassengers { get; set; }
 }

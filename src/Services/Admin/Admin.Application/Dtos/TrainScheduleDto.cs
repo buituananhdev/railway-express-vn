@@ -11,5 +11,7 @@ public class TrainScheduleDto : BaseDto
     public DateTime DepartureTime { get; set; }
     public DateTime ArrivalTime { get; set; }
     public int Duration { get; set; }
-    public Decimal Price { get; set; }
+    public Decimal FromPrice { get; set; }
+    public Decimal ToPrice { get; set; }
+
 }
