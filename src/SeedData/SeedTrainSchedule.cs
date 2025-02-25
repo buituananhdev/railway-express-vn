@@ -171,6 +171,7 @@ public class TrainScheduleCalculator
                         DepartureStation = fromStation,
                         ArrivalStationId = toStation.Id,
                         ArrivalStation = toStation,
+                        Distance = Math.Abs(toStation.KilometricPoint - fromStation.KilometricPoint),
                         DepartureTime = departureTimeFromStation,
                         ArrivalTime = arrivalTimeAtToStation,
                         IsReturnTrip = false
@@ -219,6 +220,7 @@ public class TrainScheduleCalculator
                         DepartureStation = fromStation,
                         ArrivalStationId = toStation.Id,
                         ArrivalStation = toStation,
+                        Distance = Math.Abs(toStation.KilometricPoint - fromStation.KilometricPoint),
                         DepartureTime = departureTimeFromStation,
                         ArrivalTime = arrivalTimeAtToStation,
                         IsReturnTrip = true

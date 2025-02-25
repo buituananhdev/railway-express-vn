@@ -70,6 +70,7 @@ public class SeedData
                         var trainCar = new TrainCar
                         {
                             TrainId = trains[i].Id,
+                            Description = (j == 1) ? "Business Car" : "Standard Car",
                             CarNumber = carNumber,
                             SeatType = seatType,
                             TotalSeats = 50
