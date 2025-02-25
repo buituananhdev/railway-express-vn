@@ -8,10 +8,11 @@ namespace Admin.API.Controllers;
 public class TrainsController : ControllerBase
 {
     private readonly ITrainService _trainService;
-
-    public TrainsController(ITrainService trainService)
+    private readonly ITrainCarService _trainCarService;
+    public TrainsController(ITrainService trainService, ITrainCarService trainCarService)
     {
         _trainService = trainService;
+        _trainCarService = trainCarService;
     }
 
     [HttpPost]
@@ -35,5 +36,10 @@ public class TrainsController : ControllerBase
         return Ok(trains);
     }
 
-
+    [HttpGet("{trainId}/train-cars")]
+    public async Task<IActionResult> GetTrainCars(Guid trainId)
+    {
+        var trainCars = await _trainCarService.GetTrainCarsByTrainIdAsync(trainId);
+        return Ok(trainCars);
+    }
 }
