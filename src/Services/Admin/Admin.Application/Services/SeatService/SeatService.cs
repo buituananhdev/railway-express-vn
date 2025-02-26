@@ -131,4 +131,38 @@ public class SeatService : ISeatService
     {
         return $"{LOCK_PREFIX}{scheduleId}:{journeyDate.Date.ToString("yyyyMMdd")}:{seatId}";
     }
+
+    public async Task<int> GetAvailableSeatsAsync(
+        Guid trainCarId,
+        Guid scheduleId,
+        DateTime journeyDate)
+    {
+        var seatDtos = await GetSeatsFromCacheOrDatabaseAsync(trainCarId);
+        if (!seatDtos.Any())
+        {
+            return 0;
+        }
+
+        var bookingStatusTask = GetBookingStatusAsync(seatDtos, scheduleId, journeyDate);
+        var lockStatusTask = GetLockStatusAsync(seatDtos, scheduleId, journeyDate);
+
+        var bookingStatus = await bookingStatusTask;
+        var lockStatus = await lockStatusTask;
+
+        int availableSeats = 0;
+
+        for (int i = 0; i < seatDtos.Count; i++)
+        {
+            string seatIdStr = seatDtos[i].Id.ToString();
+            var isBooked = bookingStatus.TryGetValue(seatIdStr, out var booked) && booked;
+            var isLocked = lockStatus[i];
+
+            if (!isBooked && !isLocked)
+            {
+                availableSeats++;
+            }
+        }
+
+        return availableSeats;
+    }
 }
