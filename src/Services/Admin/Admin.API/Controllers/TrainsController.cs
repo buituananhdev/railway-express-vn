@@ -37,9 +37,9 @@ public class TrainsController : ControllerBase
     }
 
     [HttpGet("{trainId}/train-cars")]
-    public async Task<IActionResult> GetTrainCars(Guid trainId)
+    public async Task<IActionResult> GetTrainCars(Guid trainId, [FromQuery] Guid trainScheduleId, [FromQuery] DateTime journeyDate)
     {
-        var trainCars = await _trainCarService.GetTrainCarsByTrainIdAsync(trainId);
+        var trainCars = await _trainCarService.GetTrainCarsAndPriceAsync(trainId, trainScheduleId, journeyDate);
         return Ok(trainCars);
     }
 }
