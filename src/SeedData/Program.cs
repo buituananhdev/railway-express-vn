@@ -73,7 +73,7 @@ public class SeedData
                             Description = (j == 1) ? "Business Car" : "Standard Car",
                             CarNumber = carNumber,
                             SeatType = seatType,
-                            TotalSeats = 50
+                            TotalSeats = 52
                         };
 
                         trainCars.Add(trainCar);
@@ -93,7 +93,7 @@ public class SeedData
                         seats.Add(new Seat
                         {
                             TrainCarId = traincar.Id,
-                            SeatNumber = $"{traincar.CarNumber}-{seatNum:D2}"
+                            SeatNumber = seatNum.ToString()
                         });
                     }
                 }
