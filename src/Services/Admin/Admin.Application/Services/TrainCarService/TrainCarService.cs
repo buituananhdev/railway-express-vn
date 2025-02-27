@@ -31,20 +31,20 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
         try
         {
             var specification = new TrainIdSpecification(trainId);
-            var trainCars = await _unitOfWork.TrainCarRepository.ToListAsync(specification);
+
+            var trainCars = await _unitOfWork.TrainCarRepository.ToListAsync(
+                spec: specification,
+                orderBy: query => query.OrderByDescending(tc => tc.CarNumber)
+            );
 
             var result = _mapper.Map<List<TrainCarDto>>(trainCars);
             foreach (var trainCarDto in result)
             {
-
                 var (fromPrice, toPrice) = await CalculateTrainCarPricesAsync(trainCarDto.Id, scheduleId, journeyDate);
-
                 trainCarDto.FromPrice = fromPrice;
                 trainCarDto.ToPrice = toPrice;
-
                 trainCarDto.AvailableSeats = await _seatService.GetAvailableSeatsAsync(trainCarDto.Id, scheduleId, journeyDate);
             }
-
             return result;
         }
         catch (Exception)
