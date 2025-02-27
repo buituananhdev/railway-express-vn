@@ -3,7 +3,7 @@ using Admin.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Admin.API.Controllers;
-[Route("api/seats")]
+[Route("v1/seats")]
 [ApiController]
 public class SeatController : ControllerBase
 {
