@@ -65,13 +65,12 @@ public class SeedData
                     for (int j = 1; j <= 10; j++)
                     {
                         var seatType = (j == 1) ? SeatType.Business : SeatType.Standard;
-                        var carNumber = $"{j}";
 
                         var trainCar = new TrainCar
                         {
                             TrainId = trains[i].Id,
                             Description = (j == 1) ? "Business Car" : "Standard Car",
-                            CarNumber = carNumber,
+                            CarNumber = j,
                             SeatType = seatType,
                             TotalSeats = 52
                         };
@@ -93,7 +92,7 @@ public class SeedData
                         seats.Add(new Seat
                         {
                             TrainCarId = traincar.Id,
-                            SeatNumber = seatNum.ToString()
+                            SeatNumber = seatNum
                         });
                     }
                 }

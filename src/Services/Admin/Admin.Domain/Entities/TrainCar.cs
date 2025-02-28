@@ -4,7 +4,7 @@ using Common.Domain;
 namespace Admin.Domain.Entities;
 public class TrainCar : BaseEntity
 {
-    public string? CarNumber { get; set; }
+    public int? CarNumber { get; set; }
     public string? Description { get; set; }
     public SeatType SeatType { get; set; }
     public int TotalSeats { get; set; }
