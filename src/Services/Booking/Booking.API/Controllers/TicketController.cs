@@ -18,8 +18,8 @@ public class TicketController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddTicketAsync(AddTicketDto addTicketDto)
     {
-        var ticket = await _ticketService.AddTicketAsync(addTicketDto);
-        return Ok(ticket);
+        var ticketId = await _ticketService.AddTicketAsync(addTicketDto);
+        return Ok(ticketId);
     }
 
     [HttpPost("passenger-details")]

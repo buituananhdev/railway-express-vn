@@ -18,7 +18,7 @@ public class TicketService : ITicketService
         _bookingUnitOfWork = bookingUnitOfWork;
         _mapper = mapper;
     }
-    public async Task<TicketDto> AddTicketAsync(AddTicketDto addTicketDto)
+    public async Task<Guid> AddTicketAsync(AddTicketDto addTicketDto)
     {
         try
         {
@@ -26,7 +26,7 @@ public class TicketService : ITicketService
             await _bookingUnitOfWork.TicketRepository.AddAsync(passenger);
             await _bookingUnitOfWork.SaveChangesAsync();
 
-            return _mapper.Map<TicketDto>(passenger);
+            return passenger.Id;
         }
         catch (Exception ex)
         {
