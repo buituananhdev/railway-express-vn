@@ -2,7 +2,9 @@
 using Booking.Application.Dtos;
 using Booking.Application.Repositories;
 using Booking.Domain.Entities;
+using Booking.Domain.Enums;
 using Booking.Domain.Specifications;
+using Booking.Domain.Specifications.Ticket;
 using Common.Domain.Specifications;
 
 namespace Booking.Application.Services;
@@ -60,8 +62,9 @@ public class TicketService : ITicketService
             var specification = new AndSpecificationMultiple<Ticket>(
                 new List<Specification<Ticket>>
                 {
-                new TicketScheduleIdSpecification(scheduleId),
-                new TicketJourneyDateSpecification(journeyDate)
+                    new TicketScheduleIdSpecification(scheduleId),
+                    new TicketJourneyDateSpecification(journeyDate),
+                    new TicketStatusSpecification(TicketStatusEnum.Active)
                 }
             );
 

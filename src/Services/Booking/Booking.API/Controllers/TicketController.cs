@@ -3,7 +3,7 @@ using Booking.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Booking.API.Controllers;
-[Route("api/tickets")]
+[Route("v1/tickets")]
 [ApiController]
 public class TicketController : ControllerBase
 {
