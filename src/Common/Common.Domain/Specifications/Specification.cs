@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 
 namespace Common.Domain.Specifications;
+
 public abstract class Specification<T>
 {
     public abstract Expression<Func<T, bool>> ToExpression();
@@ -27,25 +28,29 @@ public class AndSpecification<T> : Specification<T>
     private readonly Specification<T> _left;
     private readonly Specification<T> _right;
 
-
     public AndSpecification(Specification<T> left, Specification<T> right)
     {
-        _right = right;
         _left = left;
+        _right = right;
     }
-
 
     public override Expression<Func<T, bool>> ToExpression()
     {
         var leftExpression = _left.ToExpression();
         var rightExpression = _right.ToExpression();
 
-        var paramExpr = Expression.Parameter(typeof(T));
-        var exprBody = Expression.AndAlso(leftExpression.Body, rightExpression.Body);
-        exprBody = (BinaryExpression)new ParameterReplacer(paramExpr).Visit(exprBody);
-        var finalExpr = Expression.Lambda<Func<T, bool>>(exprBody, paramExpr);
+        var parameter = Expression.Parameter(typeof(T));
 
-        return finalExpr;
+        var leftVisitor = new ParameterReplacer(leftExpression.Parameters[0], parameter);
+        var leftBody = leftVisitor.Visit(leftExpression.Body);
+
+        var rightVisitor = new ParameterReplacer(rightExpression.Parameters[0], parameter);
+        var rightBody = rightVisitor.Visit(rightExpression.Body);
+
+        return Expression.Lambda<Func<T, bool>>(
+            Expression.AndAlso(leftBody, rightBody),
+            parameter
+        );
     }
 }
 
@@ -54,23 +59,29 @@ public class OrSpecification<T> : Specification<T>
     private readonly Specification<T> _left;
     private readonly Specification<T> _right;
 
-
     public OrSpecification(Specification<T> left, Specification<T> right)
     {
-        _right = right;
         _left = left;
+        _right = right;
     }
 
     public override Expression<Func<T, bool>> ToExpression()
     {
         var leftExpression = _left.ToExpression();
         var rightExpression = _right.ToExpression();
-        var paramExpr = Expression.Parameter(typeof(T));
-        var exprBody = Expression.OrElse(leftExpression.Body, rightExpression.Body);
-        exprBody = (BinaryExpression)new ParameterReplacer(paramExpr).Visit(exprBody);
-        var finalExpr = Expression.Lambda<Func<T, bool>>(exprBody, paramExpr);
 
-        return finalExpr;
+        var parameter = Expression.Parameter(typeof(T));
+
+        var leftVisitor = new ParameterReplacer(leftExpression.Parameters[0], parameter);
+        var leftBody = leftVisitor.Visit(leftExpression.Body);
+
+        var rightVisitor = new ParameterReplacer(rightExpression.Parameters[0], parameter);
+        var rightBody = rightVisitor.Visit(rightExpression.Body);
+
+        return Expression.Lambda<Func<T, bool>>(
+            Expression.OrElse(leftBody, rightBody),
+            parameter
+        );
     }
 }
 
@@ -85,30 +96,34 @@ public class AndSpecificationMultiple<T> : Specification<T>
 
     public override Expression<Func<T, bool>> ToExpression()
     {
-        var paramExpr = Expression.Parameter(typeof(T));
-        Expression body = _specifications.First().ToExpression().Body;
+        var parameter = Expression.Parameter(typeof(T));
+        Expression combined = Expression.Constant(true);
 
-        foreach (var specification in _specifications.Skip(1))
+        foreach (var spec in _specifications)
         {
-            var nextExpression = specification.ToExpression();
-            body = Expression.AndAlso(body, nextExpression.Body);
-            body = new ParameterReplacer(paramExpr).Visit(body);
+            var expression = spec.ToExpression();
+            var visitor = new ParameterReplacer(expression.Parameters[0], parameter);
+            var body = visitor.Visit(expression.Body);
+            combined = Expression.AndAlso(combined, body);
         }
 
-        return Expression.Lambda<Func<T, bool>>(body, paramExpr);
+        return Expression.Lambda<Func<T, bool>>(combined, parameter);
     }
 }
 
 internal class ParameterReplacer : ExpressionVisitor
 {
+    private readonly ParameterExpression _oldParameter;
+    private readonly ParameterExpression _newParameter;
 
-    private readonly ParameterExpression _parameter;
+    public ParameterReplacer(ParameterExpression oldParameter, ParameterExpression newParameter)
+    {
+        _oldParameter = oldParameter;
+        _newParameter = newParameter;
+    }
 
     protected override Expression VisitParameter(ParameterExpression node)
-        => base.VisitParameter(_parameter);
-
-    internal ParameterReplacer(ParameterExpression parameter)
     {
-        _parameter = parameter;
+        return node == _oldParameter ? _newParameter : base.VisitParameter(node);
     }
 }

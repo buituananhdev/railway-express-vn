@@ -1,6 +1,7 @@
 ﻿using Booking.Domain.Entities;
 using Common.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Booking.Infrastructure;
 public partial class BookingContext : DbContext, IDataContext
@@ -8,35 +9,18 @@ public partial class BookingContext : DbContext, IDataContext
     public BookingContext(DbContextOptions<BookingContext> options) : base(options) { }
     DbSet<T> IDataContext.Set<T>() => Set<T>();
 
-    public virtual DbSet<Ticket> Tickets { get; set; }
-    public virtual DbSet<PassengerInfo> PassengerInfos { get; set; }
+    public virtual DbSet<Ticket> Tickets { get; set; } = null!;
+    public virtual DbSet<PassengerInfo> PassengerInfos { get; set; } = null!;
 
-    // OnModelCreating method to configure relationships
+    // OnModelCreating method to configure entity relationships and constraints
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Configure PassengerInfo entity
         modelBuilder.Entity<PassengerInfo>(entity =>
         {
             entity.HasKey(e => e.Id);
-
-            entity.Property(e => e.FirstName)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            entity.Property(e => e.LastName)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            entity.Property(e => e.PhoneNumber)
-                .IsRequired()
-                .HasMaxLength(15);
-
-            entity.Property(e => e.IdentityNumber)
-                .IsRequired()
-                .HasMaxLength(30);
-
-            entity.Property(e => e.Email)
-                .HasMaxLength(100);
 
             entity.HasOne(e => e.Ticket)
                 .WithMany(t => t.PassengerDetails)
@@ -44,6 +28,7 @@ public partial class BookingContext : DbContext, IDataContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        // Configure Ticket entity
         modelBuilder.Entity<Ticket>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -51,8 +36,8 @@ public partial class BookingContext : DbContext, IDataContext
             entity.Property(e => e.TotalPrice)
                 .HasColumnType("decimal(18,2)");
 
-            entity.Property(e => e.Remarks)
-                .HasMaxLength(500);
+            entity.PrimitiveCollection(e => e.SeatIds)
+                .ElementType(guid => guid.HasConversion(new GuidToStringConverter()));
         });
     }
 }

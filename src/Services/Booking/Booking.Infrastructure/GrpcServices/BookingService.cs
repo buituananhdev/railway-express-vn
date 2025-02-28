@@ -20,7 +20,7 @@ public class BookingService : Common.Protos.BookingGrpcService.BookingGrpcServic
         var journeyDate = request.JourneyDate.ToDateTime();
 
         var seatIds = request.SeatIds.Select(Guid.Parse).ToList();
-        var results = await _ticketService.AreSeatBookedForSchedule(seatIds, scheduleId, journeyDate);
+        var results = await _ticketService.AreSeatsBookedForScheduleAsync(seatIds, scheduleId, journeyDate);
 
         return new BatchCheckSeatStatusResponse
         {

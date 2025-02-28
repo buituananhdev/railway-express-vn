@@ -5,5 +5,6 @@ public enum TicketStatusEnum
     Used = 1,
     Cancelled = 2,
     Expired = 3,
-    Refunded = 4
+    Refunded = 4,
+    UnPaid = 5
 }
