@@ -32,7 +32,7 @@ public class TicketService : ITicketService
         }
     }
 
-    public async Task<bool> IsSeatBookedForSchedule(Guid seatId, Guid scheduleId, DateTime journeyDate)
+    public async Task<bool> IsSeatBookedForScheduleAsync(Guid seatId, Guid scheduleId, DateTime journeyDate)
     {
         try
         {
@@ -53,11 +53,11 @@ public class TicketService : ITicketService
         }
     }
 
-    public async Task<Dictionary<Guid, bool>> AreSeatBookedForSchedule(List<Guid> seatIds, Guid scheduleId, DateTime journeyDate)
+    public async Task<Dictionary<Guid, bool>> AreSeatsBookedForScheduleAsync(List<Guid> seatIds, Guid scheduleId, DateTime journeyDate)
     {
         try
         {
-            var baseSpecification = new AndSpecificationMultiple<Ticket>(
+            var specification = new AndSpecificationMultiple<Ticket>(
                 new List<Specification<Ticket>>
                 {
                 new TicketScheduleIdSpecification(scheduleId),
@@ -66,18 +66,13 @@ public class TicketService : ITicketService
             );
 
             var bookedTickets = await _bookingUnitOfWork.TicketRepository
-                .ToListAsync(spec: baseSpecification);
+                .ToListAsync(specification);
 
             var bookedSeatIds = bookedTickets
-                .Select(t => t.SeatId)
+                .SelectMany(t => t.SeatIds ?? Enumerable.Empty<Guid>())
                 .ToHashSet();
 
-            var result = seatIds.ToDictionary(
-                seatId => seatId,
-                seatId => bookedSeatIds.Contains(seatId)
-            );
-
-            return result;
+            return seatIds.ToDictionary(id => id, id => bookedSeatIds.Contains(id));
         }
         catch (Exception)
         {

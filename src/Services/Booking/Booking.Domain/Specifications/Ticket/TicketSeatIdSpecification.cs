@@ -13,6 +13,6 @@ public class TicketSeatIdSpecification : Specification<Booking.Domain.Entities.T
 
     public override Expression<Func<Booking.Domain.Entities.Ticket, bool>> ToExpression()
     {
-        return ticket => ticket.SeatId == _seatId;
+        return ticket => ticket.SeatIds.Contains(_seatId);
     }
 }

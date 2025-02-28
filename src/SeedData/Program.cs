@@ -65,7 +65,7 @@ public class SeedData
                     for (int j = 1; j <= 10; j++)
                     {
                         var seatType = (j == 1) ? SeatType.Business : SeatType.Standard;
-                        var carNumber = $"C{j}";
+                        var carNumber = $"{j}";
 
                         var trainCar = new TrainCar
                         {
@@ -130,7 +130,7 @@ public class SeedData
 
     public static async Task Main()
     {
-        var connectionstring = "Server=20.2.249.87;Port=3306;Database=RailwayExpresVN_DEV1;Uid=root;Pwd=your_password;";
+        var connectionstring = "Server=localhost;Port=3306;Database=RailwayExpresVN_DEV1;Uid=root;Pwd=123456Aa;";
         var options = new DbContextOptionsBuilder<AdminContext>()
             .UseMySql(connectionstring, ServerVersion.AutoDetect(connectionstring))
             .Options;
