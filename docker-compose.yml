@@ -1,0 +1,224 @@
+version: '3.8'
+
+# Define reusable environment variables
+x-common-variables: &common-variables
+  ASPNETCORE_ENVIRONMENT: Development
+  ConnectionStrings__MySQL: Server=mysql;Port=3306;Database=RailwayExpresVN_DEV1;Uid=${MYSQL_USER:-root};Pwd=${MYSQL_PASSWORD:-123456Aa};
+  ConnectionStrings__Redis: redis:6379
+  RabbitMQ__HostName: rabbitmq
+  RabbitMQ__QueueName: email_queue
+  RabbitMQ__Username: ${RABBITMQ_USER:-guest}
+  RabbitMQ__Password: ${RABBITMQ_PASSWORD:-guest}
+  ElasticSearch__Uri: http://elasticsearch:9200/
+  ElasticSearch__DefaultIndex: aspnetcore-logs-
+  JwtSettings__Secret: ${JWT_SECRET:-asdg7-das863asd4-23as64-asd42asda3e2a}
+  JwtSettings__AccessTokenExpirationTime: ${JWT_ACCESS_EXPIRATION:-30}
+  JwtSettings__RefreshTokenExpirationTime: ${JWT_REFRESH_EXPIRATION:-1440}
+
+# Define common service configuration
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks:
+    - railway-network
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+    elasticsearch:
+      condition: service_healthy
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+      reservations:
+        memory: 256M
+
+services:
+  # MySQL Database service
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD:-123456Aa}
+      - MYSQL_DATABASE=RailwayExpresVN_DEV1
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+    networks:
+      - railway-network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD:-123456Aa}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis service
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - railway-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ service
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - railway-network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ElasticSearch service
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-changeme}
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - railway-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl --silent --fail http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # Admin API service
+  admin-api:
+    build:
+      context: .
+      dockerfile: src/Services/Admin/Admin.API/Dockerfile
+    ports:
+      - "8001:80"
+    environment:
+      <<: *common-variables
+    <<: *service-defaults
+
+  # Booking service
+  booking:
+    build:
+      context: .
+      dockerfile: src/Services/Booking/Dockerfile
+    ports:
+      - "8002:80"
+    environment:
+      <<: *common-variables
+    <<: *service-defaults
+
+  # Notification service
+  notification:
+    build:
+      context: .
+      dockerfile: src/Services/Notification/Dockerfile
+    ports:
+      - "8003:80"
+    environment:
+      <<: *common-variables
+      SMTPConfigs__Email: ${SMTP_EMAIL:-anhaanh2003@gmail.com}
+      SMTPConfigs__Displayname: ${SMTP_DISPLAYNAME:-anhaanh2003@gmail.com}
+      SMTPConfigs__Password: ${SMTP_PASSWORD:-}
+      SMTPConfigs__Host: ${SMTP_HOST:-smtp.gmail.com}
+      SMTPConfigs__Port: ${SMTP_PORT:-587}
+    <<: *service-defaults
+
+  # User Management service
+  usermanagement:
+    build:
+      context: .
+      dockerfile: src/Services/UserManagement/Dockerfile
+    ports:
+      - "8004:80"
+      - "7004:7004"
+    environment:
+      <<: *common-variables
+      Kestrel__Endpoints__Http__Url: http://+:80
+      Kestrel__Endpoints__Grpc__Url: http://+:7004
+      Kestrel__Endpoints__Grpc__Protocols: Http2
+    <<: *service-defaults
+
+  # Payment service
+  payment:
+    build:
+      context: .
+      dockerfile: src/Services/Payment/Dockerfile
+    ports:
+      - "8005:80"
+    environment:
+      <<: *common-variables
+    <<: *service-defaults
+
+  # Authentication service
+  authentication:
+    build:
+      context: .
+      dockerfile: src/Services/Authentication/Dockerfile
+    ports:
+      - "8007:80"
+    environment:
+      <<: *common-variables
+      ConnectionStrings__UserManagementServiceGrpc: http://usermanagement:7004
+    <<: *service-defaults
+
+  # Gateway service
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Gateway/ApiGateway/Dockerfile
+    ports:
+      - "8000:80"
+    depends_on:
+      - admin-api
+      - booking
+      - notification
+      - usermanagement
+      - payment
+      - authentication
+    environment:
+      <<: *common-variables
+    networks:
+      - railway-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  railway-network:
+    driver: bridge
+
+volumes:
+  mysqldata:
+  redis-data:
+  rabbitmq-data:
+  elasticsearch-data:
