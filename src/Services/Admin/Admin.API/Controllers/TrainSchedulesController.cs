@@ -17,7 +17,7 @@ public class TrainSchedulesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddTrainScheduleAsync(AddTrainScheduleDto trainScheduleDto)
     {
-        await _trainScheduleService.AddTrainScheduleAsync(trainScheduleDto);
+        await _trainScheduleService.CreateAsync(trainScheduleDto);
         return Ok();
     }
 
