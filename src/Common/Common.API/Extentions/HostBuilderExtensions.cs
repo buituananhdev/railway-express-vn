@@ -15,9 +15,11 @@ public static class HostBuilderExtensions
 {
     public static void UseBaseBuilder(this WebApplicationBuilder builder)
     {
-        #region Load common config file
-        builder.Configuration.AddJsonFile(Path.Combine(PathHelper.GetRootDirectory(), "Common", "Common.API", "appsettings.json"), optional: false, reloadOnChange: true);
-        #endregion
+        string configPath = builder.Environment.IsProduction()
+            ? Path.Combine(AppContext.BaseDirectory, "appsettings.common.json")
+            : Path.Combine(PathHelper.GetRootDirectory(), "Common", "Common.API", "appsettings.common.json");
+
+        builder.Configuration.AddJsonFile(configPath, optional: false, reloadOnChange: true);
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
@@ -26,7 +28,7 @@ public static class HostBuilderExtensions
         builder.Host.UseSerilogLogging();
         builder.Services.AddCommonApplication(builder.Configuration);
         builder.Services.AddCommonInfrastructure(builder.Configuration);
-            
+
         var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("JwtSettings:Secret").Value!);
         builder.Services.AddAuthentication(x =>
         {
