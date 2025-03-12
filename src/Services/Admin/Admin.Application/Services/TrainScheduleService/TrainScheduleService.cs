@@ -1,30 +1,29 @@
-﻿using Admin.Application.Dtos;
+﻿using System.Linq.Expressions;
+using Admin.Application.Dtos;
 using Admin.Application.Repositories;
 using Admin.Domain.Entities;
 using Admin.Domain.Specifications;
 using AutoMapper;
+using Common.Application.Interfaces;
+using Common.Application.Services;
 using Common.Domain.Specifications;
-using System.Linq.Expressions;
 
 namespace Admin.Application.Services;
-public class TrainScheduleService : ITrainScheduleService
+public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleDto, AddTrainScheduleDto, TrainScheduleDto>, ITrainScheduleService
 {
     private readonly IAdminUnitOfWork _adminUnitOfWork;
     private readonly IMapper _mapper;
 
-    public TrainScheduleService(IAdminUnitOfWork adminUnitOfWork, IMapper mapper)
+    public TrainScheduleService(
+        ITrainScheduleRepository repository,
+        IAdminUnitOfWork unitOfWork,
+        IMapper mapper,
+        IPaginationService paginationService
+        ) : base(repository, unitOfWork, mapper, paginationService)
     {
-        _adminUnitOfWork = adminUnitOfWork;
+        _adminUnitOfWork = unitOfWork;
         _mapper = mapper;
     }
-
-    public async Task AddTrainScheduleAsync(AddTrainScheduleDto trainScheduleDto)
-    {
-        var schedule = _mapper.Map<TrainSchedule>(trainScheduleDto);
-        await _adminUnitOfWork.TrainScheduleRepository.AddAsync(schedule);
-        await _adminUnitOfWork.SaveChangesAsync();
-    }
-
     public async Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(GetTrainSchedulesDto getTrainSchedulesDto)
     {
         var includes = new List<Expression<Func<TrainSchedule, object>>>
