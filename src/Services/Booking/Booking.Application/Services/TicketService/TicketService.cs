@@ -5,33 +5,24 @@ using Booking.Domain.Entities;
 using Booking.Domain.Enums;
 using Booking.Domain.Specifications;
 using Booking.Domain.Specifications.Ticket;
+using Common.Application.Interfaces;
+using Common.Application.Services;
 using Common.Domain.Specifications;
 
 namespace Booking.Application.Services;
-public class TicketService : ITicketService
+public class TicketService : BaseService<Ticket, AddTicketDto, AddTicketDto, TicketDto>, ITicketService
 {
     private readonly IBookingUnitOfWork _bookingUnitOfWork;
     private readonly IMapper _mapper;
 
-    public TicketService(IBookingUnitOfWork bookingUnitOfWork, IMapper mapper)
+    public TicketService(ITicketRepository repository,
+        IBookingUnitOfWork unitOfWork,
+        IMapper mapper,
+        IPaginationService paginationService)
+        : base(repository, unitOfWork, mapper, paginationService)
     {
-        _bookingUnitOfWork = bookingUnitOfWork;
+        _bookingUnitOfWork = unitOfWork;
         _mapper = mapper;
-    }
-    public async Task<Guid> AddTicketAsync(AddTicketDto addTicketDto)
-    {
-        try
-        {
-            var passenger = _mapper.Map<Ticket>(addTicketDto);
-            await _bookingUnitOfWork.TicketRepository.AddAsync(passenger);
-            await _bookingUnitOfWork.SaveChangesAsync();
-
-            return passenger.Id;
-        }
-        catch (Exception ex)
-        {
-            throw;
-        }
     }
 
     public async Task<bool> IsSeatBookedForScheduleAsync(Guid seatId, Guid scheduleId, DateTime journeyDate)

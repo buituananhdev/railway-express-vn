@@ -10,7 +10,7 @@ public class TicketDto : BaseDto
     public Guid TrainScheduleId { get; set; }
     public DateTime BookingDate { get; set; } = DateTime.Now;
     public DateTime JourneyDate { get; set; }
-    public decimal? TotalPrice { get; set; }
+    public decimal TotalPrice { get; set; }
     public TicketStatusEnum Status { get; set; }
     public string? Remarks { get; set; }
 }
