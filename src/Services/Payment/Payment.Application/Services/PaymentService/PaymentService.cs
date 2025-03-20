@@ -57,7 +57,7 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Ad
             PaymentNo = paymentNo,
             TicketIds = ticketIds,
             Amount = totalAmount,
-            CreatedAt = DateTime.UtcNow
+            Status = Domain.Enums.PaymentStatusEnum.UnPaid,
         };
 
         await _unitOfWork.PaymentRepository.AddAsync(paymentRecord);
