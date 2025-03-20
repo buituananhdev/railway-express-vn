@@ -27,4 +27,13 @@ public class BookingService : Common.Protos.BookingGrpcService.BookingGrpcServic
             SeatStatuses = { results.ToDictionary(r => r.Key.ToString(), r => r.Value) }
         };
     }
+
+    public override async Task<GetTicketPriceResponse> GetTicketPrice(GetTicketPriceRequest request, ServerCallContext context)
+    {
+        var ticket = await _ticketService.GetByIdAsync(Guid.Parse(request.TicketId));
+        return new GetTicketPriceResponse
+        {
+            Price = (double)ticket.TotalPrice
+        };
+    }
 }

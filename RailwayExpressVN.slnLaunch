@@ -21,6 +21,10 @@
       {
         "Path": "src\\Services\\UserManagement\\UserManagement.API\\UserManagement.API.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Payment\\Payment.API\\Payment.API.csproj",
+        "Action": "Start"
       }
     ]
   }

@@ -4,18 +4,25 @@
 dotnet ef migrations add AddTablePassenger --output-dir --project Persistence\Migrations --project .\src\Services\UserManagement\UserManagement.Infrastructure --startup-project .\src\Services\UserManagement\UserManagement.API
 dotnet ef migrations remove --project .\src\Services\UserManagement\UserManagement.Infrastructure --startup-project .\src\Services\UserManagement\UserManagement.API
 
-1. Admin Service
+2. Admin Service
 dotnet ef migrations add AddAdminPassenger --output-dir --project Persistence\Migrations .\src\Services\Admin\Admin.Infrastructure --startup-project .\src\Services\Admin\Admin.API
 dotnet ef database update --project .\src\Services\Admin\Admin.Infrastructure --startup-project .\src\Services\Admin\Admin.API
 
-1. Booking service
+3. Booking service
 dotnet ef migrations add AddTicketTbl --output-dir --project Persistence\Migrations .\src\Services\Booking\Booking.Infrastructure --startup-project .\src\Services\Booking\Booking.API
 dotnet ef database update .\src\Services\Booking\Booking.Infrastructure --startup-project .\src\Services\Booking\Booking.API
+
+4. Payment service
+dotnet ef migrations add AddTicketTbl --output-dir --project Persistence\Migrations .\src\Services\Payment\Payment.Infrastructure --startup-project .\src\Services\Payment\Payment.API
+dotnet ef database update .\src\Services\Payment\Payment.Infrastructure --startup-project .\src\Services\Payment\Payment.API
 
 # Update database
 dotnet ef database update --project .\src\Services\UserManagement\UserManagement.Infrastructure --startup-project .\src\Services\UserManagement\UserManagement.API
 dotnet ef database update --project .\src\Services\Admin\Admin.Infrastructure --startup-project .\src\Services\Admin\Admin.API
 dotnet ef database update --project .\src\Services\Booking\Booking.Infrastructure --startup-project .\src\Services\Booking\Booking.API
+dotnet ef database update --project .\src\Services\Payment\Payment.Infrastructure --startup-project .\src\Services\Payment\Payment.API
 
 
 dotnet ef migrations add UpdateTrainCarTbl --output-dir Persistence\Migrations --project .\src\Services\Admin\Admin.Infrastructure --startup-project .\src\Services\Admin\Admin.API
+
+dotnet ef migrations add AddPaymentRecordTbl --output-dir Persistence\Migrations --project .\src\Services\Payment\Payment.Infrastructure --startup-project .\src\Services\Payment\Payment.API

@@ -8,6 +8,7 @@ package booking;
 
 service BookingGrpcService {
   rpc BatchCheckSeatStatus (BatchCheckSeatStatusRequest) returns (BatchCheckSeatStatusResponse);
+  rpc GetTicketPrice (GetTicketPriceRequest) returns (GetTicketPriceResponse);
 }
 
 message BatchCheckSeatStatusRequest {
@@ -18,4 +19,12 @@ message BatchCheckSeatStatusRequest {
 
 message BatchCheckSeatStatusResponse  {
   map<string, bool> seatStatuses = 1;
+}
+
+message GetTicketPriceRequest {
+    string ticketId = 1;
+}
+
+message GetTicketPriceResponse {
+    double price = 1;
 }
