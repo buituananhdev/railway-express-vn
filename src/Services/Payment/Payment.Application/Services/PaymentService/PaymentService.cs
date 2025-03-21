@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Common.Application.Exceptions;
 using Common.Application.Interfaces;
 using Common.Application.Services;
 using Common.Protos;
@@ -30,6 +31,13 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Ad
         _bookingGrpcServiceClient = bookingGrpcServiceClient;
     }
 
+    public override async Task<PaymentRecordDto> GetByIdAsync(Guid id)
+    {
+        var paymentRecord = await _unitOfWork.PaymentRepository.GetByIdAsync(id)
+            ?? throw new NotFoundException($"Payment record with id {id} not found");
+        return _mapper.Map<PaymentRecordDto>(paymentRecord);
+    }
+
     public async Task<Guid> CreateTemporaryPaymentRecordAsync(List<Guid> ticketIds)
     {
         if (ticketIds == null || !ticketIds.Any())
@@ -55,6 +63,7 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Ad
         var paymentRecord = new PaymentRecord
         {
             PaymentNo = paymentNo,
+            Description = $"Thanh toan cho don hang {paymentNo}",
             TicketIds = ticketIds,
             Amount = totalAmount,
             Status = Domain.Enums.PaymentStatusEnum.UnPaid,
