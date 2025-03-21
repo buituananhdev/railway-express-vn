@@ -56,7 +56,8 @@ public class VNPayService : IVNPayService
     {
         try
         {
-            throw new NotImplementedException();
+            var paymentResult = _vnpay.GetPaymentResult(parameters);
+            return paymentResult;
         }
         catch (Exception)
         {
