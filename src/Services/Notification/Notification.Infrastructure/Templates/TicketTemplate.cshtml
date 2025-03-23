@@ -1,0 +1,499 @@
+﻿@model Notification.Application.Dtos.ETicketDto
+
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>E-Ticket Đường Sắt Việt Nam</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f0f0;
+            padding: 15px;
+        }
+
+        .ticket-container {
+            max-width: 750px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            background-color: #2c5282;
+            padding: 15px 0;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .logo {
+            height: 40px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ticket-body {
+            padding: 20px;
+        }
+
+        .ticket-number {
+            text-align: right;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .ticket-type {
+            background-color: #f8f9fa;
+            border-left: 4px solid #e53e3e;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+            .ticket-type .highlight {
+                color: #e53e3e;
+                font-weight: bold;
+                font-size: 16px;
+            }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            color: #2c5282;
+            font-size: 16px;
+            font-weight: bold;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 12px;
+        }
+
+        .journey-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .station {
+            flex: 1;
+        }
+
+            .station .value {
+                font-size: 18px;
+                font-weight: bold;
+            }
+
+            .station .label {
+                font-size: 12px;
+                color: #718096;
+            }
+
+        .journey-arrow {
+            margin: 0 15px;
+            color: #a0aec0;
+            font-size: 20px;
+        }
+
+        .journey-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .journey-date-time {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .date-time-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .date-time-item {
+            flex: 1;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+        }
+
+        .label {
+            font-size: 12px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .value {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .seat-details {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #ebf4ff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .seat-item {
+            text-align: center;
+        }
+
+        .seat-label {
+            font-size: 11px;
+            color: #4a5568;
+            margin-bottom: 2px;
+        }
+
+        .seat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2a4365;
+        }
+
+        .divider {
+            height: 40px;
+            width: 1px;
+            background-color: #cbd5e0;
+        }
+
+        .price-info {
+            background-color: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e53e3e;
+        }
+
+        .price-details {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .barcode-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 25px 0;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 15px;
+        }
+
+        .qr-code {
+            text-align: center;
+        }
+
+            .qr-code img {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 5px;
+            }
+
+            .qr-code p {
+                font-size: 12px;
+                color: #718096;
+            }
+
+        .boarding-info {
+            flex: 1;
+            padding-left: 20px;
+        }
+
+        .boarding-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2d3748;
+        }
+
+        .boarding-text {
+            font-size: 13px;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+
+        .return-journey {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px dashed #cbd5e0;
+        }
+
+        .footer {
+            background-color: #f7fafc;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #718096;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @@media print {
+            body > *:not(.ticket-container)
+
+            {
+                display: none !important;
+            }
+
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .ticket-container {
+                box-shadow: none !important;
+                margin: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket-container">
+        <div class="header">
+            <img src="@Model.LogoUrl" alt="Logo Đường Sắt" class="logo" />
+            <h1>E-Ticket</h1>
+        </div>
+
+        <div class="ticket-body">
+            <div class="ticket-number">Mã vé: #@Model.TicketNumber</div>
+
+            <div class="section">
+                <div class="section-title">Thông tin hành khách</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="label">Họ và tên</div>
+                        <div class="value">@Model.PassengerName</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Số điện thoại</div>
+                        <div class="value">@Model.PhoneNumber</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Email))
+                    {
+                        <div class="info-item">
+                            <div class="label">Email</div>
+                            <div class="value">@Model.Email</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="ticket-type">
+                <div>
+                    <span class="label">Loại vé</span>
+                    <span class="highlight">@Model.TicketType</span>
+                </div>
+                <div class="label">Mã đặt chỗ: <span class="value">@Model.BookingCode</span></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Chuyến đi</div>
+
+                <div class="journey-info">
+                    <div class="station">
+                        <div class="label">Ga đón</div>
+                        <div class="value">@Model.OutgoingJourney.DepartureStation</div>
+                    </div>
+                    <div class="journey-arrow">→</div>
+                    <div class="station">
+                        <div class="label">Ga đến</div>
+                        <div class="value">@Model.OutgoingJourney.ArrivalStation</div>
+                    </div>
+                </div>
+
+                <div class="journey-details">
+                    <div class="journey-date-time">
+                        <div class="date-time-group">
+                            <div class="date-time-item">
+                                <div class="label">Ngày đi</div>
+                                <div class="value">@Model.OutgoingJourney.DepartureDate.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <div class="date-time-item">
+                                <div class="label">Giờ đi</div>
+                                <div class="value">@Model.OutgoingJourney.DepartureTime.ToString(@"hh\:mm")</div>
+                            </div>
+                        </div>
+                        <div class="date-time-group">
+                            <div class="date-time-item">
+                                <div class="label">Ngày đến</div>
+                                <div class="value">@Model.OutgoingJourney.ArrivalDate.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <div class="date-time-item">
+                                <div class="label">Giờ đến</div>
+                                <div class="value">@Model.OutgoingJourney.ArrivalTime.ToString(@"hh\:mm") @(Model.OutgoingJourney.DepartureDate.Date != Model.OutgoingJourney.ArrivalDate.Date ? "(+1)" : "")</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="seat-details">
+                        <div class="seat-item">
+                            <div class="seat-label">Số tàu</div>
+                            <div class="seat-value">@Model.OutgoingJourney.TrainNumber</div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="seat-item">
+                            <div class="seat-label">Toa số</div>
+                            <div class="seat-value">@Model.OutgoingJourney.CarriageNumber</div>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="seat-item">
+                            <div class="seat-label">Ghế số</div>
+                            <div class="seat-value">@Model.OutgoingJourney.SeatNumber</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.HasReturnJourney && Model.ReturnJourney != null)
+            {
+                <div class="section return-journey">
+                    <div class="section-title">Chuyến về</div>
+
+                    <div class="journey-info">
+                        <div class="station">
+                            <div class="label">Ga đón</div>
+                            <div class="value">@Model.ReturnJourney.DepartureStation</div>
+                        </div>
+                        <div class="journey-arrow">→</div>
+                        <div class="station">
+                            <div class="label">Ga đến</div>
+                            <div class="value">@Model.ReturnJourney.ArrivalStation</div>
+                        </div>
+                    </div>
+
+                    <div class="journey-details">
+                        <div class="journey-date-time">
+                            <div class="date-time-group">
+                                <div class="date-time-item">
+                                    <div class="label">Ngày đi</div>
+                                    <div class="value">@Model.ReturnJourney.DepartureDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                                <div class="date-time-item">
+                                    <div class="label">Giờ đi</div>
+                                    <div class="value">@Model.ReturnJourney.DepartureTime.ToString(@"hh\:mm")</div>
+                                </div>
+                            </div>
+                            <div class="date-time-group">
+                                <div class="date-time-item">
+                                    <div class="label">Ngày đến</div>
+                                    <div class="value">@Model.ReturnJourney.ArrivalDate.ToString("dd/MM/yyyy")</div>
+                                </div>
+                                <div class="date-time-item">
+                                    <div class="label">Giờ đến</div>
+                                    <div class="value">@Model.ReturnJourney.ArrivalTime.ToString(@"hh\:mm") @(Model.ReturnJourney.DepartureDate.Date != Model.ReturnJourney.ArrivalDate.Date ? "(+1)" : "")</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="seat-details">
+                            <div class="seat-item">
+                                <div class="seat-label">Số tàu</div>
+                                <div class="seat-value">@Model.ReturnJourney.TrainNumber</div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="seat-item">
+                                <div class="seat-label">Toa số</div>
+                                <div class="seat-value">@Model.ReturnJourney.CarriageNumber</div>
+                            </div>
+                            <div class="divider"></div>
+                            <div class="seat-item">
+                                <div class="seat-label">Ghế số</div>
+                                <div class="seat-value">@Model.ReturnJourney.SeatNumber</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="section">
+                <div class="section-title">Thông tin thanh toán</div>
+
+                <div class="price-info">
+                    <div>
+                        <div class="label">Tổng giá vé</div>
+                        <div class="price-value">@Model.TotalPrice.ToString("#,##0") VND</div>
+                    </div>
+                    <div class="price-details">
+                        <div class="info-item">
+                            <div class="label">Hình thức thanh toán</div>
+                            <div class="value">@Model.PaymentMethod</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Ngày đặt vé</div>
+                            <div class="value">@Model.BookingDate.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="barcode-section">
+                <div class="qr-code">
+                    <img src="@Model.QrCodeUrl" alt="QR Code" />
+                    <p>Quét mã để xác thực vé</p>
+                </div>
+
+                <div class="boarding-info">
+                    <div class="boarding-title">Lưu ý khi lên tàu:</div>
+                    <div class="boarding-text">
+                        • Vui lòng có mặt tại ga trước giờ khởi hành ít nhất 30 phút
+                    </div>
+                    <div class="boarding-text">
+                        • Mang theo CMND/CCCD để đối chiếu khi lên tàu
+                    </div>
+                    <div class="boarding-text">
+                        • Xuất trình e-ticket này hoặc mã vé khi được yêu cầu
+                    </div>
+                    <div class="boarding-text">
+                        • Mọi thắc mắc vui lòng liên hệ hotline: 1900 0000
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                Vé này là tài sản của Đường Sắt Việt Nam<br />
+                Website: www.duongsatvietnam.vn | Email: support@duongsatvietnam.vn<br />
+                Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!
+            </p>
+        </div>
+    </div>
+</body>
+</html>

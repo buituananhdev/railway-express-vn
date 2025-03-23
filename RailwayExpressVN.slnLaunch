@@ -25,6 +25,10 @@
       {
         "Path": "src\\Services\\Payment\\Payment.API\\Payment.API.csproj",
         "Action": "Start"
+      },
+      {
+        "Path": "src\\Services\\Notification\\Notification.API\\Notification.API.csproj",
+        "Action": "Start"
       }
     ]
   }

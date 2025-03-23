@@ -1,9 +1,47 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DinkToPdf" Version="1.0.8" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+    <PackageReference Include="MailKit" Version="4.11.0" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.14" />
+    <PackageReference Include="MimeKit" Version="4.11.0" />
+    <PackageReference Include="RazorLight" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\Notification.Application\Notification.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Templates\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Templates\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="libwkhtmltox.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="libwkhtmltox.dylib">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="libwkhtmltox.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>

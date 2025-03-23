@@ -1,0 +1,47 @@
+﻿using Common.Infrastructure.Settings;
+using DinkToPdf.Contracts;
+using DinkToPdf;
+using MassTransit;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Notification.Application.Interfaces;
+using Notification.Infrastructure.Consumers;
+using Notification.Infrastructure.Services;
+
+namespace Notification.Infrastructure;
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddScoped<IETicketService, ETicketService>();
+        services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<ITemplateService, TemplateService>();
+
+        services.AddRazorPages().AddRazorRuntimeCompilation();
+
+        services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+        services.AddScoped<IPdfGenerator, PdfGeneratorService>();
+
+        services.AddMassTransit(x =>
+        {
+            x.AddConsumer<EmailConsumer>();
+
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                var settings = configuration.GetSection("RabbitMQSettings").Get<RabbitMQSettings>();
+
+                cfg.Host(settings.Host, settings.VirtualHost, h =>
+                {
+                    h.Username(settings.Username);
+                    h.Password(settings.Password);
+                });
+
+                cfg.ReceiveEndpoint("notification-queue", e =>
+                {
+                    e.ConfigureConsumer<EmailConsumer>(context);
+                });
+            });
+        });
+        return services;
+    }
+}
