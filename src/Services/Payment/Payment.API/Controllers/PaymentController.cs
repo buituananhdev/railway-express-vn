@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Payment.Application.Dtos;
 using Payment.Application.Services.PaymentService;
 
 namespace Payment.API.Controllers;
@@ -13,16 +14,23 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreatePayment(List<Guid> ticketIds)
+    public async Task<IActionResult> CreatePaymentAsync(List<Guid> ticketIds)
     {
         var result = await _paymentService.CreateTemporaryPaymentRecordAsync(ticketIds);
         return Ok(result);
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetPayment(Guid id)
+    public async Task<IActionResult> GetPaymentAsync(Guid id)
     {
         var result = await _paymentService.GetByIdAsync(id);
+        return Ok(result);
+    }
+
+    [HttpPut("id")]
+    public async Task<IActionResult> UpdatePaymentAsync(Guid id, [FromBody] UpdatePaymentRecordDto updateDto)
+    {
+        var result = await _paymentService.UpdateAsync(id, updateDto);
         return Ok(result);
     }
 }

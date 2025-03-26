@@ -5,6 +5,7 @@ using VNPAY.NET;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.UseBaseBuilder();
+
 builder.Services.AddSingleton<IVnpay, Vnpay>();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);

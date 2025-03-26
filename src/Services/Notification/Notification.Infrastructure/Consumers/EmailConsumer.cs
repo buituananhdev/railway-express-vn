@@ -13,7 +13,7 @@ public class EmailConsumer : IConsumer<TicketCreatedEvent>
     }
 
     public async Task Consume(ConsumeContext<TicketCreatedEvent> context)
-    {
+  {
         var message = context.Message;
         await _emailService.SendEmailAsync(
             message.Email,

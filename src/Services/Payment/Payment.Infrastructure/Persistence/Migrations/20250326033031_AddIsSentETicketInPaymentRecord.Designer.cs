@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Payment.Infrastructure;
 
@@ -11,9 +12,11 @@ using Payment.Infrastructure;
 namespace Payment.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(PaymentContext))]
-    partial class PaymentContextModelSnapshot : ModelSnapshot
+    [Migration("20250326033031_AddIsSentETicketInPaymentRecord")]
+    partial class AddIsSentETicketInPaymentRecord
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,6 +56,9 @@ namespace Payment.Infrastructure.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<int?>("StatusCode")
+                        .HasColumnType("int");
+
                     b.Property<string>("TicketIds")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -62,9 +68,6 @@ namespace Payment.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("VnpResponseCode")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
