@@ -26,7 +26,7 @@ public class PdfGeneratorService : IPdfGenerator
                 ColorMode = ColorMode.Color,
                 Orientation = Orientation.Portrait,
                 PaperSize = PaperKind.A4,
-                Margins = new MarginSettings { Top = 5, Bottom = 5, Left = 5, Right = 5 },
+                Margins = new MarginSettings { Top = 0, Bottom = 0, Left = 0, Right = 0 },
                 DPI = 300
             },
             Objects = {
@@ -34,7 +34,7 @@ public class PdfGeneratorService : IPdfGenerator
                     HtmlContent = processedHtml,
                     WebSettings = {
                         DefaultEncoding = "utf-8",
-                        EnableIntelligentShrinking = false
+                        EnableIntelligentShrinking = false,
                     },
                     UseLocalLinks = true,
                     LoadSettings = {
