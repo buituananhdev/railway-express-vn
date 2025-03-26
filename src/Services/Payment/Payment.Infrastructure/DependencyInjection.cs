@@ -1,6 +1,8 @@
 ﻿using Common.Application.Repositories;
 using Common.Infrastructure;
 using Common.Infrastructure.Repositories;
+using Common.Infrastructure.Settings;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +31,24 @@ public static class DependencyInjection
 
         services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+
+        services.AddMassTransit(x =>
+        {
+            x.SetKebabCaseEndpointNameFormatter();
+
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                var settings = configuration.GetSection("RabbitMQSettings").Get<RabbitMQSettings>();
+
+                cfg.Host(settings.Host, settings.VirtualHost, h =>
+                {
+                    h.Username(settings.Username);
+                    h.Password(settings.Password);
+                });
+
+                cfg.ConfigureEndpoints(context);
+            });
+        });
 
         return services;
     }

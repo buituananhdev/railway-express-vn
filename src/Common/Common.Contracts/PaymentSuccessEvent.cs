@@ -1,5 +1,5 @@
-﻿namespace Notification.Application.Dtos;
-public record ETicketDto
+﻿namespace Common.Contracts;
+public record PaymentSuccessEvent
 (
     string PassengerName,
     string Email,

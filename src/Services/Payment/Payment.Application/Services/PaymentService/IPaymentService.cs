@@ -12,7 +12,7 @@ public interface IPaymentService
         PaginationParams paginationParams,
         Specification<PaymentRecord>? specification = null,
         List<Expression<Func<PaymentRecord, object>>>? includes = null);
-    Task<PaymentRecordDto> UpdateAsync(Guid id, AddPaymentRecordDto updateDto);
+    Task<PaymentRecordDto> UpdateAsync(Guid id, UpdatePaymentRecordDto updateDto);
     Task DeleteAsync(Guid id);
     Task<PaymentRecordDto> GetByIdAsync(Guid id);
     Task<Guid> CreateTemporaryPaymentRecordAsync(List<Guid> ticketIds);

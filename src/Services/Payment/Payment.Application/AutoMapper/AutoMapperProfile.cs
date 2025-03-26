@@ -7,7 +7,8 @@ public class AutoMapperProfile : Profile
 {
     public AutoMapperProfile()
     {
-        CreateMap<PaymentRecord, PaymentRecordDto>().ReverseMap();
+        CreateMap<PaymentRecordDto, PaymentRecord>().ReverseMap();
         CreateMap<AddPaymentRecordDto, PaymentRecord>().ReverseMap();
+        CreateMap<UpdatePaymentRecordDto, PaymentRecord>().ReverseMap();
     }
 }

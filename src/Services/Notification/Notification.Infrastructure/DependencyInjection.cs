@@ -1,6 +1,6 @@
 ﻿using Common.Infrastructure.Settings;
-using DinkToPdf.Contracts;
 using DinkToPdf;
+using DinkToPdf.Contracts;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,7 +13,6 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<IETicketService, ETicketService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ITemplateService, TemplateService>();
 
@@ -24,7 +23,9 @@ public static class DependencyInjection
 
         services.AddMassTransit(x =>
         {
+            x.SetKebabCaseEndpointNameFormatter();
             x.AddConsumer<EmailConsumer>();
+            x.AddConsumer<PaymentSuccessComsumer>();
 
             x.UsingRabbitMq((context, cfg) =>
             {
@@ -36,12 +37,10 @@ public static class DependencyInjection
                     h.Password(settings.Password);
                 });
 
-                cfg.ReceiveEndpoint("notification-queue", e =>
-                {
-                    e.ConfigureConsumer<EmailConsumer>(context);
-                });
+                cfg.ConfigureEndpoints(context);
             });
         });
+
         return services;
     }
 }
