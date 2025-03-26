@@ -27,7 +27,7 @@ public class PaymentController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut("id")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> UpdatePaymentAsync(Guid id, [FromBody] UpdatePaymentRecordDto updateDto)
     {
         var result = await _paymentService.UpdateAsync(id, updateDto);
