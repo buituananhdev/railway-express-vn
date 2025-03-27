@@ -30,34 +30,34 @@ public class VNPayController : ControllerBase
         return Ok(paymentResult);
     }
 
-    [HttpGet("ipn")]
-    public ActionResult PaymentIpnNotification()
-    {
-        try
-        {
-            if (Request.QueryString.HasValue)
-            {
-                var paymentResult = _vnPayService.GetPaymentResult(Request.Query);
+    //[HttpGet("ipn")]
+    //public ActionResult PaymentIpnNotification()
+    //{
+    //    try
+    //    {
+    //        if (Request.QueryString.HasValue)
+    //        {
+    //            var paymentResult = _vnPayService.GetPaymentResult(Request.Query);
 
-                if (paymentResult.IsSuccess)
-                {
-                    // Cập nhật trạng thái đơn hàng trong database
-                    // UpdateOrderStatus(paymentResult.PaymentId, "Paid");
+    //            if (paymentResult.IsSuccess)
+    //            {
+    //                // Cập nhật trạng thái đơn hàng trong database
+    //                // UpdateOrderStatus(paymentResult.PaymentId, "Paid");
 
-                    return Ok(); // Trả về mã 200 để VNPAY biết đã nhận thông báo
-                }
+    //                return Ok(); // Trả về mã 200 để VNPAY biết đã nhận thông báo
+    //            }
 
-                // Xử lý thanh toán thất bại
-                // UpdateOrderStatus(paymentResult.PaymentId, "Failed");
+    //            // Xử lý thanh toán thất bại
+    //            // UpdateOrderStatus(paymentResult.PaymentId, "Failed");
 
-                return Ok(); // Vẫn trả về OK để VNPAY biết đã nhận thông báo
-            }
+    //            return Ok(); // Vẫn trả về OK để VNPAY biết đã nhận thông báo
+    //        }
 
-            return NotFound();
-        }
-        catch (Exception)
-        {
-            return BadRequest(new { vnp_ResponseCode = "97" }); // Mã lỗi theo quy định của VNPAY
-        }
-    }
+    //        return NotFound();
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return BadRequest(new { vnp_ResponseCode = "97" }); // Mã lỗi theo quy định của VNPAY
+    //    }
+    //}
 }
