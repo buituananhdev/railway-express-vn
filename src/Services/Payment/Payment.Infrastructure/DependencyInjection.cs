@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Payment.Application.Repositories;
 using Payment.Infrastructure.Repositories;
 using Payment.Infrastructure.VNPayServices;
+using VNPAY.NET;
 
 namespace Payment.Infrastructure;
 public static class DependencyInjection
@@ -18,6 +19,7 @@ public static class DependencyInjection
         services.AddAutoMapper(typeof(DependencyInjection).Assembly);
         services.AddScoped<IDataContext>(provider => provider.GetRequiredService<PaymentContext>());
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddSingleton<IVnpay, Vnpay>();
         services.AddScoped<IVNPayService, VNPayService>();
         services.AddDbContext<PaymentContext>(options =>
         {

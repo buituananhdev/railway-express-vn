@@ -33,7 +33,7 @@ public class VNPayService : IVNPayService
         {
             var request = new PaymentRequest
             {
-                PaymentId = DateTime.Now.Ticks,
+                PaymentId = paymentId,
                 Money = (double)paymentRecord.Amount,
                 Description = paymentRecord.Description,
                 IpAddress = ipAddress,
