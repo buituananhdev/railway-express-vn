@@ -70,7 +70,10 @@ public class UserAccountService : IUserAccountService
                 ?? throw new NotFoundException($"User account with id {id} not found");
 
             userAccount.Email = updateUserAccountDto.Email;
-            userAccount.PasswordHash = BCrypt.Net.BCrypt.HashPassword(updateUserAccountDto.PasswordHash);
+            if (!string.IsNullOrEmpty(updateUserAccountDto.PasswordHash))
+            {
+                userAccount.PasswordHash = BCrypt.Net.BCrypt.HashPassword(updateUserAccountDto.PasswordHash);
+            }
             userAccount.Role = updateUserAccountDto.Role;
             userAccount.Status = updateUserAccountDto.Status;
             await _userManagementUnitOfWork.SaveChangesAsync();

@@ -3,11 +3,11 @@ using Common.Domain.Specifications;
 using System.Linq.Expressions;
 
 namespace UserManagement.Domain.Specifications;
-public class PassengerIsActiveSpecification : Specification<UserManagement.Domain.Entities.Passenger>
+public class PassengerStatusSpecification : Specification<UserManagement.Domain.Entities.Passenger>
 {
     private readonly StatusEnum _status;
 
-    public PassengerIsActiveSpecification(StatusEnum status)
+    public PassengerStatusSpecification(StatusEnum status)
     {
         _status = status;
     }

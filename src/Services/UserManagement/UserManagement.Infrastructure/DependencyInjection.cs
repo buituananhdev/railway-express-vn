@@ -14,7 +14,6 @@ public static class DependencyInjection
     {
         services.AddAutoMapper(typeof(DependencyInjection).Assembly);
         services.AddScoped<IDataContext>(provider => provider.GetRequiredService<UserManagementContext>());
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddDbContext<UserManagementContext>(options =>
         {
