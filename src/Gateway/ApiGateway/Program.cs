@@ -1,7 +1,9 @@
-﻿using ApiGateway;
+using ApiGateway;
 using Common.API.Extentions;
 using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 builder.UseBaseBuilder();
 
 // Add services
@@ -46,6 +48,8 @@ builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 app.UseCors(builder =>
 {
