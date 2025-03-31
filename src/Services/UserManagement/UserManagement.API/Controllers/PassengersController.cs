@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common.Application.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using UserManagement.Application.Dtos;
@@ -35,6 +36,24 @@ public class PassengersController : ControllerBase
     public async Task<IActionResult> AddPassenger([FromBody] AddPassengerDto passengerDto)
     {
         await _passengerService.AddPassengerAsync(passengerDto);
+        return Ok();
+    }
+    [HttpGet("paging")]
+    public async Task<IActionResult> GetPassengersAsync([FromQuery] PaginationParams paginationParams)
+    {
+        var passengers = await _passengerService.GetPassengerListAsync(paginationParams);
+        return Ok(passengers);
+    }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeletePassenger(Guid id)
+    {
+        await _passengerService.DeletePassengerAsync(id);
+        return Ok();
+    }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdatePassenger(Guid id, [FromBody] UpdatePassengerDto updatePassengerDto)
+    {
+        await _passengerService.UpdatePassengerAsync(id, updatePassengerDto);
         return Ok();
     }
 }

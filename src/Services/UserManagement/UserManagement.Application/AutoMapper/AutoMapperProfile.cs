@@ -10,6 +10,10 @@ public class AutoMapperProfile : Profile
     {
         CreateMap<Passenger, PassengerDto>().ReverseMap();
         CreateMap<Passenger, AddPassengerDto>().ReverseMap();
+        CreateMap<Passenger, UpdatePassengerDto>().ReverseMap();
+        CreateMap<Passenger, PaginatePassengerDto>()
+            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.UserAccount.Role))
+            .ReverseMap();
         CreateMap<CreateUserRequest, AddPassengerDto>().ReverseMap();
 
         CreateMap<UserAccountDto, UserAccount>().ReverseMap();
