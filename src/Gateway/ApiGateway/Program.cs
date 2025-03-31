@@ -54,7 +54,7 @@ app.UseCors(builder =>
            .AllowAnyHeader()
            .AllowCredentials();
 
-    builder.WithOrigins("http://localhost:5173")
+    builder.WithOrigins("http://localhost:5173", "http://localhost:5174")
            .AllowAnyMethod()
            .AllowAnyHeader()
            .AllowCredentials();

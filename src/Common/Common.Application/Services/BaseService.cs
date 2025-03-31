@@ -66,10 +66,7 @@ public abstract class BaseService<TEntity, TCreateDto, TUpdateDto, TReadDto>
         return new PaginationResult<TReadDto>
         {
             Data = _mapper.Map<List<TReadDto>>(paginatedResult.Data),
-            CurrentPage = paginatedResult.CurrentPage,
-            TotalPages = paginatedResult.TotalPages,
-            PageSize = paginatedResult.PageSize,
-            TotalCount = paginatedResult.TotalCount
+            MetaData = paginatedResult.MetaData
         };
     }
 

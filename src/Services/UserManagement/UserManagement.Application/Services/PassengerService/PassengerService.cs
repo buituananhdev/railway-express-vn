@@ -102,10 +102,7 @@ internal class PassengerService : IPassengerService
             return new PaginationResult<PaginatePassengerDto>
             {
                 Data = _mapper.Map<List<PaginatePassengerDto>>(paginatedResult.Data),
-                CurrentPage = paginatedResult.CurrentPage,
-                TotalPages = paginatedResult.TotalPages,
-                PageSize = paginatedResult.PageSize,
-                TotalCount = paginatedResult.TotalCount
+                MetaData = paginatedResult.MetaData
             };
         }
         catch (Exception ex)
