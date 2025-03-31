@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsAspireHost>true</IsAspireHost>
+    <UserSecretsId>9bbff344-e863-44ca-9648-8b99adca058c</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.1.0" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="9.1.0" />
+    <PackageReference Include="Aspire.Hosting.Redis" Version="9.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Gateway\ApiGateway\ApiGateway.csproj" />
+    <ProjectReference Include="..\src\Services\Admin\Admin.API\Admin.API.csproj" />
+    <ProjectReference Include="..\src\Services\Authentication\Auth.API\Auth.API.csproj" />
+    <ProjectReference Include="..\src\Services\Booking\Booking.API\Booking.API.csproj" />
+    <ProjectReference Include="..\src\Services\Notification\Notification.API\Notification.API.csproj" />
+    <ProjectReference Include="..\src\Services\Payment\Payment.API\Payment.API.csproj" />
+    <ProjectReference Include="..\src\Services\UserManagement\UserManagement.API\UserManagement.API.csproj" />
+  </ItemGroup>
+
+</Project>

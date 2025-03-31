@@ -11,6 +11,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\..\..\RailwayExpressVN.ServiceDefaults\RailwayExpressVN.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\..\..\Common\Common.API\Common.API.csproj" />
 		<ProjectReference Include="..\Auth.Application\Auth.Application.csproj" />
 	</ItemGroup>

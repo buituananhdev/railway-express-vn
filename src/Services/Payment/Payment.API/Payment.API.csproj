@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\RailwayExpressVN.ServiceDefaults\RailwayExpressVN.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\..\Common\Common.API\Common.API.csproj" />
     <ProjectReference Include="..\Payment.Application\Payment.Application.csproj" />
     <ProjectReference Include="..\Payment.Infrastructure\Payment.Infrastructure.csproj" />
