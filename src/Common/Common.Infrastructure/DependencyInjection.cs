@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog.Sinks.Elasticsearch;
 using Serilog;
+using StackExchange.Redis;
 
 namespace Common.Infrastructure;
 public static class DependencyInjection
@@ -22,7 +23,16 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<ILoggerService, SerilogLogger>();
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            var redisConnectionString = configuration.GetConnectionString("Redis") ?? "localhost:6379";
+            return ConnectionMultiplexer.Connect(redisConnectionString);
+        });
+
         services.AddScoped<ICacheService, CacheService>();
+        services.AddScoped<IDistributedLockService, RedisLockService>();
+
 
         //Log.Logger = new LoggerConfiguration()
         //        .Enrich.FromLogContext()

@@ -8,69 +8,243 @@ using Booking.Domain.Specifications.Ticket;
 using Common.Application.Interfaces;
 using Common.Application.Services;
 using Common.Domain.Specifications;
+using Microsoft.Extensions.Logging;
 
-namespace Booking.Application.Services;
-public class TicketService : BaseService<Ticket, AddTicketDto, AddTicketDto, TicketDto>, ITicketService
+namespace Booking.Application.Services
 {
-    private readonly IBookingUnitOfWork _bookingUnitOfWork;
-    private readonly IMapper _mapper;
-
-    public TicketService(ITicketRepository repository,
-        IBookingUnitOfWork unitOfWork,
-        IMapper mapper,
-        IPaginationService paginationService)
-        : base(repository, unitOfWork, mapper, paginationService)
+    public class TicketService : BaseService<Ticket, AddTicketDto, AddTicketDto, TicketDto>, ITicketService
     {
-        _bookingUnitOfWork = unitOfWork;
-        _mapper = mapper;
-    }
+        private readonly IBookingUnitOfWork _bookingUnitOfWork;
+        private readonly IMapper _mapper;
+        private readonly IDistributedLockService _lockService;
+        private readonly ICacheService _cacheService;
+        private readonly ILogger<TicketService> _logger;
+        private const string SEAT_LOCK_KEY_PREFIX = "seat:lock:";
+        private const int LOCK_TIMEOUT_SECONDS = 5;
 
-    public async Task<bool> IsSeatBookedForScheduleAsync(Guid seatId, Guid scheduleId, DateTime journeyDate)
-    {
-        try
+        public TicketService(
+            ITicketRepository repository,
+            IBookingUnitOfWork unitOfWork,
+            IMapper mapper,
+            IPaginationService paginationService,
+            IDistributedLockService lockService,
+            ICacheService cacheService,
+            ILogger<TicketService> logger)
+            : base(repository, unitOfWork, mapper, paginationService)
         {
-            var specification = new AndSpecificationMultiple<Ticket>(
-                new List<Specification<Ticket>>
+            _bookingUnitOfWork = unitOfWork;
+            _mapper = mapper;
+            _lockService = lockService;
+            _cacheService = cacheService;
+            _logger = logger;
+        }
+
+        public override async Task<TicketDto> CreateAsync(AddTicketDto createDto)
+        {
+            if (createDto.SeatIds?.Count == 1)
+            {
+                return await BookSingleSeatAsync(createDto);
+            }
+            else if (createDto.SeatIds?.Count > 1)
+            {
+                return await BookMultipleSeatsAsync(createDto);
+            }
+            else
+            {
+                throw new ArgumentException("No seat IDs provided for booking");
+            }
+        }
+
+        private async Task<TicketDto> BookSingleSeatAsync(AddTicketDto createDto)
+        {
+            var seatId = createDto.SeatIds[0];
+            var lockKey = GetSeatLockKey(seatId, createDto.TrainScheduleId, createDto.JourneyDate);
+
+            try
+            {
+                return await _lockService.ExecuteWithLockAsync<TicketDto>(
+                    lockKey,
+                    async () =>
+                    {
+                        bool isBooked = await IsSeatBookedForScheduleAsync(seatId, createDto.TrainScheduleId, createDto.JourneyDate);
+                        if (isBooked)
+                        {
+                            throw new InvalidOperationException($"Seat {seatId} is already booked for this schedule and date.");
+                        }
+
+                        var entity = _mapper.Map<Ticket>(createDto);
+                        await _bookingUnitOfWork.TicketRepository.AddAsync(entity);
+                        await _unitOfWork.SaveChangesAsync();
+
+                        await CacheSeatBookingInfoAsync(seatId, createDto.TrainScheduleId, createDto.JourneyDate);
+
+                        return _mapper.Map<TicketDto>(entity);
+                    },
+                    TimeSpan.FromSeconds(LOCK_TIMEOUT_SECONDS)
+                );
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Could not acquire lock"))
+            {
+                _logger.LogWarning("Concurrent booking attempt for seat {SeatId} on schedule {ScheduleId}", seatId, createDto.TrainScheduleId);
+                throw new InvalidOperationException("This seat is currently being booked by another user. Please try again.");
+            }
+        }
+
+        private async Task<TicketDto> BookMultipleSeatsAsync(AddTicketDto createDto)
+        {
+            // For multiple seats, we need to lock all seats simultaneously
+            var lockKeys = createDto.SeatIds.Select(seatId =>
+                GetSeatLockKey(seatId, createDto.TrainScheduleId, createDto.JourneyDate)).ToList();
+
+            var mainLockKey = $"multi:seat:lock:{createDto.TrainScheduleId}:{createDto.JourneyDate}:{Guid.NewGuid()}";
+
+            try
+            {
+                return await _lockService.ExecuteWithLockAsync<TicketDto>(
+                    mainLockKey,
+                    async () =>
+                    {
+                        var bookingStatus = await AreSeatsBookedForScheduleAsync(
+                            createDto.SeatIds, createDto.TrainScheduleId, createDto.JourneyDate);
+
+                        var bookedSeats = bookingStatus.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+                        if (bookedSeats.Any())
+                        {
+                            throw new InvalidOperationException($"Seats {string.Join(", ", bookedSeats)} are already booked.");
+                        }
+
+                        var entity = _mapper.Map<Ticket>(createDto);
+                        await _bookingUnitOfWork.TicketRepository.AddAsync(entity);
+                        await _unitOfWork.SaveChangesAsync();
+
+                        foreach (var seatId in createDto.SeatIds)
+                        {
+                            await CacheSeatBookingInfoAsync(seatId, createDto.TrainScheduleId, createDto.JourneyDate);
+                        }
+
+                        return _mapper.Map<TicketDto>(entity);
+                    },
+                    TimeSpan.FromSeconds(LOCK_TIMEOUT_SECONDS)
+                );
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("Could not acquire lock"))
+            {
+                _logger.LogWarning("Concurrent booking attempt for multiple seats on schedule {ScheduleId}", createDto.TrainScheduleId);
+                throw new InvalidOperationException("One or more seats are currently being booked by another user. Please try again.");
+            }
+        }
+
+        private string GetSeatLockKey(Guid seatId, Guid scheduleId, DateTime journeyDate)
+        {
+            return $"{SEAT_LOCK_KEY_PREFIX}{scheduleId}:{journeyDate:yyyyMMdd}:{seatId}";
+        }
+
+        private async Task CacheSeatBookingInfoAsync(Guid seatId, Guid scheduleId, DateTime journeyDate)
+        {
+            string cacheKey = $"seat:booked:{scheduleId}:{journeyDate:yyyyMMdd}:{seatId}";
+            await _cacheService.SetCacheAsync(cacheKey, true, TimeSpan.FromMinutes(10));
+        }
+
+        public async Task<bool> IsSeatBookedForScheduleAsync(Guid seatId, Guid scheduleId, DateTime journeyDate)
+        {
+            try
+            {
+                string cacheKey = $"seat:booked:{scheduleId}:{journeyDate:yyyyMMdd}:{seatId}";
+                var cachedResult = await _cacheService.GetCacheAsync<bool?>(cacheKey);
+
+                if (cachedResult.HasValue)
                 {
-                new TicketSeatIdSpecification(seatId),
-                new TicketScheduleIdSpecification(scheduleId),
-                new TicketJourneyDateSpecification(journeyDate)
+                    return cachedResult.Value;
                 }
-            );
 
-            return await _bookingUnitOfWork.TicketRepository.ExistsAsync(specification);
-        }
-        catch (Exception ex)
-        {
-            throw;
-        }
-    }
+                var specification = new AndSpecificationMultiple<Ticket>(
+                    new List<Specification<Ticket>>
+                    {
+                        new TicketSeatIdSpecification(seatId),
+                        new TicketScheduleIdSpecification(scheduleId),
+                        new TicketJourneyDateSpecification(journeyDate),
+                        new TicketStatusSpecification(TicketStatusEnum.Active)
+                    }
+                );
 
-    public async Task<Dictionary<Guid, bool>> AreSeatsBookedForScheduleAsync(List<Guid> seatIds, Guid scheduleId, DateTime journeyDate)
-    {
-        try
+                bool isBooked = await _bookingUnitOfWork.TicketRepository.ExistsAsync(specification);
+
+                await _cacheService.SetCacheAsync(cacheKey, isBooked, TimeSpan.FromMinutes(1));
+
+                return isBooked;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if seat is booked");
+                throw;
+            }
+        }
+
+        public async Task<Dictionary<Guid, bool>> AreSeatsBookedForScheduleAsync(List<Guid> seatIds, Guid scheduleId, DateTime journeyDate)
         {
-            var specification = new AndSpecificationMultiple<Ticket>(
-                new List<Specification<Ticket>>
+            try
+            {
+                var result = new Dictionary<Guid, bool>();
+
+                var cacheKeys = seatIds.Select(id => $"seat:booked:{scheduleId}:{journeyDate:yyyyMMdd}:{id}").ToArray();
+                var cacheExists = await _cacheService.ExistsMultipleAsync(cacheKeys);
+
+                var uncachedSeatIds = new List<Guid>();
+
+                for (int i = 0; i < seatIds.Count; i++)
                 {
-                    new TicketScheduleIdSpecification(scheduleId),
-                    new TicketJourneyDateSpecification(journeyDate),
-                    new TicketStatusSpecification(TicketStatusEnum.Active)
+                    if (cacheExists[i])
+                    {
+                        var isBooked = await _cacheService.GetCacheAsync<bool>(cacheKeys[i]);
+                        result[seatIds[i]] = isBooked;
+                    }
+                    else
+                    {
+                        uncachedSeatIds.Add(seatIds[i]);
+                    }
                 }
-            );
 
-            var bookedTickets = await _bookingUnitOfWork.TicketRepository
-                .ToListAsync(specification);
+                if (uncachedSeatIds.Any())
+                {
+                    var specification = new AndSpecificationMultiple<Ticket>(
+                        new List<Specification<Ticket>>
+                        {
+                            new TicketScheduleIdSpecification(scheduleId),
+                            new TicketJourneyDateSpecification(journeyDate),
+                            new TicketStatusSpecification(TicketStatusEnum.Active)
+                        }
+                    );
 
-            var bookedSeatIds = bookedTickets
-                .SelectMany(t => t.SeatIds ?? Enumerable.Empty<Guid>())
-                .ToHashSet();
+                    var bookedTickets = await _bookingUnitOfWork.TicketRepository.ToListAsync(specification);
+                    var bookedSeatIds = bookedTickets
+                        .SelectMany(t => t.SeatIds ?? Enumerable.Empty<Guid>())
+                        .ToHashSet();
 
-            return seatIds.ToDictionary(id => id, id => bookedSeatIds.Contains(id));
+                    foreach (var seatId in uncachedSeatIds)
+                    {
+                        bool isBooked = bookedSeatIds.Contains(seatId);
+                        result[seatId] = isBooked;
+
+                        string cacheKey = $"seat:booked:{scheduleId}:{journeyDate:yyyyMMdd}:{seatId}";
+                        await _cacheService.SetCacheAsync(cacheKey, isBooked, TimeSpan.FromMinutes(1));
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if multiple seats are booked");
+                throw;
+            }
         }
-        catch (Exception)
+
+        public Task UpdateTicketsStatusAsync(List<Guid> ticketIds, TicketStatusEnum status)
         {
-            throw;
+            var specifications = ticketIds.Select(id => new TicketIdSpecification(id)).ToList();
+            var specification = new OrSpecificationMultiple<Ticket>(specifications);
+
+            return _bookingUnitOfWork.TicketRepository.UpdateStatusAsync(specification, status);
         }
     }
 }
