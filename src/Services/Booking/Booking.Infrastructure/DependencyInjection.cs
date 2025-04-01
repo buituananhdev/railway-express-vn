@@ -1,8 +1,11 @@
 ﻿using Booking.Application.Repositories;
+using Booking.Infrastructure.Consumers;
 using Booking.Infrastructure.Repositories;
 using Common.Application.Repositories;
 using Common.Infrastructure;
 using Common.Infrastructure.Repositories;
+using Common.Infrastructure.Settings;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +36,25 @@ public static class DependencyInjection
         services.AddGrpc(options =>
         {
             options.EnableDetailedErrors = true;
+        });
+
+        services.AddMassTransit(x =>
+        {
+            x.SetKebabCaseEndpointNameFormatter();
+            x.AddConsumer<UpdateTicketStatusConsumer>();
+
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                var settings = configuration.GetSection("RabbitMQSettings").Get<RabbitMQSettings>();
+
+                cfg.Host(settings.Host, settings.VirtualHost, h =>
+                {
+                    h.Username(settings.Username);
+                    h.Password(settings.Password);
+                });
+
+                cfg.ConfigureEndpoints(context);
+            });
         });
 
         return services;

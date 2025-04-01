@@ -1,4 +1,4 @@
-﻿namespace Common.Contracts;
+﻿namespace Common.Contracts.Events;
 public record PaymentSuccessEvent
 (
     string PassengerName,
