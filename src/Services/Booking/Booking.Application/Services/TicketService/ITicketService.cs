@@ -1,6 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Booking.Application.Dtos;
 using Booking.Domain.Entities;
+using Booking.Domain.Enums;
 using Common.Application.Dtos;
 using Common.Domain.Specifications;
 
@@ -17,4 +18,5 @@ public interface ITicketService
     Task<TicketDto> GetByIdAsync(Guid id);
     Task<bool> IsSeatBookedForScheduleAsync(Guid seatId, Guid scheduleId, DateTime journeyDate);
     Task<Dictionary<Guid, bool>> AreSeatsBookedForScheduleAsync(List<Guid> seatIds, Guid scheduleId, DateTime journeyDate);
+    Task UpdateTicketStatusAsync(Guid ticketId, TicketStatusEnum status);
 }

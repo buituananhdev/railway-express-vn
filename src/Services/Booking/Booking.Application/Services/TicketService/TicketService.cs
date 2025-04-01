@@ -74,7 +74,7 @@ namespace Booking.Application.Services
 
                         var entity = _mapper.Map<Ticket>(createDto);
                         await _bookingUnitOfWork.TicketRepository.AddAsync(entity);
-                        await _unitOfWork.SaveChangesAsync();
+                        await _bookingUnitOfWork.SaveChangesAsync();
 
                         await CacheSeatBookingInfoAsync(seatId, createDto.TrainScheduleId, createDto.JourneyDate);
 
@@ -115,7 +115,7 @@ namespace Booking.Application.Services
 
                         var entity = _mapper.Map<Ticket>(createDto);
                         await _bookingUnitOfWork.TicketRepository.AddAsync(entity);
-                        await _unitOfWork.SaveChangesAsync();
+                        await _bookingUnitOfWork.SaveChangesAsync();
 
                         foreach (var seatId in createDto.SeatIds)
                         {
@@ -239,12 +239,18 @@ namespace Booking.Application.Services
             }
         }
 
-        public Task UpdateTicketsStatusAsync(List<Guid> ticketIds, TicketStatusEnum status)
+        public async Task UpdateTicketStatusAsync(Guid ticketId, TicketStatusEnum status)
         {
-            var specifications = ticketIds.Select(id => new TicketIdSpecification(id)).ToList();
-            var specification = new OrSpecificationMultiple<Ticket>(specifications);
-
-            return _bookingUnitOfWork.TicketRepository.UpdateStatusAsync(specification, status);
+            try
+            {
+                var ticket = await _bookingUnitOfWork.TicketRepository.GetByIdAsync(ticketId);
+                ticket.Status = status;
+                await _bookingUnitOfWork.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
         }
     }
 }

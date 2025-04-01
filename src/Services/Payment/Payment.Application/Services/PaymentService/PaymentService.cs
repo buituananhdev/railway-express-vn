@@ -2,9 +2,8 @@
 using Common.Application.Exceptions;
 using Common.Application.Interfaces;
 using Common.Application.Services;
-using Common.Contracts;
+using Common.Contracts.Events;
 using Common.Protos;
-using Grpc.Core;
 using MassTransit;
 using Payment.Application.Dtos;
 using Payment.Application.Repositories;
@@ -35,6 +34,7 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
 
     public override async Task<PaymentRecordDto> UpdateAsync(Guid id, UpdatePaymentRecordDto updatePayment)
     {
+
         var entity = await _unitOfWork.PaymentRepository.GetByIdAsync(id)
             ?? throw new NotFoundException($"Entity with id {id} not found");
 
@@ -49,6 +49,11 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
             entity.Status = PaymentStatusEnum.Paid;
             entity.IsSentETicket = true;
             await SendETicketAsync(id);
+            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(entity.TicketIds, 0));
+        } else
+        {
+            entity.Status = PaymentStatusEnum.Failed;
+            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(entity.TicketIds, 2));
         }
 
         _repository.Update(entity);
@@ -90,7 +95,6 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
 
         await _unitOfWork.PaymentRepository.AddAsync(paymentRecord);
         await _unitOfWork.SaveChangesAsync();
-
         return paymentRecord.Id;
     }
 

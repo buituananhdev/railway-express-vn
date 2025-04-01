@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
     <ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
     <ProjectReference Include="..\Booking.Application\Booking.Application.csproj" />
   </ItemGroup>
@@ -18,6 +19,7 @@
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.29.3" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.67.0" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.4.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.2" />
   </ItemGroup>
 

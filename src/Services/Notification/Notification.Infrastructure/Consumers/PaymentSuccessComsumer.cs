@@ -1,4 +1,4 @@
-﻿using Common.Contracts;
+﻿using Common.Contracts.Events;
 using MassTransit;
 using Notification.Application.Interfaces;
 using Notification.Infrastructure.Events;
