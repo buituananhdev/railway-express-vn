@@ -3,6 +3,7 @@ using AutoMapper;
 using Common.Application.Dtos;
 using Common.Application.Exceptions;
 using Common.Application.Interfaces;
+using Common.Application.Services;
 using Common.Domain.Specifications;
 using UserManagement.Application.Dtos;
 using UserManagement.Application.Repositories;
@@ -11,20 +12,21 @@ using UserManagement.Domain.Specifications;
 
 namespace UserManagement.Application.Services;
 
-internal class PassengerService : IPassengerService
+internal class PassengerService : BaseService<Passenger, AddPassengerDto, UpdatePassengerDto, PassengerDto>, IPassengerService
 {
     private readonly IUserManagementUnitOfWork _userManagementUnitOfWork;
     private readonly IMapper _mapper;
     private readonly IUserAccountService _userAccountService;
     private readonly IPaginationService _paginationService;
     public PassengerService(IUserManagementUnitOfWork userManagementUnitOfWork, IMapper mapper, IUserAccountService userAccountService, IPaginationService paginationService)
+        : base(userManagementUnitOfWork.PassengerRepository, userManagementUnitOfWork, mapper, paginationService)
     {
         _userManagementUnitOfWork = userManagementUnitOfWork;
         _mapper = mapper;
         _userAccountService = userAccountService;
         _paginationService = paginationService;
     }
-    public async Task AddPassengerAsync(AddPassengerDto passengerDto)
+    public async override Task<PassengerDto> CreateAsync(AddPassengerDto passengerDto)
     {
         try
         {
@@ -32,8 +34,8 @@ internal class PassengerService : IPassengerService
             {
                 Email = passengerDto.Email,
                 PasswordHash = passengerDto.Password,
-                Role = passengerDto.Role == "Passenger" ? Common.Domain.RoleEnum.Passenger : Common.Domain.RoleEnum.Admin,
-                Status = passengerDto.Active ? Common.Domain.StatusEnum.Active : Common.Domain.StatusEnum.Inactive
+                Role = passengerDto.Role,
+                Status = passengerDto.Active
             };
             _userManagementUnitOfWork.BeginTransaction();
             var accountDto = await _userAccountService.AddUserAccountAsync(account);
@@ -43,6 +45,7 @@ internal class PassengerService : IPassengerService
             await _userManagementUnitOfWork.SaveChangesAsync();
             await _userManagementUnitOfWork.CommitAsync();
             _userManagementUnitOfWork.Dispose();
+            return _mapper.Map<PassengerDto>(passenger);
         } 
         catch (Exception ex)
         {
@@ -52,7 +55,7 @@ internal class PassengerService : IPassengerService
         }
     }
 
-    public async Task<PassengerDto> GetPassengerByEmailAsync(string email)
+    public async Task<PassengerDto> GetByEmailAsync(string email)
     {
         try
         {
@@ -65,19 +68,7 @@ internal class PassengerService : IPassengerService
         }
     }
 
-    public async Task<PassengerDto> GetPassengerByIDAsync(Guid id)
-    {
-        try
-        {
-            var passenger = await _userManagementUnitOfWork.PassengerRepository.GetByIdAsync(id);
-            return _mapper.Map<PassengerDto>(passenger);
-        }
-        catch (Exception ex)
-        {
-            throw;
-        }
-    }
-    public async Task<PaginationResult<PaginatePassengerDto>> GetPassengerListAsync(
+    public async override Task<PaginationResult<PassengerDto>> GetListAsync(
         PaginationParams paginationParams,
         Specification<Passenger>? specification = null,
         List<Expression<Func<Passenger, object>>>? includes = null)
@@ -99,9 +90,9 @@ internal class PassengerService : IPassengerService
                 .GetQueryable(specification, includes);
             var paginatedResult = await _paginationService
                 .CreatePaginatedResultAsync(query, paginationParams);
-            return new PaginationResult<PaginatePassengerDto>
+            return new PaginationResult<PassengerDto>
             {
-                Data = _mapper.Map<List<PaginatePassengerDto>>(paginatedResult.Data),
+                Data = _mapper.Map<List<PassengerDto>>(paginatedResult.Data),
                 MetaData = paginatedResult.MetaData
             };
         }
@@ -110,28 +101,7 @@ internal class PassengerService : IPassengerService
             throw;
         }
     }
-    public async Task DeletePassengerAsync(Guid id)
-    {
-        try
-        {
-            var passenger = await _userManagementUnitOfWork.PassengerRepository.GetByIdAsync(id)
-                ?? throw new NotFoundException($"Passenger with id {id} not found");
-            var userAccountId = passenger.UserAccountId;
-            _userManagementUnitOfWork.BeginTransaction();
-            _userManagementUnitOfWork.PassengerRepository.Delete(passenger);
-            await _userAccountService.DeleteUserAccountByIdAsync(userAccountId);
-            await _userManagementUnitOfWork.SaveChangesAsync();
-            await _userManagementUnitOfWork.CommitAsync();
-            _userManagementUnitOfWork.Dispose();
-        }
-        catch (Exception ex)
-        {
-            _userManagementUnitOfWork.Rollback();
-            _userManagementUnitOfWork.Dispose();
-            throw;
-        }
-    }
-    public async Task UpdatePassengerAsync(Guid id, UpdatePassengerDto updatePassengerDto)
+    public async override Task<PassengerDto> UpdateAsync(Guid id, UpdatePassengerDto updatePassengerDto)
     {
         try
         {
@@ -142,13 +112,36 @@ internal class PassengerService : IPassengerService
             var updatedUserAccount = new UserAccountDto
             {
                 Email = updatePassengerDto.Email,
-                Role = updatePassengerDto.Role == "Passenger" ? Common.Domain.RoleEnum.Passenger : Common.Domain.RoleEnum.Admin,
-                Status = updatePassengerDto.Active ? Common.Domain.StatusEnum.Active : Common.Domain.StatusEnum.Inactive
+                Role = updatePassengerDto.Role,
+                Status = updatePassengerDto.Active
             };
             _userManagementUnitOfWork.BeginTransaction();
             await _userAccountService.UpdateUserAccountAsync(userAccount.Id, updatedUserAccount);
             _mapper.Map(updatePassengerDto, passenger);
             _userManagementUnitOfWork.PassengerRepository.Update(passenger);
+            await _userManagementUnitOfWork.SaveChangesAsync();
+            await _userManagementUnitOfWork.CommitAsync();
+            _userManagementUnitOfWork.Dispose();
+            return _mapper.Map<PassengerDto>(passenger);
+        }
+        catch (Exception ex)
+        {
+            _userManagementUnitOfWork.Rollback();
+            _userManagementUnitOfWork.Dispose();
+            throw;
+        }
+    }
+
+    public async override Task DeleteAsync(Guid id)
+    {
+        try
+        {
+            var passenger = await _userManagementUnitOfWork.PassengerRepository.GetByIdAsync(id)
+                ?? throw new NotFoundException($"Passenger with id {id} not found");
+            var userAccountId = passenger.UserAccountId;
+            _userManagementUnitOfWork.BeginTransaction();
+            _userManagementUnitOfWork.PassengerRepository.Delete(passenger);
+            await _userAccountService.DeleteUserAccountByIdAsync(userAccountId);
             await _userManagementUnitOfWork.SaveChangesAsync();
             await _userManagementUnitOfWork.CommitAsync();
             _userManagementUnitOfWork.Dispose();
