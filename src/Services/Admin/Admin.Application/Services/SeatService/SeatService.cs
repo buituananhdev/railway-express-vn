@@ -18,7 +18,9 @@ public class SeatService : ISeatService
     private const int LOCK_DURATION_MINUTES = 5;
     private const string LOCK_PREFIX = "lock:";
     private const string SEATS_CACHE_KEY = "seats:traincar:{0}";
-    private const int SEATS_CACHE_MINUTES = 30;
+    private const int SEATS_CACHE_MINUTES = 60;
+    private const string STATUS_CACHE_KEY = "status:schedule:{0}:date:{1}";
+    private const int STATUS_CACHE_MINUTES = 1;
 
     public SeatService(
         IAdminUnitOfWork adminUnitOfWork,
@@ -38,29 +40,56 @@ public class SeatService : ISeatService
     DateTime journeyDate)
     {
         var seatDtos = await GetSeatsFromCacheOrDatabaseAsync(trainCarId);
-        if (!seatDtos.Any())
+        string statusCacheKey = string.Format(STATUS_CACHE_KEY, trainScheduleId, journeyDate.Date.ToString("yyyyMMdd"));
+
+        var cachedStatus = await _cacheService.GetCacheAsync<Dictionary<string, bool>>(statusCacheKey);
+        Dictionary<string, bool> combinedStatus;
+
+        if (cachedStatus != null)
         {
-            return seatDtos;
+            combinedStatus = cachedStatus;
+        }
+        else
+        {
+            var bookingStatus = await GetBookingStatusAsync(seatDtos, trainScheduleId, journeyDate);
+
+            var lockKeys = seatDtos.Select(seat => GetLockKey(trainScheduleId, journeyDate, seat.Id)).ToArray();
+            var lockResults = await _cacheService.ExistsMultipleAsync(lockKeys);
+
+            combinedStatus = new Dictionary<string, bool>();
+            for (int i = 0; i < seatDtos.Count; i++)
+            {
+                string seatIdStr = seatDtos[i].Id.ToString();
+                var isBooked = bookingStatus.TryGetValue(seatIdStr, out var booked) && booked;
+                var isLocked = lockResults[i];
+
+                combinedStatus[seatIdStr] = isBooked || isLocked;
+            }
+
+            await _cacheService.SetCacheAsync(statusCacheKey, combinedStatus, TimeSpan.FromMinutes(STATUS_CACHE_MINUTES));
         }
 
-        var bookingStatusTask = GetBookingStatusAsync(seatDtos, trainScheduleId, journeyDate);
-        var lockStatusTask = GetLockStatusAsync(seatDtos, trainScheduleId, journeyDate);
-
-        var bookingStatus = await bookingStatusTask;
-        var lockStatus = await lockStatusTask;
-
-        for (int i = 0; i < seatDtos.Count; i++)
+        var result = new List<SeatDto>(seatDtos.Count);
+        foreach (var seat in seatDtos)
         {
-            string seatIdStr = seatDtos[i].Id.ToString();
-            var isBooked = bookingStatus.TryGetValue(seatIdStr, out var booked) && booked;
-            var isLocked = lockStatus[i];
+            var seatCopy = new SeatDto
+            {
+                Id = seat.Id,
+                SeatNumber = seat.SeatNumber,
+                TrainCarId = seat.TrainCarId,
+            };
 
-            seatDtos[i].Status = isBooked || isLocked
+            string seatIdStr = seatCopy.Id.ToString();
+            var isUnavailable = combinedStatus.TryGetValue(seatIdStr, out var unavailable) && unavailable;
+
+            seatCopy.Status = isUnavailable
                 ? Domain.Enums.SeatStatusEnum.Booked
                 : Domain.Enums.SeatStatusEnum.Available;
+
+            result.Add(seatCopy);
         }
 
-        return seatDtos;
+        return result;
     }
 
     private async Task<List<SeatDto>> GetSeatsFromCacheOrDatabaseAsync(Guid trainCarId)
@@ -124,7 +153,12 @@ public class SeatService : ISeatService
             )).ToList();
 
         await _cacheService.SetMultipleAsync(lockEntries, TimeSpan.FromMinutes(LOCK_DURATION_MINUTES));
-        return;
+
+        string statusCacheKey = string.Format(STATUS_CACHE_KEY,
+            lockSeatDto.ScheduleId,
+            lockSeatDto.JourneyDate.Date.ToString("yyyyMMdd"));
+
+        await _cacheService.RemoveCacheAsync(statusCacheKey);
     }
 
     private static string GetLockKey(Guid scheduleId, DateTime journeyDate, Guid seatId)
@@ -137,17 +171,23 @@ public class SeatService : ISeatService
         Guid scheduleId,
         DateTime journeyDate)
     {
+        string availableSeatsCacheKey = $"available:seats:{trainCarId}:{scheduleId}:{journeyDate.Date:yyyyMMdd}";
+        var cachedCount = await _cacheService.GetCacheAsync<int?>(availableSeatsCacheKey);
+
+        if (cachedCount.HasValue)
+        {
+            return cachedCount.Value;
+        }
+
         var seatDtos = await GetSeatsFromCacheOrDatabaseAsync(trainCarId);
         if (!seatDtos.Any())
         {
             return 0;
         }
 
-        var bookingStatusTask = GetBookingStatusAsync(seatDtos, scheduleId, journeyDate);
-        var lockStatusTask = GetLockStatusAsync(seatDtos, scheduleId, journeyDate);
+        var bookingStatus = await GetBookingStatusAsync(seatDtos, scheduleId, journeyDate);
 
-        var bookingStatus = await bookingStatusTask;
-        var lockStatus = await lockStatusTask;
+        var lockStatus = await GetLockStatusAsync(seatDtos, scheduleId, journeyDate);
 
         int availableSeats = 0;
 
@@ -162,6 +202,8 @@ public class SeatService : ISeatService
                 availableSeats++;
             }
         }
+
+        await _cacheService.SetCacheAsync(availableSeatsCacheKey, availableSeats, TimeSpan.FromSeconds(30));
 
         return availableSeats;
     }
