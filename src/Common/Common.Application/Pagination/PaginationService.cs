@@ -28,10 +28,13 @@ public class PaginationService : IPaginationService
         return new PaginationResult<T>
         {
             Data = items,
-            CurrentPage = pageNumber,
-            TotalPages = totalPages,
-            PageSize = pageSize,
-            TotalCount = totalCount
+            MetaData = new PaginationMetadata
+            {
+                CurrentPage = pageNumber,
+                TotalPages = totalPages,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            }
         };
     }
 }

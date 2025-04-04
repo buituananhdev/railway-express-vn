@@ -44,7 +44,7 @@ namespace Admin.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TrainCarId");
 
-                    b.ToTable("Seats");
+                    b.ToTable("Seats", (string)null);
                 });
 
             modelBuilder.Entity("Admin.Domain.Entities.Station", b =>
@@ -83,7 +83,7 @@ namespace Admin.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Stations");
+                    b.ToTable("Stations", (string)null);
                 });
 
             modelBuilder.Entity("Admin.Domain.Entities.Train", b =>
@@ -107,7 +107,7 @@ namespace Admin.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Trains");
+                    b.ToTable("Trains", (string)null);
                 });
 
             modelBuilder.Entity("Admin.Domain.Entities.TrainCar", b =>
@@ -141,7 +141,7 @@ namespace Admin.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TrainId");
 
-                    b.ToTable("TrainCars");
+                    b.ToTable("TrainCars", (string)null);
                 });
 
             modelBuilder.Entity("Admin.Domain.Entities.TrainSchedule", b =>
@@ -185,7 +185,7 @@ namespace Admin.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TrainId");
 
-                    b.ToTable("TrainSchedules");
+                    b.ToTable("TrainSchedules", (string)null);
                 });
 
             modelBuilder.Entity("Admin.Domain.Entities.TrainStatus", b =>
@@ -230,7 +230,7 @@ namespace Admin.Infrastructure.Persistence.Migrations
                     b.HasIndex("TrainId1")
                         .IsUnique();
 
-                    b.ToTable("TrainStatuses");
+                    b.ToTable("TrainStatuses", (string)null);
                 });
 
             modelBuilder.Entity("Admin.Domain.Entities.Seat", b =>

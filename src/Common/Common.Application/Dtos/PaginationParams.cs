@@ -12,4 +12,5 @@ public class PaginationParams
     }
     public string? SortBy { get; set; }
     public bool? IsSortAscending { get; set; } = true;
+    public bool? IsActive { get; set; } = true;
 }

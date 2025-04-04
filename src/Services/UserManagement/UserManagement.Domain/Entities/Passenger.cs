@@ -9,4 +9,4 @@ public class Passenger : BaseEntity
     public string? Address { get; set; }
     public Guid UserAccountId { get; set; }
     public UserAccount UserAccount { get; set; }
-}
+}   

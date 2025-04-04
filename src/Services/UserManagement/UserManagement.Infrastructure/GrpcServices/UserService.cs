@@ -41,7 +41,7 @@ public class UserService : User.UserBase
             };
         }
 
-        var user = await _passengerService.GetPassengerByEmailAsync(request.Email);
+        var user = await _passengerService.GetByEmailAsync(request.Email);
 
         return new UserGrpcResponse
         {
@@ -54,7 +54,7 @@ public class UserService : User.UserBase
     public override async Task<UserGrpcResponse> CreateUser(CreateUserRequest request, ServerCallContext context)
     {
         var createUserDto = _mapper.Map<AddPassengerDto>(request);
-        await _passengerService.AddPassengerAsync(createUserDto);
+        await _passengerService.CreateAsync(createUserDto);
         return new UserGrpcResponse
         {
             IsSuccess = true,

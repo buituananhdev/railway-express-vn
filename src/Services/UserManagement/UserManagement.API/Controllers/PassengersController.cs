@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+﻿using Common.Application.Dtos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UserManagement.Application.Dtos;
 using UserManagement.Application.Services;
@@ -19,7 +19,7 @@ public class PassengersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetPassengerById(Guid id)
     {
-        var passenger = await _passengerService.GetPassengerByIDAsync(id);
+        var passenger = await _passengerService.GetByIdAsync(id);
         return Ok(passenger);
     }
 
@@ -27,14 +27,32 @@ public class PassengersController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetPassengerByEmail([FromQuery] string email)
     {
-        var passenger = await _passengerService.GetPassengerByEmailAsync(email);
+        var passenger = await _passengerService.GetByEmailAsync(email);
         return Ok(passenger);
     }
 
     [HttpPost]
     public async Task<IActionResult> AddPassenger([FromBody] AddPassengerDto passengerDto)
     {
-        await _passengerService.AddPassengerAsync(passengerDto);
+        await _passengerService.CreateAsync(passengerDto);
+        return Ok();
+    }
+    [HttpGet("paging")]
+    public async Task<IActionResult> GetPassengersAsync([FromQuery] PaginationParams paginationParams)
+    {
+        var passengers = await _passengerService.GetListAsync(paginationParams);
+        return Ok(passengers);
+    }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeletePassenger(Guid id)
+    {
+        await _passengerService.DeleteAsync(id);
+        return Ok();
+    }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdatePassenger(Guid id, [FromBody] UpdatePassengerDto updatePassengerDto)
+    {
+        await _passengerService.UpdateAsync(id, updatePassengerDto);
         return Ok();
     }
 }
