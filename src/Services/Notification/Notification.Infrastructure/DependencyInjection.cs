@@ -37,6 +37,16 @@ public static class DependencyInjection
                     h.Password(settings.Password);
                 });
 
+                cfg.ReceiveEndpoint(settings.QueueName, e =>
+                {
+                    e.ConfigureConsumer<EmailConsumer>(context);
+                    e.ConfigureConsumer<PaymentSuccessComsumer>(context);
+
+                    e.UseMessageRetry(r => r.Exponential(5, TimeSpan.FromSeconds(1),
+                                                 TimeSpan.FromSeconds(30),
+                                                 TimeSpan.FromSeconds(5)));
+                });
+
                 cfg.ConfigureEndpoints(context);
             });
         });
