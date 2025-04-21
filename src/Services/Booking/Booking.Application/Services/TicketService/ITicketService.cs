@@ -19,5 +19,4 @@ public interface ITicketService
     Task<bool> IsSeatBookedForScheduleAsync(Guid seatId, Guid scheduleId, DateTime journeyDate);
     Task<Dictionary<Guid, bool>> AreSeatsBookedForScheduleAsync(List<Guid> seatIds, Guid scheduleId, DateTime journeyDate);
     Task UpdateTicketStatusAsync(Guid ticketId, TicketStatusEnum status);
-    Task<TicketDto> SearchTicketAsync(string ticketNumber, string email);
 }
