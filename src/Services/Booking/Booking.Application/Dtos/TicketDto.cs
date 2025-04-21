@@ -4,6 +4,7 @@ using Common.Application.Dtos;
 namespace Booking.Application.Dtos;
 public class TicketDto : BaseDto
 {
+    public string TicketNumber { get; set; }
     public Guid? PassengerId { get; set; }
     public Guid TrainId { get; set; }
     public List<Guid>? SeatIds { get; set; }

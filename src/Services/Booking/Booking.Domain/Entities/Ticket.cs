@@ -4,6 +4,7 @@ using Common.Domain;
 namespace Booking.Domain.Entities;
 public class Ticket : BaseEntity
 {
+    public string TicketNumber { get; set; }
     public Guid? PassengerId { get; set; }
     public Guid TrainId { get; set; }
     public List<Guid>? SeatIds { get; set; }
