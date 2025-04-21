@@ -41,6 +41,7 @@ namespace Booking.Application.Services
 
         public override async Task<TicketDto> CreateAsync(AddTicketDto createDto)
         {
+            createDto.TicketNumber = GenerateTicketNumber();
             if (createDto.SeatIds?.Count == 1)
             {
                 return await BookSingleSeatAsync(createDto);
@@ -251,6 +252,26 @@ namespace Booking.Application.Services
             {
                 throw;
             }
+        }
+
+        private string GenerateTicketNumber()
+        {
+            int remainingChars = 7;
+
+            string timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            Random random = new Random();
+            int randomPart = random.Next(1000);
+
+            string uniqueIdentifier = $"{timestamp}{randomPart:D3}";
+
+            if (uniqueIdentifier.Length > remainingChars)
+            {
+                uniqueIdentifier = uniqueIdentifier.Substring(uniqueIdentifier.Length - remainingChars);
+            }
+
+            string ticketNumber = $"#BO-{uniqueIdentifier}";
+
+            return ticketNumber;
         }
     }
 }
