@@ -1,23 +1,182 @@
+version: '3.8'
+
 services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/Gateway/ApiGateway/Dockerfile
+    ports:
+      - "8000:80"
+      - "8001:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ReverseProxy__Clusters__authCluster__Destinations__destination1__Address=http://auth-api
+      - ReverseProxy__Clusters__userManagementCluster__Destinations__destination1__Address=http://usermanagement-api
+      - ReverseProxy__Clusters__adminCluster__Destinations__destination1__Address=http://admin-api
+      - ReverseProxy__Clusters__bookingCluster__Destinations__destination1__Address=http://booking-api
+      - ReverseProxy__Clusters__paymentCluster__Destinations__destination1__Address=http://payment-api
+    depends_on:
+      - auth-api
+      - usermanagement-api
+      - admin-api
+      - booking-api
+      - payment-api
+    networks:
+      - railway-express-network
+
+  # Authentication Service
+  auth-api:
+    build:
+      context: .
+      dockerfile: src/Services/Authentication/Auth.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=railwayexpress_auth;User=root;Password=password;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - railway-express-network
+
+  # User Management Service
+  usermanagement-api:
+    build:
+      context: .
+      dockerfile: src/Services/UserManagement/UserManagement.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=railwayexpress_users;User=root;Password=password;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - railway-express-network
+
+  # Admin Service
+  admin-api:
+    build:
+      context: .
+      dockerfile: src/Services/Admin/Admin.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=railwayexpress_admin;User=root;Password=password;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - railway-express-network
+
+  # Booking Service
+  booking-api:
+    build:
+      context: .
+      dockerfile: src/Services/Booking/Booking.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=railwayexpress_booking;User=root;Password=password;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - railway-express-network
+
+  # Payment Service
+  payment-api:
+    build:
+      context: .
+      dockerfile: src/Services/Payment/Payment.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=railwayexpress_payment;User=root;Password=password;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - railway-express-network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=railwayexpress
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - railway-express-network
+
+  # RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management
     ports:
       - "5672:5672"
       - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - railway-express-network
 
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
+  # # Elasticsearch
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.7.1
+  #   environment:
+  #     - discovery.type=single-node
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #     - xpack.security.enabled=false
+  #   ports:
+  #     - "9200:9200"
+  #   volumes:
+  #     - elasticsearch-data:/usr/share/elasticsearch/data
+  #   networks:
+  #     - railway-express-network
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.4
-    environment:
-      - discovery.type=single-node
+  # # Kibana
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.7.1
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   ports:
+  #     - "5601:5601"
+  #   depends_on:
+  #     - elasticsearch
+  #   networks:
+  #     - railway-express-network
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.4
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
+  # # Logstash
+  # logstash:
+  #   image: docker.elastic.co/logstash/logstash:8.7.1
+  #   volumes:
+  #     - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+  #   ports:
+  #     - "5000:5000"
+  #   depends_on:
+  #     - elasticsearch
+  #   networks:
+  #     - railway-express-network
+
+networks:
+  railway-express-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  rabbitmq-data:
+  elasticsearch-data:

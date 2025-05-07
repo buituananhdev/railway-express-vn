@@ -10,23 +10,29 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Services/Admin/Admin.API/Admin.API.csproj", "Services/Admin/Admin.API/"]
-COPY ["Common/Common.API/Common.API.csproj", "Common/Common.API/"]
-COPY ["Common/Common.Application/Common.Application.csproj", "Common/Common.Application/"]
-COPY ["Common/Common.Domain/Common.Domain.csproj", "Common/Common.Domain/"]
-COPY ["Common/Common.Infrastructure/Common.Infrastructure.csproj", "Common/Common.Infrastructure/"]
-COPY ["Services/Admin/Admin.Application/Admin.Application.csproj", "Services/Admin/Admin.Application/"]
-COPY ["Services/Admin/Admin.Domain/Admin.Domain.csproj", "Services/Admin/Admin.Domain/"]
-COPY ["Services/Admin/Admin.Infrastructure/Admin.Infrastructure.csproj", "Services/Admin/Admin.Infrastructure/"]
-RUN dotnet restore "./Services/Admin/Admin.API/Admin.API.csproj"
+
+COPY ["RailwayExpressVN.ServiceDefaults/RailwayExpressVN.ServiceDefaults.csproj", "RailwayExpressVN.ServiceDefaults/"]
+COPY ["src/Common/Common.API/Common.API.csproj", "src/Common/Common.API/"]
+COPY ["src/Common/Common.Application/Common.Application.csproj", "src/Common/Common.Application/"]
+COPY ["src/Common/Common.Contracts/Common.Contracts.csproj", "src/Common/Common.Contracts/"]
+COPY ["src/Common/Common.Domain/Common.Domain.csproj", "src/Common/Common.Domain/"]
+COPY ["src/Common/Common.Infrastructure/Common.Infrastructure.csproj", "src/Common/Common.Infrastructure/"]
+
+COPY ["src/Services/Admin/Admin.API/Admin.API.csproj", "src/Services/Admin/Admin.API/"]
+COPY ["src/Services/Admin/Admin.Application/Admin.Application.csproj", "src/Services/Admin/Admin.Application/"]
+COPY ["src/Services/Admin/Admin.Domain/Admin.Domain.csproj", "src/Services/Admin/Admin.Domain/"]
+COPY ["src/Services/Admin/Admin.Infrastructure/Admin.Infrastructure.csproj", "src/Services/Admin/Admin.Infrastructure/"]
+
+RUN dotnet restore "src/Services/Admin/Admin.API/Admin.API.csproj"
+
 COPY . .
-WORKDIR "/src/Services/Admin/Admin.API"
-RUN dotnet build "./Admin.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/src/Services/Admin/Admin.API"
+RUN dotnet build "Admin.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Admin.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Admin.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final

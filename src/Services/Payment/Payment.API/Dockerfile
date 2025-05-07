@@ -4,24 +4,32 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
-
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["Services/Payment/Payment.API/Payment.API.csproj", "Services/Payment/Payment.API/"]
-RUN dotnet restore "./Services/Payment/Payment.API/Payment.API.csproj"
+
+COPY ["RailwayExpressVN.ServiceDefaults/RailwayExpressVN.ServiceDefaults.csproj", "RailwayExpressVN.ServiceDefaults/"]
+COPY ["src/Common/Common.API/Common.API.csproj", "src/Common/Common.API/"]
+COPY ["src/Common/Common.Application/Common.Application.csproj", "src/Common/Common.Application/"]
+COPY ["src/Common/Common.Contracts/Common.Contracts.csproj", "src/Common/Common.Contracts/"]
+COPY ["src/Common/Common.Domain/Common.Domain.csproj", "src/Common/Common.Domain/"]
+COPY ["src/Common/Common.Infrastructure/Common.Infrastructure.csproj", "src/Common/Common.Infrastructure/"]
+
+COPY ["src/Services/Payment/Payment.API/Payment.API.csproj", "src/Services/Payment/Payment.API/"]
+COPY ["src/Services/Payment/Payment.Application/Payment.Application.csproj", "src/Services/Payment/Payment.Application/"]
+COPY ["src/Services/Payment/Payment.Domain/Payment.Domain.csproj", "src/Services/Payment/Payment.Domain/"]
+COPY ["src/Services/Payment/Payment.Infrastructure/Payment.Infrastructure.csproj", "src/Services/Payment/Payment.Infrastructure/"]
+RUN dotnet restore "src/Services/Payment/Payment.API/Payment.API.csproj"
 COPY . .
-WORKDIR "/src/Services/Payment/Payment.API"
-RUN dotnet build "./Payment.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/src/Services/Payment/Payment.API"
+RUN dotnet build "Payment.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Payment.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Payment.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
