@@ -15,10 +15,7 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-# region gRPC configrations
-app.MapGrpcService<GreeterService>();
 app.MapGrpcService<UserService>();
-# endregion
 
 app.UseBaseConfig();
 app.Run();

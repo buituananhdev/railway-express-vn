@@ -110,6 +110,23 @@ services:
     networks:
       - railway-express-network
 
+  # Notification Service
+  notification-api:
+    build:
+      context: .
+      dockerfile: src/Services/Notification/Notification.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=mysql;Port=3306;Database=railwayexpress_payment;User=root;Password=password;
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+    depends_on:
+      - mysql
+      - rabbitmq
+    networks:
+      - railway-express-network
+
   # MySQL Database
   mysql:
     image: mysql:8.0

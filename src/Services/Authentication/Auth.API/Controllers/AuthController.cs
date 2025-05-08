@@ -7,12 +7,10 @@ namespace Auth.API.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private readonly IGreeterGrpcService _greeterGrpcService;
     private readonly IAuthService _authService;
 
-    public AuthController(IAuthService authService, IGreeterGrpcService greeterGrpcService)
+    public AuthController(IAuthService authService)
     {
-        _greeterGrpcService = greeterGrpcService;
         _authService = authService;
     }
 
@@ -28,12 +26,5 @@ public class AuthController : ControllerBase
     {
         await _authService.RegisterAsync(request);
         return Ok();
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> Greeter(string name)
-    {
-        var response = await _greeterGrpcService.SayHelloAsync(name, CancellationToken.None);
-        return Ok(response);
     }
 }
