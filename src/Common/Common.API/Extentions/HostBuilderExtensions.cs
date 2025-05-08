@@ -18,12 +18,12 @@ public static class HostBuilderExtensions
     {
         if (builder.Environment.IsProduction())
         {
-            builder.Configuration.AddJsonFile(Path.Combine(PathHelper.GetRootDirectory(), "Common", "Common.API", "appsettings.json"), optional: false, reloadOnChange: true);
+            var keyVaultUrl = new Uri($"https://railway-vault.vault.azure.net/");
+            builder.Configuration.AddAzureKeyVault(keyVaultUrl, new DefaultAzureCredential());
         }
         else
         {
-            var keyVaultUrl = new Uri($"https://railway-vault.vault.azure.net/");
-            builder.Configuration.AddAzureKeyVault(keyVaultUrl, new DefaultAzureCredential());
+            builder.Configuration.AddJsonFile(Path.Combine(PathHelper.GetRootDirectory(), "Common", "Common.API", "appsettings.common.json"), optional: false, reloadOnChange: true);
         }
 
         builder.Services.AddControllers();

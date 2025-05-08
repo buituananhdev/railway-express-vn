@@ -26,27 +26,32 @@ jobs:
           - service: auth-api
             dockerfile: src/Services/Authentication/Auth.API/Dockerfile
             port: 80
-            ingress: internal
+            ingress: external
             
           - service: usermanagement-api
             dockerfile: src/Services/UserManagement/UserManagement.API/Dockerfile
             port: 80
-            ingress: internal
+            ingress: external
             
           - service: admin-api
             dockerfile: src/Services/Admin/Admin.API/Dockerfile
             port: 80
-            ingress: internal
+            ingress: external
             
           - service: booking-api
             dockerfile: src/Services/Booking/Booking.API/Dockerfile
             port: 80
-            ingress: internal
+            ingress: external
             
           - service: payment-api
             dockerfile: src/Services/Payment/Payment.API/Dockerfile
             port: 80
-            ingress: internal
+            ingress: external
+
+          - service: notification-api
+            dockerfile: src/Services/Notification/Notification.API/Dockerfile
+            port: 80
+            ingress: external
 
     steps:
       - name: Checkout code
@@ -124,6 +129,14 @@ jobs:
             cpu: 0.5
             memory: "1Gi"
 
+          - service: notification-api
+            port: 80
+            ingress: external
+            min_replicas: 1
+            max_replicas: 3
+            cpu: 0.5
+            memory: "1Gi"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -183,7 +196,6 @@ jobs:
             --cpu ${{ matrix.cpu }} \
             --memory ${{ matrix.memory }} \
             --env-vars "SERVICE_VERSION=$SHORT_SHA" "ENVIRONMENT=production" "API_GATEWAY_URL=$GATEWAY_URL" \
-            --secrets "DB_CONNECTION=${{ secrets.DB_CONNECTION }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
             --revision-suffix $SHORT_SHA
 
       - name: Update Container App
@@ -198,7 +210,6 @@ jobs:
             --cpu ${{ matrix.cpu }} \
             --memory ${{ matrix.memory }} \
             --env-vars "SERVICE_VERSION=$SHORT_SHA" "ENVIRONMENT=production" "API_GATEWAY_URL=$GATEWAY_URL" \
-            --secrets "DB_CONNECTION=${{ secrets.DB_CONNECTION }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
             --revision-suffix $SHORT_SHA
 
       - name: Add Health Probe to Container App
