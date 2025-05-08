@@ -82,47 +82,47 @@ jobs:
             min_replicas: 1
             max_replicas: 5
             cpu: 0.5
-            memory: 1.0Gi
+            memory: "1Gi"
             
           - service: auth-api
             port: 80
-            ingress: internal
+            ingress: external
             min_replicas: 1
             max_replicas: 3
             cpu: 0.5
-            memory: 1.0Gi
+            memory: "1Gi"
             
           - service: usermanagement-api
             port: 80
-            ingress: internal
+            ingress: external
             min_replicas: 1
             max_replicas: 3
             cpu: 0.5
-            memory: 1.0Gi
+            memory: "1Gi"
             
           - service: admin-api
             port: 80
-            ingress: internal
+            ingress: external
             min_replicas: 1
             max_replicas: 3
             cpu: 0.5
-            memory: 1.0Gi
+            memory: "1Gi"
             
           - service: booking-api
             port: 80
-            ingress: internal
+            ingress: external
             min_replicas: 1
             max_replicas: 3
             cpu: 0.5
-            memory: 1.0Gi
+            memory: "1Gi"
             
           - service: payment-api
             port: 80
-            ingress: internal
+            ingress: external
             min_replicas: 1
             max_replicas: 3
             cpu: 0.5
-            memory: 1.0Gi
+            memory: "1Gi"
 
     steps:
       - name: Checkout code
@@ -167,6 +167,8 @@ jobs:
       - name: Create Container App
         if: steps.check_app.outputs.app_exists != 'true'
         run: |
+          GATEWAY_URL="https://railway-api-gateway.${{ steps.environment.outputs.env_name }}.azurecontainerapps.io"
+          
           az containerapp create \
             --name railway-${{ matrix.service }} \
             --resource-group $RESOURCE_GROUP \
@@ -180,37 +182,55 @@ jobs:
             --max-replicas ${{ matrix.max_replicas }} \
             --cpu ${{ matrix.cpu }} \
             --memory ${{ matrix.memory }} \
-            --env-vars "SERVICE_VERSION=$SHORT_SHA" "ENVIRONMENT=production" \
-            --query-params "API_GATEWAY_URL=https://railway-api-gateway.${steps.environment.outputs.env_name}.azurecontainerapps.io" \
+            --env-vars "SERVICE_VERSION=$SHORT_SHA" "ENVIRONMENT=production" "API_GATEWAY_URL=$GATEWAY_URL" \
             --secrets "DB_CONNECTION=${{ secrets.DB_CONNECTION }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
             --revision-suffix $SHORT_SHA
 
       - name: Update Container App
         if: steps.check_app.outputs.app_exists == 'true'
         run: |
+          GATEWAY_URL="https://railway-api-gateway.${{ steps.environment.outputs.env_name }}.azurecontainerapps.io"
+          
           az containerapp update \
             --name railway-${{ matrix.service }} \
             --resource-group $RESOURCE_GROUP \
             --image $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA \
             --cpu ${{ matrix.cpu }} \
             --memory ${{ matrix.memory }} \
-            --env-vars "SERVICE_VERSION=$SHORT_SHA" "ENVIRONMENT=production" \
-            --query-params "API_GATEWAY_URL=https://railway-api-gateway.${steps.environment.outputs.env_name}.azurecontainerapps.io" \
+            --env-vars "SERVICE_VERSION=$SHORT_SHA" "ENVIRONMENT=production" "API_GATEWAY_URL=$GATEWAY_URL" \
             --secrets "DB_CONNECTION=${{ secrets.DB_CONNECTION }}" "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" \
             --revision-suffix $SHORT_SHA
 
-      # - name: Add Health Probe to Container App
-      #   run: |
-      #     az containerapp revision set-healthprobe \
-      #       --name railway-${{ matrix.service }} \
-      #       --resource-group $RESOURCE_GROUP \
-      #       --probe-name liveness \
-      #       --type liveness \
-      #       --protocol HTTP \
-      #       --path /health \
-      #       --port ${{ matrix.port }} \
-      #       --initial-delay 30 \
-      #       --period 10 \
-      #       --timeout 5 \
-      #       --success-count 1 \
-      #       --failure-count 3
+      - name: Add Health Probe to Container App
+        run: |
+          # The command may fail if the container app is not yet fully deployed,
+          # so we'll add a retry mechanism
+          max_retries=3
+          retry_count=0
+          
+          while [ $retry_count -lt $max_retries ]; do
+            if az containerapp revision set-healthprobe \
+              --name railway-${{ matrix.service }} \
+              --resource-group $RESOURCE_GROUP \
+              --probe-name liveness \
+              --type liveness \
+              --protocol HTTP \
+              --path /health \
+              --port ${{ matrix.port }} \
+              --initial-delay 30 \
+              --period 10 \
+              --timeout 5 \
+              --success-count 1 \
+              --failure-count 3; then
+              echo "Health probe set successfully"
+              break
+            else
+              retry_count=$((retry_count+1))
+              if [ $retry_count -lt $max_retries ]; then
+                echo "Failed to set health probe, retrying in 10 seconds..."
+                sleep 10
+              else
+                echo "Failed to set health probe after $max_retries attempts"
+              fi
+            fi
+          done
