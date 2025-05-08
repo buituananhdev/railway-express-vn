@@ -9,17 +9,22 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Common.Infrastructure;
 using Common.Application;
+using Azure.Identity;
 
 namespace Common.API.Extentions;
 public static class HostBuilderExtensions
 {
     public static void UseBaseBuilder(this WebApplicationBuilder builder)
     {
-        string configPath = builder.Environment.IsProduction()
-            ? Path.Combine(AppContext.BaseDirectory, "appsettings.common.json")
-            : Path.Combine(PathHelper.GetRootDirectory(), "Common", "Common.API", "appsettings.common.json");
-
-        builder.Configuration.AddJsonFile(configPath, optional: false, reloadOnChange: true);
+        if (builder.Environment.IsProduction())
+        {
+            builder.Configuration.AddJsonFile(Path.Combine(PathHelper.GetRootDirectory(), "Common", "Common.API", "appsettings.json"), optional: false, reloadOnChange: true);
+        }
+        else
+        {
+            var keyVaultUrl = new Uri($"https://railway-vault.vault.azure.net/");
+            builder.Configuration.AddAzureKeyVault(keyVaultUrl, new DefaultAzureCredential());
+        }
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
