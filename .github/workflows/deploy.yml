@@ -209,7 +209,7 @@ jobs:
             --image $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA \
             --cpu ${{ matrix.cpu }} \
             --memory ${{ matrix.memory }} \
-            --env-vars "SERVICE_VERSION=$SHORT_SHA" "ENVIRONMENT=production" "API_GATEWAY_URL=$GATEWAY_URL" \
+            --set-env-vars SERVICE_VERSION=$SHORT_SHA ENVIRONMENT=production API_GATEWAY_URL=$GATEWAY_URL \
             --revision-suffix $SHORT_SHA
 
       - name: Add Health Probe to Container App
