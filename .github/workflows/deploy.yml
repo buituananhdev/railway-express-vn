@@ -83,6 +83,7 @@ jobs:
         include:
           - service: api-gateway
             port: 80
+            additional_port: ""
             ingress: external
             min_replicas: 1
             max_replicas: 5
@@ -91,6 +92,7 @@ jobs:
             
           - service: auth-api
             port: 80
+            additional_port: ""
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -108,6 +110,7 @@ jobs:
             
           - service: admin-api
             port: 80
+            additional_port: ""
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -134,6 +137,7 @@ jobs:
 
           - service: notification-api
             port: 80
+            additional_port: ""
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -189,24 +193,30 @@ jobs:
           echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
           echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
 
-      - name: Generate YAML for Container App
+      - name: Generate Container App YAML
         if: steps.check_app.outputs.app_exists != 'true'
         run: |
+          ADDITIONAL_PORTS=""
+          if [ -n "${{ matrix.additional_port }}" ]; then
+            ADDITIONAL_PORTS="additionalPortMappings:
+              - external: ${{ matrix.ingress == 'external' }}
+                targetPort: ${{ matrix.additional_port }}
+                exposedPort: ${{ matrix.additional_port }}"
+          fi
+
           cat <<EOF > containerapp.yaml
-          location: $LOCATION
-          name: railway-${{ matrix.service }}
-          type: Microsoft.App/containerApps
-          properties:
-            managedEnvironmentId: /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/managedEnvironments/${{ steps.environment.outputs.env_name }}
+          apiVersion: apps.microsoft.com/v1
+          kind: ContainerApp
+          metadata:
+            name: railway-${{ matrix.service }}
+            location: $LOCATION
+          spec:
+            environmentId: /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/managedEnvironments/${{ steps.environment.outputs.env_name }}
             configuration:
               ingress:
-                external: true
+                external: ${{ matrix.ingress == 'external' }}
                 targetPort: ${{ matrix.port }}
-                transport: auto
-                additionalPortMappings:
-                  - exposedPort: ${{ matrix.additional_port }}
-                    targetPort: ${{ matrix.additional_port }}
-                    external: true
+                $ADDITIONAL_PORTS
               registries:
                 - server: $ACR_NAME.azurecr.io
                   username: $ACR_USERNAME
@@ -214,13 +224,6 @@ jobs:
               secrets:
                 - name: acr-password
                   value: $ACR_PASSWORD
-              activeRevisionsMode: Single
-              revisionSuffix: init
-              environmentVariables:
-                - name: SERVICE_VERSION
-                  value: init
-                - name: ENVIRONMENT
-                  value: production
             template:
               containers:
                 - name: ${{ matrix.service }}
@@ -232,7 +235,6 @@ jobs:
                 minReplicas: ${{ matrix.min_replicas }}
                 maxReplicas: ${{ matrix.max_replicas }}
           EOF
-
 
       - name: Create Container App
         if: steps.check_app.outputs.app_exists != 'true'
