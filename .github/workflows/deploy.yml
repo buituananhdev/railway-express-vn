@@ -99,14 +99,14 @@ jobs:
         with:
           imageToDeploy: ${{ env.ACR_NAME }}.azurecr.io/${{ matrix.service }}:${{ env.SHORT_SHA }}
           resourceGroup: ${{ env.RESOURCE_GROUP }}
-          containerAppName: ${{ matrix.service }}
+          containerAppName: railway-${{ matrix.service }}
           environmentVariables: |
             ASPNETCORE_ENVIRONMENT=Production
 
       - name: Get Deployed App URL
         run: |
           az containerapp show \
-            --name ${{ matrix.service }} \
+            --name railway-${{ matrix.service }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --query properties.configuration.ingress.fqdn \
             --output tsv
