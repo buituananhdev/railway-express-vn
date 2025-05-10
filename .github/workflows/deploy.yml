@@ -10,7 +10,6 @@ env:
   ACR_NAME: railwayacr4601
   RESOURCE_GROUP: railway-resource
   LOCATION: southeastasia
-  VERSION: ${{ github.sha }}
 
 jobs:
   build-and-push:
@@ -20,42 +19,30 @@ jobs:
         include:
           - service: api-gateway
             dockerfile: src/Gateway/ApiGateway/Dockerfile
-            port: 80
-            ingress: external
-            
           - service: auth-api
             dockerfile: src/Services/Authentication/Auth.API/Dockerfile
-            port: 80
-            ingress: external
-            
           - service: usermanagement-api
             dockerfile: src/Services/UserManagement/UserManagement.API/Dockerfile
-            port: 80
-            ingress: external
-            
           - service: admin-api
             dockerfile: src/Services/Admin/Admin.API/Dockerfile
-            port: 80
-            ingress: external
-            
           - service: booking-api
             dockerfile: src/Services/Booking/Booking.API/Dockerfile
-            port: 80
-            ingress: external
-            
           - service: payment-api
             dockerfile: src/Services/Payment/Payment.API/Dockerfile
-            port: 80
-            ingress: external
-
           - service: notification-api
             dockerfile: src/Services/Notification/Notification.API/Dockerfile
-            port: 80
-            ingress: external
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Build
+        run: dotnet build --configuration Release
 
       - name: Set short SHA for versioning
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
@@ -66,14 +53,17 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: ACR Login
-        run: az acr login --name $ACR_NAME
+        run: az acr login --name ${{ env.ACR_NAME }}
 
       - name: Build and Push Image
-        run: |
-          echo "Building and pushing ${{ matrix.service }}:$SHORT_SHA"
-          docker build -t $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA -t $ACR_NAME.azurecr.io/${{ matrix.service }}:latest -f ${{ matrix.dockerfile }} .
-          docker push $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA
-          docker push $ACR_NAME.azurecr.io/${{ matrix.service }}:latest
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.ACR_NAME }}.azurecr.io/${{ matrix.service }}:${{ env.SHORT_SHA }}
+            ${{ env.ACR_NAME }}.azurecr.io/${{ matrix.service }}:latest
 
   deploy:
     needs: build-and-push
@@ -82,71 +72,16 @@ jobs:
       matrix:
         include:
           - service: api-gateway
-            port: 80
-            additional_port: 7002
-            ingress: external
-            min_replicas: 1
-            max_replicas: 5
-            cpu: 0.5
-            memory: "1Gi"
-            
           - service: auth-api
-            port: 80
-            additional_port: 7002
-            ingress: external
-            min_replicas: 1
-            max_replicas: 3
-            cpu: 0.5
-            memory: "1Gi"
-            
           - service: usermanagement-api
-            port: 80
-            additional_port: 7002
-            ingress: external
-            min_replicas: 1
-            max_replicas: 3
-            cpu: 0.5
-            memory: "1Gi"
-            
           - service: admin-api
-            port: 80
-            additional_port: 7002
-            ingress: external
-            min_replicas: 1
-            max_replicas: 3
-            cpu: 0.5
-            memory: "1Gi"
-            
           - service: booking-api
-            port: 80
-            additional_port: 7002
-            ingress: external
-            min_replicas: 1
-            max_replicas: 3
-            cpu: 0.5
-            memory: "1Gi"
-            
           - service: payment-api
-            port: 80
-            additional_port: 7002
-            ingress: external
-            min_replicas: 1
-            max_replicas: 3
-            cpu: 0.5
-            memory: "1Gi"
-
           - service: notification-api
-            port: 80
-            additional_port: 7002
-            ingress: external
-            min_replicas: 1
-            max_replicas: 3
-            cpu: 0.5
-            memory: "1Gi"
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set short SHA for versioning
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
@@ -156,121 +91,23 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Check if Container App exists
-        id: check_app
-        continue-on-error: true
-        run: |
-          EXISTS=$(az containerapp show --name railway-${{ matrix.service }} --resource-group $RESOURCE_GROUP --query name -o tsv 2>/dev/null || echo "false")
-          if [ "$EXISTS" != "false" ]; then
-            echo "Container app exists, will update"
-            echo "app_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "Container app does not exist, will create"
-            echo "app_exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Container App Environment if not exists
-        id: environment
-        run: |
-          ENV_EXISTS=$(az containerapp env list --resource-group $RESOURCE_GROUP --query "[?name=='railway-env'].name" -o tsv)
-          if [ -z "$ENV_EXISTS" ]; then
-            echo "Creating Container App Environment"
-            az containerapp env create \
-              --name railway-env \
-              --resource-group $RESOURCE_GROUP \
-              --location $LOCATION
-          else
-            echo "Container App Environment already exists"
-          fi
-          echo "env_name=railway-env" >> $GITHUB_OUTPUT
-
       - name: Login to ACR
-        run: | 
-          az acr login --name $ACR_NAME
-          CREDS=$(az acr credential show --name $ACR_NAME)
-          ACR_USERNAME=$(echo "$CREDS" | jq -r '.username')
-          ACR_PASSWORD=$(echo "$CREDS" | jq -r '.passwords[0].value')
-          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
-          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
+        run: az acr login --name ${{ env.ACR_NAME }}
 
-      - name: Generate Container App YAML
-        if: steps.check_app.outputs.app_exists != 'true'
+      - name: Deploy Container App
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          imageToDeploy: ${{ env.ACR_NAME }}.azurecr.io/${{ matrix.service }}:${{ env.SHORT_SHA }}
+          resourceGroup: ${{ env.RESOURCE_GROUP }}
+          containerAppName: ${{ matrix.service }}
+          environmentVariables: |
+            ASPNETCORE_ENVIRONMENT=Production
+
+      - name: Get Deployed App URL
         run: |
-          cat <<EOF > containerapp.yaml
-          apiVersion: apps.microsoft.com/v1
-          kind: ContainerApp
-          metadata:
-            name: railway-${{ matrix.service }}
-            location: $LOCATION
-          spec:
-            environmentId: /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/managedEnvironments/${{ steps.environment.outputs.env_name }}
-            configuration:
-              ingress:
-                external: ${{ matrix.ingress == 'external' }}
-                targetPort: ${{ matrix.port }}
-                additionalPortMappings:
-                  - external: true
-                    targetPort: ${{ matrix.additional_port }}
-                    exposedPort: ${{ matrix.additional_port }}
-              registries:
-                - server: $ACR_NAME.azurecr.io
-                  username: $ACR_USERNAME
-                  passwordSecretRef: acr-password
-              secrets:
-                - name: acr-password
-                  value: $ACR_PASSWORD
-            template:
-              containers:
-                - name: ${{ matrix.service }}
-                  image: $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA
-                  resources:
-                    cpu: ${{ matrix.cpu }}
-                    memory: ${{ matrix.memory }}
-              scale:
-                minReplicas: ${{ matrix.min_replicas }}
-                maxReplicas: ${{ matrix.max_replicas }}
-          EOF
+          az containerapp show \
+            --name ${{ matrix.service }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv
 
-      - name: Create Container App
-        if: steps.check_app.outputs.app_exists != 'true'
-        run: |
-          az containerapp create \
-            --name railway-${{ matrix.service }} \
-            --resource-group $RESOURCE_GROUP \
-            --yaml containerapp.yaml
-
-          sleep 5
-
-          IDENTITY_OBJECT_ID=$(az containerapp show \
-            --name railway-${{ matrix.service }} \
-            --resource-group $RESOURCE_GROUP \
-            --query "identity.principalId" \
-            --output tsv)
-
-          SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-
-          az role assignment create \
-            --assignee $IDENTITY_OBJECT_ID \
-            --role acrpull \
-            --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ContainerRegistry/registries/$ACR_NAME
-
-      - name: Update Container App
-        if: steps.check_app.outputs.app_exists == 'true'
-        run: |
-          az containerapp registry set \
-            --name railway-${{ matrix.service }} \
-            --resource-group $RESOURCE_GROUP \
-            --server $ACR_NAME.azurecr.io \
-            --username $ACR_USERNAME \
-            --password $ACR_PASSWORD
-
-          az containerapp update \
-            --name railway-${{ matrix.service }} \
-            --resource-group $RESOURCE_GROUP \
-            --image $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA \
-            --cpu ${{ matrix.cpu }} \
-            --memory ${{ matrix.memory }} \
-            --min-replicas ${{ matrix.min_replicas }} \
-            --max-replicas ${{ matrix.max_replicas }} \
-            --set-env-vars SERVICE_VERSION=$SHORT_SHA ENVIRONMENT=production \
-            --revision-suffix $SHORT_SHA
