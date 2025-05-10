@@ -280,8 +280,6 @@ foreach ($svc in $services) {
                 --image $image `
                 --ingress external `
                 --target-port $config.port `
-                --min-replicas $config.minReplicas `
-                --max-replicas $config.maxReplicas `
                 --cpu $config.cpu `
                 --memory $config.memory `
                 --env-vars $envVars `
