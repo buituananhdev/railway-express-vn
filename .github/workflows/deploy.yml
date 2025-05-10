@@ -99,6 +99,7 @@ jobs:
             
           - service: usermanagement-api
             port: 80
+            additional_port: 7002
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -115,6 +116,7 @@ jobs:
             
           - service: booking-api
             port: 80
+            additional_port: 7002
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -123,6 +125,7 @@ jobs:
             
           - service: payment-api
             port: 80
+            additional_port: 7002
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -186,25 +189,58 @@ jobs:
           echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
           echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
 
+      - name: Generate YAML for Container App
+        if: steps.check_app.outputs.app_exists != 'true'
+        run: |
+          cat <<EOF > containerapp.yaml
+          location: $LOCATION
+          name: railway-${{ matrix.service }}
+          type: Microsoft.App/containerApps
+          properties:
+            managedEnvironmentId: /subscriptions/$(az account show --query id -o tsv)/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.App/managedEnvironments/${{ steps.environment.outputs.env_name }}
+            configuration:
+              ingress:
+                external: true
+                targetPort: ${{ matrix.port }}
+                transport: auto
+                additionalPortMappings:
+                  - exposedPort: ${{ matrix.additional_port }}
+                    targetPort: ${{ matrix.additional_port }}
+                    external: true
+              registries:
+                - server: $ACR_NAME.azurecr.io
+                  username: $ACR_USERNAME
+                  passwordSecretRef: acr-password
+              secrets:
+                - name: acr-password
+                  value: $ACR_PASSWORD
+              activeRevisionsMode: Single
+              revisionSuffix: init
+              environmentVariables:
+                - name: SERVICE_VERSION
+                  value: init
+                - name: ENVIRONMENT
+                  value: production
+            template:
+              containers:
+                - name: ${{ matrix.service }}
+                  image: $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA
+                  resources:
+                    cpu: ${{ matrix.cpu }}
+                    memory: ${{ matrix.memory }}
+              scale:
+                minReplicas: ${{ matrix.min_replicas }}
+                maxReplicas: ${{ matrix.max_replicas }}
+          EOF
+
+
       - name: Create Container App
         if: steps.check_app.outputs.app_exists != 'true'
         run: |
           az containerapp create \
             --name railway-${{ matrix.service }} \
             --resource-group $RESOURCE_GROUP \
-            --environment ${{ steps.environment.outputs.env_name }} \
-            --image $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA \
-            --ingress ${{ matrix.ingress }} \
-            --target-port ${{ matrix.port }} \
-            --min-replicas ${{ matrix.min_replicas }} \
-            --max-replicas ${{ matrix.max_replicas }} \
-            --cpu ${{ matrix.cpu }} \
-            --memory ${{ matrix.memory }} \
-            --env-vars "SERVICE_VERSION=init" "ENVIRONMENT=production" \
-            --registry-server $ACR_NAME.azurecr.io" \
-            --registry-username $ACR_USERNAME \
-            --registry-password $ACR_PASSWORD \
-            --revision-suffix init
+            --yaml containerapp.yaml
 
           sleep 5
 
