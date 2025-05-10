@@ -177,6 +177,15 @@ jobs:
           fi
           echo "env_name=railway-env" >> $GITHUB_OUTPUT
 
+      - name: Login to ACR
+        run: | 
+          az acr login --name $ACR_NAME
+          CREDS=$(az acr credential show --name $ACR_NAME)
+          ACR_USERNAME=$(echo "$CREDS" | jq -r '.username')
+          ACR_PASSWORD=$(echo "$CREDS" | jq -r '.passwords[0].value')
+          echo "ACR_USERNAME=$ACR_USERNAME" >> $GITHUB_ENV
+          echo "ACR_PASSWORD=$ACR_PASSWORD" >> $GITHUB_ENV
+
       - name: Create Container App
         if: steps.check_app.outputs.app_exists != 'true'
         run: |
@@ -184,7 +193,7 @@ jobs:
             --name railway-${{ matrix.service }} \
             --resource-group $RESOURCE_GROUP \
             --environment ${{ steps.environment.outputs.env_name }} \
-            --image mcr.microsoft.com/oss/nginx/nginx:1.15.5-alpine \
+            --image $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA \
             --ingress ${{ matrix.ingress }} \
             --target-port ${{ matrix.port }} \
             --min-replicas ${{ matrix.min_replicas }} \
@@ -192,8 +201,12 @@ jobs:
             --cpu ${{ matrix.cpu }} \
             --memory ${{ matrix.memory }} \
             --env-vars "SERVICE_VERSION=init" "ENVIRONMENT=production" \
-            --revision-suffix init \
-            --identity "SystemAssigned"
+            --registry-server $ACR_NAME.azurecr.io" \
+            --registry-username $ACR_USERNAME \
+            --registry-password $ACR_PASSWORD \
+            --revision-suffix init
+
+          sleep 5
 
           IDENTITY_OBJECT_ID=$(az containerapp show \
             --name railway-${{ matrix.service }} \
@@ -208,23 +221,23 @@ jobs:
             --role acrpull \
             --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.ContainerRegistry/registries/$ACR_NAME
 
-          az containerapp update \
-            --name railway-${{ matrix.service }} \
-            --resource-group $RESOURCE_GROUP \
-            --image $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA \
-            --cpu ${{ matrix.cpu }} \
-            --memory ${{ matrix.memory }} \
-            --set-env-vars SERVICE_VERSION=$SHORT_SHA ENVIRONMENT=production \
-            --revision-suffix $SHORT_SHA
-
       - name: Update Container App
         if: steps.check_app.outputs.app_exists == 'true'
         run: |
+          az containerapp registry set \
+            --name railway-${{ matrix.service }} \
+            --resource-group $RESOURCE_GROUP \
+            --server $ACR_NAME.azurecr.io \
+            --username $ACR_USERNAME \
+            --password $ACR_PASSWORD
+
           az containerapp update \
             --name railway-${{ matrix.service }} \
             --resource-group $RESOURCE_GROUP \
             --image $ACR_NAME.azurecr.io/${{ matrix.service }}:$SHORT_SHA \
             --cpu ${{ matrix.cpu }} \
             --memory ${{ matrix.memory }} \
+            --min-replicas ${{ matrix.min_replicas }} \
+            --max-replicas ${{ matrix.max_replicas }} \
             --set-env-vars SERVICE_VERSION=$SHORT_SHA ENVIRONMENT=production \
             --revision-suffix $SHORT_SHA
