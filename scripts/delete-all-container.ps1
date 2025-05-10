@@ -1,14 +1,6 @@
 $resourceGroup = "railway-resource"
 
-$containerApps = @(
-    "railway-admin-api",
-    "railway-api-gateway",
-    "railway-booking-api",
-    "railway-notification-api",
-    "railway-payment-api",
-    "railway-auth-api",
-    "railway-usermanagement-api"
-)
+$containerApps = az containerapp list --resource-group $resourceGroup --query "[].name" -o tsv
 
 foreach ($app in $containerApps) {
     Write-Host "Deleting Container App: $app"
