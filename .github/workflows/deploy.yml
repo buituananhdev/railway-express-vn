@@ -83,7 +83,7 @@ jobs:
         include:
           - service: api-gateway
             port: 80
-            additional_port: ""
+            additional_port: 7002
             ingress: external
             min_replicas: 1
             max_replicas: 5
@@ -92,7 +92,7 @@ jobs:
             
           - service: auth-api
             port: 80
-            additional_port: ""
+            additional_port: 7002
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -110,7 +110,7 @@ jobs:
             
           - service: admin-api
             port: 80
-            additional_port: ""
+            additional_port: 7002
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -137,7 +137,7 @@ jobs:
 
           - service: notification-api
             port: 80
-            additional_port: ""
+            additional_port: 7002
             ingress: external
             min_replicas: 1
             max_replicas: 3
@@ -196,14 +196,6 @@ jobs:
       - name: Generate Container App YAML
         if: steps.check_app.outputs.app_exists != 'true'
         run: |
-          ADDITIONAL_PORTS=""
-          if [ -n "${{ matrix.additional_port }}" ]; then
-            ADDITIONAL_PORTS="additionalPortMappings:
-              - external: ${{ matrix.ingress == 'external' }}
-                targetPort: ${{ matrix.additional_port }}
-                exposedPort: ${{ matrix.additional_port }}"
-          fi
-
           cat <<EOF > containerapp.yaml
           apiVersion: apps.microsoft.com/v1
           kind: ContainerApp
@@ -216,7 +208,10 @@ jobs:
               ingress:
                 external: ${{ matrix.ingress == 'external' }}
                 targetPort: ${{ matrix.port }}
-                $ADDITIONAL_PORTS
+                additionalPortMappings:
+                  - external: true
+                    targetPort: ${{ matrix.additional_port }}
+                    exposedPort: ${{ matrix.additional_port }}
               registries:
                 - server: $ACR_NAME.azurecr.io
                   username: $ACR_USERNAME
