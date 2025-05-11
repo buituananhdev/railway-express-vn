@@ -17,7 +17,7 @@ public static class DependencyInjection
 
         services.AddGrpcClient<BookingGrpcService.BookingGrpcServiceClient>(o =>
         {
-            o.Address = new Uri("http://localhost:7002");
+            o.Address = new Uri(configuration["GRPC:Booking"]);
         });
 
         return services;
