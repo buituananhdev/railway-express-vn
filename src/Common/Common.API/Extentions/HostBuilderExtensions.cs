@@ -10,6 +10,8 @@ using Microsoft.IdentityModel.Tokens;
 using Common.Infrastructure;
 using Common.Application;
 using Azure.Identity;
+using Serilog.Sinks.Elasticsearch;
+using Serilog;
 
 namespace Common.API.Extentions;
 public static class HostBuilderExtensions
@@ -30,7 +32,25 @@ public static class HostBuilderExtensions
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
+        if(builder.Environment.IsProduction())
+        {
+            Log.Logger = new LoggerConfiguration()
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(builder.Configuration["ElasticSearch:Uri"]))
+                {
+                    AutoRegisterTemplate = true,
+                    IndexFormat = $"{builder.Configuration["ElasticSearch:DefaultIndex"]}-{DateTime.UtcNow:yyyy.MM.dd}",
+                })
+                .CreateLogger();
+        } else
+        {
+            Log.Logger = new LoggerConfiguration()
+                 .WriteTo.Console()
+                 .CreateLogger();
+        }
         builder.Host.UseSerilogLogging();
+
         builder.Services.AddCommonApplication(builder.Configuration);
         builder.Services.AddCommonInfrastructure(builder.Configuration);
 
@@ -78,5 +98,11 @@ public static class HostBuilderExtensions
 
         app.MapControllers();
         return app;
+    }
+
+    public static IHostBuilder UseSerilogLogging(this IHostBuilder hostBuilder)
+    {
+        hostBuilder.UseSerilog();
+        return hostBuilder;
     }
 }
