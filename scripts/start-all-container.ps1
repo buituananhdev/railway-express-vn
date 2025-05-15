@@ -6,7 +6,7 @@ $containerApps = az containerapp list --resource-group $resourceGroup --query "[
 foreach ($app in $containerApps) {
     Write-Host "Stopping app: $app..."
     
-    Stop-AzContainerApp -Name $app `
+    Start-AzContainerApp -Name $app `
                         -ResourceGroupName $resourceGroup `
                         -SubscriptionId $subscriptionId
 
