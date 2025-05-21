@@ -1,49 +1,38 @@
-﻿using System;
-using DinkToPdf;
-using DinkToPdf.Contracts;
-using Notification.Application.Interfaces;
+﻿using System.Text;
 using HtmlAgilityPack;
-using System.Text;
+using Notification.Application.Interfaces;
+using PuppeteerSharp;
+using PuppeteerSharp.Media;
 
 namespace Notification.Infrastructure.Services;
 
 public class PdfGeneratorService : IPdfGenerator
 {
-    private readonly IConverter _convert;
-
-    public PdfGeneratorService(IConverter convert)
-    {
-        _convert = convert;
-    }
-
-    public byte[] GeneratePdfFromHtml(string htmlContent)
+    public async Task<byte[]> GeneratePdfFromHtmlAsync(string htmlContent)
     {
         var processedHtml = ProcessHtmlContent(htmlContent);
 
-        var doc = new HtmlToPdfDocument()
+        await new BrowserFetcher().DownloadAsync();
+
+        using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+        using var page = await browser.NewPageAsync();
+
+        await page.SetContentAsync(processedHtml);
+
+        var pdfOptions = new PdfOptions
         {
-            GlobalSettings = {
-                ColorMode = ColorMode.Color,
-                Orientation = Orientation.Portrait,
-                PaperSize = PaperKind.A4,
-                Margins = new MarginSettings { Top = 0, Bottom = 0, Left = 0, Right = 0 },
-                DPI = 300
-            },
-            Objects = {
-                new ObjectSettings() {
-                    HtmlContent = processedHtml,
-                    WebSettings = {
-                        DefaultEncoding = "utf-8",
-                        EnableIntelligentShrinking = false,
-                    },
-                    UseLocalLinks = true,
-                    LoadSettings = {
-                        BlockLocalFileAccess = false
-                    }
-                }
+            Format = PaperFormat.A4,
+            PrintBackground = true,
+            MarginOptions = new MarginOptions
+            {
+                Top = "0px",
+                Bottom = "0px",
+                Left = "0px",
+                Right = "0px"
             }
         };
-        return _convert.Convert(doc);
+
+        return await page.PdfDataAsync(pdfOptions);
     }
 
     private string ProcessHtmlContent(string originalHtml)

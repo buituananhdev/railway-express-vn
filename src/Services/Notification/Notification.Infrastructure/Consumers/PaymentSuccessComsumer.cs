@@ -26,7 +26,7 @@ public sealed class PaymentSuccessComsumer : IConsumer<PaymentSuccessEvent>
     {
         var htmlContent = await _templateService.RenderTemplateAsync("TicketTemplate", context.Message);
 
-        var pdfBytes = _pdfGenerator.GeneratePdfFromHtml(htmlContent);
+        var pdfBytes = await _pdfGenerator.GeneratePdfFromHtmlAsync(htmlContent);
 
         await _bus.Publish(new TicketCreatedEvent(
             context.Message.Email,
