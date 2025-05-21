@@ -14,7 +14,7 @@ public class PdfGeneratorService : IPdfGenerator
 
         await new BrowserFetcher().DownloadAsync();
 
-        using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+        using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true, Args = new[] { "--no-sandbox", "--disable-setuid-sandbox" } });
         using var page = await browser.NewPageAsync();
 
         await page.SetContentAsync(processedHtml);
