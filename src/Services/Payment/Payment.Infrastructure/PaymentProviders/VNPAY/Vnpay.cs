@@ -60,7 +60,7 @@ namespace VNPAY.NET
             helper.AddRequestData("vnp_Version", _version);
             helper.AddRequestData("vnp_Command", "pay");
             helper.AddRequestData("vnp_TmnCode", _tmnCode);
-            helper.AddRequestData("vnp_Amount", (request.Money * 100).ToString());
+            helper.AddRequestData("vnp_Amount", ((long)(request.Money * 100)).ToString());
             helper.AddRequestData("vnp_CreateDate", request.CreatedDate.ToString("yyyyMMddHHmmss"));
             helper.AddRequestData("vnp_CurrCode", request.Currency.ToString().ToUpper());
             helper.AddRequestData("vnp_IpAddr", request.IpAddress);

@@ -1,4 +1,4 @@
-﻿@model Common.Contracts.PaymentSuccessEvent
+﻿@model Common.Contracts.Events.PaymentSuccessEvent
 
 <!doctype html>
 <html lang="vi">
@@ -306,17 +306,6 @@
                         <div class="label">Họ và tên</div>
                         <div class="value">@Model.PassengerName</div>
                     </div>
-                    <div class="info-item">
-                        <div class="label">Số điện thoại</div>
-                        <div class="value">@Model.PhoneNumber</div>
-                    </div>
-                    @if (!string.IsNullOrEmpty(Model.Email))
-                    {
-                        <div class="info-item">
-                            <div class="label">Email</div>
-                            <div class="value">@Model.Email</div>
-                        </div>
-                    }
                 </div>
             </div>
 
@@ -334,12 +323,12 @@
                 <div class="journey-info">
                     <div class="station">
                         <div class="label">Ga đón</div>
-                        <div class="value">@Model.OutgoingJourney.DepartureStation</div>
+                        <div class="value">@Model.Journey.DepartureStation</div>
                     </div>
                     <div class="journey-arrow">→</div>
                     <div class="station">
                         <div class="label">Ga đến</div>
-                        <div class="value">@Model.OutgoingJourney.ArrivalStation</div>
+                        <div class="value">@Model.Journey.ArrivalStation</div>
                     </div>
                 </div>
 
@@ -348,21 +337,21 @@
                         <div class="date-time-group">
                             <div class="date-time-item">
                                 <div class="label">Ngày đi</div>
-                                <div class="value">@Model.OutgoingJourney.DepartureDate.ToString("dd/MM/yyyy")</div>
+                                <div class="value">@Model.Journey.DepartureDate.ToString("dd/MM/yyyy")</div>
                             </div>
                             <div class="date-time-item">
                                 <div class="label">Giờ đi</div>
-                                <div class="value">@Model.OutgoingJourney.DepartureTime.ToString(@"hh\:mm")</div>
+                                <div class="value">@Model.Journey.DepartureTime.ToString(@"hh\:mm")</div>
                             </div>
                         </div>
                         <div class="date-time-group">
                             <div class="date-time-item">
                                 <div class="label">Ngày đến</div>
-                                <div class="value">@Model.OutgoingJourney.ArrivalDate.ToString("dd/MM/yyyy")</div>
+                                <div class="value">@Model.Journey.ArrivalDate.ToString("dd/MM/yyyy")</div>
                             </div>
                             <div class="date-time-item">
                                 <div class="label">Giờ đến</div>
-                                <div class="value">@Model.OutgoingJourney.ArrivalTime.ToString(@"hh\:mm") @(Model.OutgoingJourney.DepartureDate.Date != Model.OutgoingJourney.ArrivalDate.Date ? "(+1)" : "")</div>
+                                <div class="value">@Model.Journey.ArrivalTime.ToString(@"hh\:mm") @(Model.Journey.DepartureDate.Date != Model.Journey.ArrivalDate.Date ? "(+1)" : "")</div>
                             </div>
                         </div>
                     </div>
@@ -370,99 +359,17 @@
                     <div class="seat-details">
                         <div class="seat-item">
                             <div class="seat-label">Số tàu</div>
-                            <div class="seat-value">@Model.OutgoingJourney.TrainNumber</div>
+                            <div class="seat-value">@Model.Journey.TrainNumber</div>
                         </div>
                         <div class="divider"></div>
                         <div class="seat-item">
                             <div class="seat-label">Toa số</div>
-                            <div class="seat-value">@Model.OutgoingJourney.CarriageNumber</div>
+                            <div class="seat-value">@Model.Journey.CarriageNumber</div>
                         </div>
                         <div class="divider"></div>
                         <div class="seat-item">
                             <div class="seat-label">Ghế số</div>
-                            <div class="seat-value">@Model.OutgoingJourney.SeatNumber</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @if (Model.HasReturnJourney && Model.ReturnJourney != null)
-            {
-                <div class="section return-journey">
-                    <div class="section-title">Chuyến về</div>
-
-                    <div class="journey-info">
-                        <div class="station">
-                            <div class="label">Ga đón</div>
-                            <div class="value">@Model.ReturnJourney.DepartureStation</div>
-                        </div>
-                        <div class="journey-arrow">→</div>
-                        <div class="station">
-                            <div class="label">Ga đến</div>
-                            <div class="value">@Model.ReturnJourney.ArrivalStation</div>
-                        </div>
-                    </div>
-
-                    <div class="journey-details">
-                        <div class="journey-date-time">
-                            <div class="date-time-group">
-                                <div class="date-time-item">
-                                    <div class="label">Ngày đi</div>
-                                    <div class="value">@Model.ReturnJourney.DepartureDate.ToString("dd/MM/yyyy")</div>
-                                </div>
-                                <div class="date-time-item">
-                                    <div class="label">Giờ đi</div>
-                                    <div class="value">@Model.ReturnJourney.DepartureTime.ToString(@"hh\:mm")</div>
-                                </div>
-                            </div>
-                            <div class="date-time-group">
-                                <div class="date-time-item">
-                                    <div class="label">Ngày đến</div>
-                                    <div class="value">@Model.ReturnJourney.ArrivalDate.ToString("dd/MM/yyyy")</div>
-                                </div>
-                                <div class="date-time-item">
-                                    <div class="label">Giờ đến</div>
-                                    <div class="value">@Model.ReturnJourney.ArrivalTime.ToString(@"hh\:mm") @(Model.ReturnJourney.DepartureDate.Date != Model.ReturnJourney.ArrivalDate.Date ? "(+1)" : "")</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="seat-details">
-                            <div class="seat-item">
-                                <div class="seat-label">Số tàu</div>
-                                <div class="seat-value">@Model.ReturnJourney.TrainNumber</div>
-                            </div>
-                            <div class="divider"></div>
-                            <div class="seat-item">
-                                <div class="seat-label">Toa số</div>
-                                <div class="seat-value">@Model.ReturnJourney.CarriageNumber</div>
-                            </div>
-                            <div class="divider"></div>
-                            <div class="seat-item">
-                                <div class="seat-label">Ghế số</div>
-                                <div class="seat-value">@Model.ReturnJourney.SeatNumber</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-
-            <div class="section">
-                <div class="section-title">Thông tin thanh toán</div>
-
-                <div class="price-info">
-                    <div>
-                        <div class="label">Tổng giá vé</div>
-                        <div class="price-value">@Model.TotalPrice.ToString("#,##0") VND</div>
-                    </div>
-                    <div class="price-details">
-                        <div class="info-item">
-                            <div class="label">Hình thức thanh toán</div>
-                            <div class="value">@Model.PaymentMethod</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="label">Ngày đặt vé</div>
-                            <div class="value">@Model.BookingDate.ToString("dd/MM/yyyy HH:mm")</div>
+                            <div class="seat-value">@Model.Journey.SeatNumber</div>
                         </div>
                     </div>
                 </div>

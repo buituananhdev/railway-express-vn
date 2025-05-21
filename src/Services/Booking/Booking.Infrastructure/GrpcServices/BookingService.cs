@@ -1,4 +1,5 @@
-﻿using Booking.Application.Services;
+﻿using AutoMapper;
+using Booking.Application.Services;
 using Common.Protos;
 using Grpc.Core;
 
@@ -6,10 +7,11 @@ namespace Booking.Infrastructure.GrpcServices;
 public class BookingService : Common.Protos.BookingGrpcService.BookingGrpcServiceBase
 {
     private readonly ITicketService _ticketService;
-
-    public BookingService(ITicketService ticketService)
+    private readonly IMapper _mapper;
+    public BookingService(ITicketService ticketService, IMapper mapper)
     {
         _ticketService = ticketService;
+        _mapper = mapper;
     }
 
     public override async Task<BatchCheckSeatStatusResponse> BatchCheckSeatStatus(
@@ -35,5 +37,13 @@ public class BookingService : Common.Protos.BookingGrpcService.BookingGrpcServic
         {
             Price = (double)ticket.TotalPrice
         };
+    }
+
+    public override async Task<GetTicketInformationResponse> GetTicketInformation(
+        GetTicketInformationRequest request,
+        ServerCallContext context)
+    {
+        var ticket = await _ticketService.GetTicketWithPassengerInfoAsync(Guid.Parse(request.TicketId));
+        return _mapper.Map<GetTicketInformationResponse>(ticket);
     }
 }

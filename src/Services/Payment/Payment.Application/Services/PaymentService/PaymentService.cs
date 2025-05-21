@@ -35,30 +35,31 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
     public override async Task<PaymentRecordDto> UpdateAsync(Guid id, UpdatePaymentRecordDto updatePayment)
     {
 
-        var entity = await _unitOfWork.PaymentRepository.GetByIdAsync(id)
+        var payment = await _unitOfWork.PaymentRepository.GetByIdAsync(id)
             ?? throw new NotFoundException($"Entity with id {id} not found");
 
-        if (entity.IsSentETicket)
+        if (payment.IsSentETicket)
         {
-            throw new Exception("Cannot update payment record after sending e-ticket");
+            return _mapper.Map<PaymentRecordDto>(payment);
         }
 
-        _mapper.Map(updatePayment, entity);
+        _mapper.Map(updatePayment, payment);
         if (updatePayment.VnpResponseCode == 00)
         {
-            entity.Status = PaymentStatusEnum.Paid;
-            entity.IsSentETicket = true;
-            await SendETicketAsync(id);
-            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(entity.TicketIds, 0));
-        } else
+            payment.Status = PaymentStatusEnum.Paid;
+            payment.IsSentETicket = true;
+            await SendETicketAsync(payment, payment.TicketIds);
+            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.TicketIds, 0));
+        }
+        else
         {
-            entity.Status = PaymentStatusEnum.Failed;
-            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(entity.TicketIds, 2));
+            payment.Status = PaymentStatusEnum.Failed;
+            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.TicketIds, 2));
         }
 
-        _repository.Update(entity);
+        _repository.Update(payment);
         await _unitOfWork.SaveChangesAsync();
-        return _mapper.Map<PaymentRecordDto>(entity);
+        return _mapper.Map<PaymentRecordDto>(payment);
     }
 
 
@@ -110,46 +111,44 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
         return $"PO-{randomNumber}";
     }
 
-    private async Task SendETicketAsync(Guid id)
+    private async Task SendETicketAsync(PaymentRecord payment, List<Guid> ticketIds)
     {
+        var ticketInfos = new List<GetTicketInformationResponse>();
+        foreach (var ticketId in ticketIds)
+        {
+            var ticketInfo = await _bookingGrpcServiceClient.GetTicketInformationAsync(
+                new GetTicketInformationRequest { TicketId = ticketId.ToString() });
+            ticketInfos.Add(ticketInfo);
+        }
 
-        var sampleEvent = new PaymentSuccessEvent(
-            PassengerName: "Nguyen Van A",
-            Email: "anhaanh2003@gmail.com",
-            PhoneNumber: "0987654321",
-            TicketNumber: "TCK123456",
-            BookingCode: "BK987654",
-            TicketType: "First Class",
-            OutgoingJourney: new JourneyInfo(
-                DepartureStation: "Hanoi",
-                ArrivalStation: "Ho Chi Minh City",
-                DepartureDate: new DateTime(2025, 4, 15),
-                ArrivalDate: new DateTime(2025, 4, 16),
-                DepartureTime: new TimeSpan(8, 30, 0),
-                ArrivalTime: new TimeSpan(18, 45, 0),
-                TrainNumber: "SE1",
-                CarriageNumber: "A5",
-                SeatNumber: "12B"
-            ),
-            ReturnJourney: new JourneyInfo(
-                DepartureStation: "Ho Chi Minh City",
-                ArrivalStation: "Hanoi",
-                DepartureDate: new DateTime(2025, 4, 20),
-                ArrivalDate: new DateTime(2025, 4, 21),
-                DepartureTime: new TimeSpan(7, 0, 0),
-                ArrivalTime: new TimeSpan(17, 15, 0),
-                TrainNumber: "SE2",
-                CarriageNumber: "B3",
-                SeatNumber: "8A"
-            ),
-            TotalPrice: 2500000m,
-            PaymentMethod: "Credit Card",
-            BookingDate: DateTime.UtcNow,
-            QrCodeUrl: "https://example.com/qrcode.png",
-            LogoUrl: "https://example.com/logo.png",
-            HasReturnJourney: true
-        );
+        foreach (var ticket in ticketInfos)
+        {
+            var mainPassenger = ticket.PassengerDetails
+                .Where(p => (bool)p.IsMainPassenger)
+                .FirstOrDefault();
 
-        await _publishEndpoint.Publish(sampleEvent);
+            var event1 = new PaymentSuccessEvent(
+                TicketNumber: ticket.TicketNumber,
+                PassengerName: mainPassenger.FirstName + mainPassenger.LastName,
+                Email: mainPassenger.Email,
+                TicketType: "First Class",
+                BookingCode: payment.PaymentNo,
+                Journey: new JourneyInfo(
+                    DepartureStation: "Hanoi",
+                    ArrivalStation: "Ho Chi Minh City",
+                    DepartureDate: ticket.JourneyDate.ToDateTime(),
+                    ArrivalDate: ticket.JourneyDate.ToDateTime(),
+                    DepartureTime: new TimeSpan(8, 30, 0),
+                    ArrivalTime: new TimeSpan(18, 45, 0),
+                    TrainNumber: "SE1",
+                    CarriageNumber: "A5",
+                    SeatNumber: "12B"
+                ),
+                BookingDate: DateTime.UtcNow,
+                QrCodeUrl: "https://example.com/qrcode.png",
+                LogoUrl: "https://example.com/logo.png"
+            );
+            await _publishEndpoint.Publish(event1);
+        }
     }
 }
