@@ -294,5 +294,7 @@ namespace Booking.Application.Services
 
             return _mapper.Map<TicketDto>(ticket);
         }
+
+        public Task<TicketDto> CreateTicketForDialogfowAsync(DialogflowCreateTicketRequest request) => throw new NotImplementedException();
     }
 }
