@@ -10,4 +10,10 @@ public class DialogflowRequest
 public class QueryResult
 {
     public Dictionary<string, object> Parameters { get; set; }
+    public Intent Intent { get; set; }
+}
+
+public class Intent
+{
+    public string DisplayName { get; set; }
 }

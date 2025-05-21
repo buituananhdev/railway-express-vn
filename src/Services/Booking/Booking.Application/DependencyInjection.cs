@@ -10,6 +10,7 @@ public static class DependencyInjection
         services.AddAutoMapper(typeof(DependencyInjection).Assembly);
         services.AddScoped<ITicketService, TicketService>();
         services.AddScoped<IPassengerInfoService, PassengerInfoService>();
+        services.AddScoped<IDialogflowService, DialogflowService>();
         return services;
     }
 }
