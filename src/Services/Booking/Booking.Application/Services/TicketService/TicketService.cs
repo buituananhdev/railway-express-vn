@@ -296,5 +296,16 @@ namespace Booking.Application.Services
         }
 
         public Task<TicketDto> CreateTicketForDialogfowAsync(DialogflowCreateTicketRequest request) => throw new NotImplementedException();
+        public async Task<TicketDto> GetTicketByTicketNumberAsync(string ticketNumber)
+        {
+            var specification = new TicketNumberSpecification(ticketNumber);
+            var includes = new List<Expression<Func<Ticket, object>>>
+            {
+                t => t.PassengerDetails,
+            };
+            var ticket = await _bookingUnitOfWork.TicketRepository
+                .FirstOrDefaultAsync(specification, includes);
+            return _mapper.Map<TicketDto>(ticket);
+        }
     }
 }
