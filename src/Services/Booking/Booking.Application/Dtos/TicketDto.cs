@@ -1,4 +1,5 @@
-﻿using Booking.Domain.Enums;
+﻿using Booking.Domain.Entities;
+using Booking.Domain.Enums;
 using Common.Application.Dtos;
 
 namespace Booking.Application.Dtos;
@@ -14,4 +15,5 @@ public class TicketDto : BaseDto
     public decimal TotalPrice { get; set; }
     public TicketStatusEnum Status { get; set; }
     public string? Remarks { get; set; }
+    public List<PassengerInfoDto>? PassengerDetails { get; set; }
 }

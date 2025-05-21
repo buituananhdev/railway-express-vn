@@ -1,20 +1,15 @@
 ﻿namespace Common.Contracts.Events;
 public record PaymentSuccessEvent
 (
+    string TicketNumber,
     string PassengerName,
     string Email,
-    string PhoneNumber,
-    string TicketNumber,
-    string BookingCode,
     string TicketType,
-    JourneyInfo OutgoingJourney,
-    JourneyInfo? ReturnJourney,
-    decimal TotalPrice,
-    string PaymentMethod,
+    string BookingCode,
+    JourneyInfo Journey,
     DateTime BookingDate,
-    string QrCodeUrl,
     string LogoUrl,
-    bool HasReturnJourney = false
+    string QrCodeUrl
 );
 
 public record JourneyInfo(

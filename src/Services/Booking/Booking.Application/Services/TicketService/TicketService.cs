@@ -1,4 +1,5 @@
-﻿using AutoMapper;
+﻿using System.Linq.Expressions;
+using AutoMapper;
 using Booking.Application.Dtos;
 using Booking.Application.Repositories;
 using Booking.Domain.Entities;
@@ -272,6 +273,26 @@ namespace Booking.Application.Services
             string ticketNumber = $"#BO-{uniqueIdentifier}";
 
             return ticketNumber;
+        }
+
+        public async Task<TicketDto> GetTicketWithPassengerInfoAsync(Guid ticketId)
+        {
+            var specification = new AndSpecificationMultiple<Ticket>(
+                new List<Specification<Ticket>>
+                {
+                    new TicketIdSpecification(ticketId)
+                }
+            );
+
+            var includes = new List<Expression<Func<Ticket, object>>>
+            {
+                t => t.PassengerDetails,
+            };
+
+            var ticket = await _bookingUnitOfWork.TicketRepository
+                .FirstOrDefaultAsync(specification, includes);
+
+            return _mapper.Map<TicketDto>(ticket);
         }
     }
 }

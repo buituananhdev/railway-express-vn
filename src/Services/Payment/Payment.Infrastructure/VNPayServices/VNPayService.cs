@@ -34,7 +34,7 @@ public class VNPayService : IVNPayService
             var request = new PaymentRequest
             {
                 PaymentId = paymentId,
-                Money = (double)paymentRecord.Amount,
+                Money = paymentRecord.Amount,
                 Description = paymentRecord.Description,
                 IpAddress = ipAddress,
                 BankCode = paymentType == PaymentTypeEnum.BankTransfer ? BankCode.VNBANK : BankCode.INTCARD,
