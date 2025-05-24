@@ -95,5 +95,14 @@ public class AutoMapperProfile : Profile
             .ForMember(dest => dest.Status, opt => opt.Ignore());
 
         CreateMap<SeatDto, Seat>();
+
+        // AddSeatDto -> Seat
+        CreateMap<AddSeatDto, Seat>();
+
+        CreateMap<SeatFullInformationDto, Seat>().ReverseMap();
+        CreateMap<TrainCar, TrainCarFullInformationDto>();
+        CreateMap<Train, TrainDto>();
+
+        CreateMap<TrainFullInformationDto, Train>().ReverseMap();
     }
 }

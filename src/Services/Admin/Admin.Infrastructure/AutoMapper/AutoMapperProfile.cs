@@ -1,55 +1,40 @@
-﻿using AutoMapper;
-using Booking.Application.Dtos;
-using Booking.Domain.Entities;
+﻿using Admin.Application.Dtos;
+using Admin.Domain.Enums;
+using AutoMapper;
 using Common.Protos;
 
-namespace Booking.Application.AutoMapper;
+namespace Admin.Infrastructure.AutoMapper;
+
 public class AutoMapperProfile : Profile
 {
     public AutoMapperProfile()
     {
-        #region Ticket
-        CreateMap<Ticket, TicketDto>().ReverseMap();
-        CreateMap<AddTicketDto, Ticket>().ReverseMap();
-        #endregion
-
-        #region PassengerInfo
-        CreateMap<PassengerInfoDto, PassengerInfo>().ReverseMap();
-        CreateMap<AddPassengerInfoDto, PassengerInfo>().ReverseMap();
-        #endregion
-
-        CreateMap<Seat, GetSeatInformationResponse>().ReverseMap();
-
-        CreateMap<TicketSeat, TicketSeatDto>().ReverseMap();
-        CreateMap<AddTicketSeatDto, TicketSeat>().ReverseMap();
-        CreateMap<AddTicketSeatDto, TicketSeatDto>().ReverseMap();
-
         // Forward mappings (DTO -> Proto)
-        CreateMap<Seat, GetSeatInformationResponse>()
+        CreateMap<SeatFullInformationDto, GetSeatInformationResponse>()
             .ForMember(dest => dest.TrainCar, opt => opt.MapFrom(src => src.TrainCar))
             .ForMember(dest => dest.SeatNumber, opt => opt.MapFrom(src => src.SeatNumber))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => (int)src.Status));
 
-        CreateMap<TrainCar, TrainCarFullInformation>()
+        CreateMap<TrainCarFullInformationDto, TrainCarFullInformation>()
             .ForMember(dest => dest.CarNumber, opt => opt.MapFrom(src => src.CarNumber ?? 0))
             .ForMember(dest => dest.SeatType, opt => opt.MapFrom(src => (int)src.SeatType))
             .ForMember(dest => dest.Train, opt => opt.MapFrom(src => src.Train));
 
-        CreateMap<Train, TrainFullInformation>()
+        CreateMap<TrainFullInformationDto, TrainFullInformation>()
             .ForMember(dest => dest.TrainName, opt => opt.MapFrom(src => src.TrainName ?? string.Empty));
 
         // Reverse mappings (Proto -> DTO) - only if needed
-        CreateMap<GetSeatInformationResponse, Seat>()
+        CreateMap<GetSeatInformationResponse, SeatFullInformationDto>()
             .ForMember(dest => dest.TrainCar, opt => opt.MapFrom(src => src.TrainCar))
             .ForMember(dest => dest.SeatNumber, opt => opt.MapFrom(src => src.SeatNumber))
-            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status));
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => (SeatStatusEnum)src.Status));
 
-        CreateMap<TrainCarFullInformation, TrainCar>()
+        CreateMap<TrainCarFullInformation, TrainCarFullInformationDto>()
             .ForMember(dest => dest.CarNumber, opt => opt.MapFrom(src => src.CarNumber == 0 ? (int?)null : src.CarNumber))
-            .ForMember(dest => dest.SeatType, opt => opt.MapFrom(src => src.SeatType))
+            .ForMember(dest => dest.SeatType, opt => opt.MapFrom(src => (SeatType)src.SeatType))
             .ForMember(dest => dest.Train, opt => opt.MapFrom(src => src.Train));
 
-        CreateMap<TrainFullInformation, Train>()
+        CreateMap<TrainFullInformation, TrainFullInformationDto>()
             .ForMember(dest => dest.TrainName, opt => opt.MapFrom(src => src.TrainName ?? string.Empty));
     }
 }

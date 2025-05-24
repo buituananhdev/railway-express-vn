@@ -4,6 +4,7 @@ using Booking.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Booking.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(BookingContext))]
-    partial class BookingContextModelSnapshot : ModelSnapshot
+    [Migration("20250524130120_AddTicketSeatTbl")]
+    partial class AddTicketSeatTbl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -64,9 +67,6 @@ namespace Booking.Infrastructure.Persistence.Migrations
                         .HasColumnType("varchar(20)");
 
                     b.Property<Guid>("TicketId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("TicketSeatId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -156,7 +156,7 @@ namespace Booking.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid?>("PassengerInfoId")
+                    b.Property<Guid>("PassengerInfoId")
                         .HasColumnType("char(36)");
 
                     b.Property<Guid>("SeatId")
@@ -203,7 +203,8 @@ namespace Booking.Infrastructure.Persistence.Migrations
                     b.HasOne("Booking.Domain.Entities.PassengerInfo", "PassengerInfo")
                         .WithOne("TicketSeat")
                         .HasForeignKey("Booking.Domain.Entities.TicketSeat", "PassengerInfoId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Booking.Domain.Entities.Ticket", "Ticket")
                         .WithMany("TicketSeats")

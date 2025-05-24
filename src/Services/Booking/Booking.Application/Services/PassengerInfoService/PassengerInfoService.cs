@@ -9,11 +9,13 @@ public class PassengerInfoService : IPassengerInfoService
 {
     private readonly IBookingUnitOfWork _bookingUnitOfWork;
     private readonly IMapper _mapper;
+    private readonly ITicketSeatService _ticketSeatService;
 
-    public PassengerInfoService(IBookingUnitOfWork bookingUnitOfWork, IMapper mapper)
+    public PassengerInfoService(IBookingUnitOfWork bookingUnitOfWork, IMapper mapper, ITicketSeatService ticketSeatService)
     {
         _bookingUnitOfWork = bookingUnitOfWork;
         _mapper = mapper;
+        _ticketSeatService = ticketSeatService;
     }
 
     public async Task<AddPassengerDetailsDto> AddPassengerDetailsAsync(AddPassengerDetailsDto addPassengerDetailDto)
@@ -25,6 +27,12 @@ public class PassengerInfoService : IPassengerInfoService
             await _bookingUnitOfWork.PassengerInfoRepository.AddRangeAsync(passengerInfos);
             await _bookingUnitOfWork.SaveChangesAsync();
 
+            foreach (var passengerInfo in passengerInfos)
+            {
+                var ticketSeat = await _ticketSeatService.GetByIdAsync(passengerInfo.TicketSeatId);
+                ticketSeat.PassengerInfoId = passengerInfo.Id;
+                await _ticketSeatService.UpdateAsync(ticketSeat.Id, _mapper.Map<AddTicketSeatDto>(ticketSeat));
+            }
             return addPassengerDetailDto;
         }
         catch (Exception ex)

@@ -14,4 +14,6 @@ public class PassengerInfo : BaseEntity
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
     public string? IdentityNumber { get; set; }
+    public Guid TicketSeatId { get; set; }
+    public TicketSeat TicketSeat { get; set; }
 }

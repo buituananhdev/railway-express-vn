@@ -7,13 +7,15 @@ public class BookingUnitOfWork : UnitOfWork, IBookingUnitOfWork
 {
     public ITicketRepository TicketRepository { get; private set; }
     public IPassengerInfoRepository PassengerInfoRepository { get; private set; }
-
+    public ITicketSeatRepository TicketSeatRepository { get; private set; }
     public BookingUnitOfWork(
         IDataContext context,
         ITicketRepository ticketRepository,
-        IPassengerInfoRepository passengerInfoRepository) : base(context)
+        IPassengerInfoRepository passengerInfoRepository,
+        ITicketSeatRepository ticketSeatRepository) : base(context)
     {
         TicketRepository = ticketRepository;
         PassengerInfoRepository = passengerInfoRepository;
+        TicketSeatRepository = ticketSeatRepository;
     }
 }

@@ -46,7 +46,6 @@ public class AutoMapperProfile : Profile
         CreateMap<TicketDto, GetTicketInformationResponse>()
             .ForMember(dest => dest.PassengerId, opt => opt.MapFrom(src => src.PassengerId))
             .ForMember(dest => dest.TrainId, opt => opt.MapFrom(src => src.TrainId.ToString()))
-            .ForMember(dest => dest.SeatIds, opt => opt.MapFrom(src => src.SeatIds.Select(id => id.ToString())))
             .ForMember(dest => dest.TrainScheduleId, opt => opt.MapFrom(src => src.TrainScheduleId.ToString()))
             .ForMember(dest => dest.BookingDate, opt => opt.MapFrom(src => src.BookingDate))
             .ForMember(dest => dest.JourneyDate, opt => opt.MapFrom(src => src.JourneyDate))

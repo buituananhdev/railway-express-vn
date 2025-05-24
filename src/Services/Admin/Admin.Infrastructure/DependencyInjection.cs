@@ -12,6 +12,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddAutoMapper(typeof(DependencyInjection).Assembly);
         services.AddDbContext<AdminContext>(options =>
         {
             var connectionString = configuration.GetConnectionString("MySQL")   
@@ -33,6 +34,11 @@ public static class DependencyInjection
 
         services.AddScoped<IDataContext>(provider => provider.GetRequiredService<AdminContext>());
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddGrpc(options =>
+        {
+            options.EnableDetailedErrors = true;
+        });
 
         return services;
     }
