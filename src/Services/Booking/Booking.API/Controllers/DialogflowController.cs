@@ -13,6 +13,7 @@ public class DialogflowController : ControllerBase
     {
         _dialogflowService = dialogflowService;
     }
+
     [HttpPost("webhook")]
     public async Task<IActionResult> HandleWebhook([FromBody] DialogflowRequest request)
     {
@@ -35,5 +36,24 @@ public class DialogflowController : ControllerBase
                     FulfillmentText = "Xin lỗi, tôi chưa hỗ trợ yêu cầu này."
                 });
         }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Post([FromBody] UserMessage request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Text))
+            return BadRequest("Text is required.");
+
+        var sessionId = Request.Cookies["sessionId"] ?? Guid.NewGuid().ToString();
+        if (!Request.Cookies.ContainsKey("sessionId"))
+            Response.Cookies.Append("sessionId", sessionId, new CookieOptions { HttpOnly = true });
+
+        var reply = await _dialogflowService.DetectIntentAsync(sessionId, request.Text);
+        return Ok(new { reply });
+    }
+
+    public class UserMessage
+    {
+        public string Text { get; set; } = string.Empty;
     }
 }

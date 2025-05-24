@@ -1,15 +1,31 @@
 ﻿using Booking.Application.Dtos;
 using Booking.Domain.Enums;
+using Google.Cloud.Dialogflow.V2;
+using Microsoft.Extensions.Configuration;
 
 namespace Booking.Application.Services
 {
     public class DialogflowService : IDialogflowService
     {
         private readonly ITicketService _ticketService;
-
-        public DialogflowService(ITicketService ticketService)
+        private readonly string _projectId;
+        private readonly string _jsonCredentials;
+        private readonly string _languageCode;
+        private readonly SessionsClient _client;
+        public DialogflowService(ITicketService ticketService, IConfiguration configuration)
         {
             _ticketService = ticketService;
+            _projectId = configuration["Dialogflow:ProjectId"]!;
+            _languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
+            _jsonCredentials = configuration["Dialogflow:JSON"]
+                               ?? throw new InvalidOperationException(
+                                   "Secret Dialogflow:JSON not found in configuration.");
+
+            var builder = new SessionsClientBuilder
+            {
+                JsonCredentials = _jsonCredentials
+            };
+            _client = builder.Build();
         }
         public Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters)
         {
@@ -171,6 +187,26 @@ namespace Booking.Application.Services
                 TicketStatusEnum.UnPaid => "💳 Chưa thanh toán",
                 _ => status.ToString()
             };
+        }
+
+        public async Task<string> DetectIntentAsync(string sessionId, string text)
+        {
+            var sessionName = SessionName.FromProjectSession(_projectId, sessionId);
+            var request = new DetectIntentRequest
+            {
+                SessionAsSessionName = sessionName,
+                QueryInput = new QueryInput
+                {
+                    Text = new TextInput
+                    {
+                        Text = text,
+                        LanguageCode = _languageCode
+                    }
+                }
+            };
+
+            var response = await _client.DetectIntentAsync(request);
+            return response.QueryResult.FulfillmentText;
         }
     }
 }
