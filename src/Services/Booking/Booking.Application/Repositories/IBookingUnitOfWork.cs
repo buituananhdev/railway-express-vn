@@ -5,4 +5,5 @@ public interface IBookingUnitOfWork : IUnitOfWork
 {
     ITicketRepository TicketRepository { get; }
     IPassengerInfoRepository PassengerInfoRepository { get; }
+    ITicketSeatRepository TicketSeatRepository { get; }
 }

@@ -1,6 +1,5 @@
 ﻿using Admin.Domain.Enums;
 using Common.Application.Dtos;
-using Common.Domain;
 
 namespace Admin.Application.Dtos;
 public class TrainDto : BaseDto

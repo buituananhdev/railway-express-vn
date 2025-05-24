@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Services;
+using Common.Protos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,13 @@ public static class DependencyInjection
         services.AddScoped<ITicketService, TicketService>();
         services.AddScoped<IPassengerInfoService, PassengerInfoService>();
         services.AddScoped<IDialogflowService, DialogflowService>();
+        services.AddScoped<ITicketSeatService, TicketSeatService>();
+
+        services.AddGrpcClient<AdminGrpcService.AdminGrpcServiceClient>(o =>
+        {
+            o.Address = new Uri(configuration["GRPC:Admin"]);
+        });
+
         return services;
     }
 }

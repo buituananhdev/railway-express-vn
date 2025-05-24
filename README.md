@@ -26,3 +26,4 @@ dotnet ef database update --project .\src\Services\Payment\Payment.Infrastructur
 dotnet ef migrations add UpdateTrainCarTbl --output-dir Persistence\Migrations --project .\src\Services\Admin\Admin.Infrastructure --startup-project .\src\Services\Admin\Admin.API
 
 dotnet ef migrations add UpdateStatusCodeToEnum --output-dir Persistence\Migrations --project .\src\Services\Payment\Payment.Infrastructure --startup-project .\src\Services\Payment\Payment.API
+dotnet ef migrations add AddTicketSeatIdInPassengerInfo --output-dir  Persistence\Migrations --project .\src\Services\Booking\Booking.Infrastructure --startup-project .\src\Services\Booking\Booking.API

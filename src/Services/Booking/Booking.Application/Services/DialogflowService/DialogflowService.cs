@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Dtos;
+using Booking.Domain.Enums;
 
 namespace Booking.Application.Services
 {
@@ -102,22 +103,74 @@ namespace Booking.Application.Services
 
         public string GenerateTicketInfoMessage(TicketDto ticket)
         {
-            if(ticket == null)
+            if (ticket == null)
             {
                 return "Không tìm thấy vé nào với mã vé này.";
             }
 
             var passengerNames = ticket.PassengerDetails != null && ticket.PassengerDetails.Any()
-                ? string.Join(", ", ticket.PassengerDetails.Select(p => $"{p.FirstName + " " + p.LastName}"))
-                : "Không có thông tin hành khách.";
+                ? string.Join(", ", ticket.PassengerDetails.Select(p => $"{p.FirstName} {p.LastName}"))
+                : "Không có thông tin hành khách";
 
-            return
-                $"🎫 Mã vé: {ticket.TicketNumber}\n" +
-                $"🗓️ Ngày khởi hành: {ticket.JourneyDate:dd/MM/yyyy}\n" +
-                $"💺 Số ghế: {(ticket.SeatIds?.Count ?? 0)}\n" +
-                $"💵 Tổng tiền: {ticket.TotalPrice:N0} VNĐ\n" +
-                $"📌 Trạng thái: {ticket.Status.ToString()}\n" +
-                $"👤 Hành khách: {passengerNames}";
+            var trainInfo = ticket.SeatInformation?.TrainCar?.Train?.TrainName ?? "N/A";
+
+            var carNumber = ticket.SeatInformation?.TrainCar?.CarNumber?.ToString() ?? "N/A";
+            var seatTypeText = GetSeatTypeText(ticket.SeatInformation?.TrainCar?.SeatType ?? 0);
+
+            var seatNumber = ticket.SeatInformation?.SeatNumber.ToString() ?? "N/A";
+            var totalSeats = ticket.TicketSeats?.Count ?? 0;
+
+            var statusText = GetStatusText(ticket.Status);
+            var bookingDateText = ticket.BookingDate.ToString("dd/MM/yyyy HH:mm");
+
+            var message = $"🎫 **THÔNG TIN VÉ TÀU**\n" +
+                          $"━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                          $"🆔 Mã vé: {ticket.TicketNumber}\n" +
+                          $"🚂 Tàu: {trainInfo}\n" +
+                          $"🚃 Toa: {carNumber} \n" +
+                          $"💺 Ghế: {seatNumber} ({seatTypeText})\n" +
+                          $"📊 Số lượng ghế: {totalSeats}\n" +
+                          $"🗓️ Ngày khởi hành: {ticket.JourneyDate:dd/MM/yyyy}\n" +
+                          $"📅 Ngày đặt vé: {bookingDateText}\n" +
+                          $"💵 Tổng tiền: {ticket.TotalPrice:N0} VNĐ\n" +
+                          $"📌 Trạng thái: {statusText}\n" +
+                          $"👤 Hành khách: {passengerNames}";
+
+            // Thêm ghi chú nếu có
+            if (!string.IsNullOrEmpty(ticket.Remarks))
+            {
+                message += $"\n📝 Ghi chú: {ticket.Remarks}";
+            }
+
+            return message;
+        }
+
+
+        private string GetSeatTypeText(int seatType)
+        {
+            return seatType switch
+            {
+                1 => "Ghế cứng",
+                2 => "Ghế mềm",
+                3 => "Giường nằm cứng",
+                4 => "Giường nằm mềm",
+                5 => "VIP",
+                _ => "Không xác định"
+            };
+        }
+
+        private string GetStatusText(TicketStatusEnum status)
+        {
+            return status switch
+            {
+                TicketStatusEnum.Active => "✅ Đang hoạt động",
+                TicketStatusEnum.Used => "🎫 Đã sử dụng",
+                TicketStatusEnum.Cancelled => "❌ Đã hủy",
+                TicketStatusEnum.Expired => "⌛ Hết hạn",
+                TicketStatusEnum.Refunded => "💰 Đã hoàn tiền",
+                TicketStatusEnum.UnPaid => "💳 Chưa thanh toán",
+                _ => status.ToString()
+            };
         }
     }
 }

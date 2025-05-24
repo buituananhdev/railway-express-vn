@@ -27,4 +27,11 @@ public class SeatController : ControllerBase
         await _seatService.LockSeatsAsync(lockSeatDto);
         return Ok();
     }
+
+    [HttpGet("available")]
+    public async Task<IActionResult> GetAvailableSeats([FromQuery] Guid seatId)
+    {
+        var availableSeats = await _seatService.GetSeatWithTrainInformationAsync(seatId);
+        return Ok(availableSeats);
+    }
 }

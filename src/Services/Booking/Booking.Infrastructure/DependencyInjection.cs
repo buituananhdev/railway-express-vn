@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IBookingUnitOfWork, BookingUnitOfWork>();
         services.AddScoped<ITicketRepository, TicketRepository>();
         services.AddScoped<IPassengerInfoRepository, PassengerInfoRepository>();
+        services.AddScoped<ITicketSeatRepository, TicketSeatRepository>();
 
         services.AddGrpc(options =>
         {

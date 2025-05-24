@@ -1,15 +1,22 @@
-﻿using Admin.Application.Dtos;
+﻿using System.Linq.Expressions;
+using Admin.Application.Dtos;
 using Admin.Application.Repositories;
+using Admin.Domain.Entities;
 using Admin.Domain.Specifications;
+using Admin.Domain.Specifications.Seat;
 using AutoMapper;
+using Common.Application.Dtos;
 using Common.Application.Interfaces;
+using Common.Application.Pagination;
+using Common.Application.Services;
+using Common.Domain.Specifications;
 using Common.Protos;
 using Google.Protobuf.Collections;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Admin.Application.Services;
 
-public class SeatService : ISeatService
+public class SeatService : BaseService<Seat, AddSeatDto, AddSeatDto, SeatDto>, ISeatService
 {
     private readonly BookingGrpcService.BookingGrpcServiceClient _bookingGrpcServiceClient;
     private readonly IAdminUnitOfWork _adminUnitOfWork;
@@ -23,10 +30,12 @@ public class SeatService : ISeatService
     private const int STATUS_CACHE_MINUTES = 1;
 
     public SeatService(
+        ISeatRepository repository,
         IAdminUnitOfWork adminUnitOfWork,
         IMapper mapper,
+        IPaginationService paginationService,
         BookingGrpcService.BookingGrpcServiceClient bookingGrpcServiceClient,
-        ICacheService cacheService)
+        ICacheService cacheService) : base(repository, adminUnitOfWork, mapper, paginationService)
     {
         _adminUnitOfWork = adminUnitOfWork;
         _mapper = mapper;
@@ -206,5 +215,25 @@ public class SeatService : ISeatService
         await _cacheService.SetCacheAsync(availableSeatsCacheKey, availableSeats, TimeSpan.FromSeconds(30));
 
         return availableSeats;
+    }
+
+    public async Task<SeatFullInformationDto> GetSeatWithTrainInformationAsync(Guid seatId)
+    {
+        var specification = new AndSpecificationMultiple<Seat>(
+            new List<Specification<Seat>>
+            {
+            new SeatIdSpecification(seatId)
+            }
+        );
+
+        var includes = new List<Expression<Func<Seat, object>>>
+        {
+            t => t.TrainCar,
+            s => ((Seat)s).TrainCar.Train
+        };
+        var seat = await _adminUnitOfWork.SeatRepository
+            .FirstOrDefaultAsync(specification, includes);
+
+        return _mapper.Map<SeatFullInformationDto>(seat);
     }
 }
