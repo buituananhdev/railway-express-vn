@@ -123,17 +123,17 @@ namespace Booking.Application.Services
             var statusText = GetStatusText(ticket.Status);
             var bookingDateText = ticket.BookingDate.ToString("dd/MM/yyyy HH:mm");
 
-            var message = $"🎫 **THÔNG TIN VÉ TÀU**\n" +
-                          $"━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
-                          $"🆔 Mã vé: {ticket.TicketNumber}\n" +
-                          $"🚂 Tàu: {trainInfo}\n" +
-                          $"🚃 Toa: {carNumber} \n" +
-                          $"💺 Ghế: {seatNumber} ({seatTypeText})\n" +
-                          $"📊 Số lượng ghế: {totalSeats}\n" +
-                          $"🗓️ Ngày khởi hành: {ticket.JourneyDate:dd/MM/yyyy}\n" +
-                          $"📅 Ngày đặt vé: {bookingDateText}\n" +
-                          $"💵 Tổng tiền: {ticket.TotalPrice:N0} VNĐ\n" +
-                          $"📌 Trạng thái: {statusText}\n" +
+            var message = $"🎫 **THÔNG TIN VÉ TÀU**</br>" +
+                          $"━━━━━━━━━━━━━━━━━━━━━━</br>" +
+                          $"🆔 Mã vé: {ticket.TicketNumber}</br>" +
+                          $"🚂 Tàu: {trainInfo}</br>" +
+                          $"🚃 Toa: {carNumber}</br>" +
+                          $"💺 Ghế: {seatNumber} ({seatTypeText})</br>" +
+                          $"📊 Số lượng ghế: {totalSeats}</br>" +
+                          $"🗓️ Ngày khởi hành: {ticket.JourneyDate:dd/MM/yyyy}</br>" +
+                          $"📅 Ngày đặt vé: {bookingDateText}</br>" +
+                          $"💵 Tổng tiền: {ticket.TotalPrice:N0} VNĐ</br>" +
+                          $"📌 Trạng thái: {statusText}</br>" +
                           $"👤 Hành khách: {passengerNames}";
 
             // Thêm ghi chú nếu có
