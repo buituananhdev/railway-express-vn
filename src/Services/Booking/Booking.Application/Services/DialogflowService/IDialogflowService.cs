@@ -5,4 +5,5 @@ public interface IDialogflowService
 {
     Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters);
     Task<DialogflowResponse> HandleSearchTicket(Dictionary<string, object> parameters);
+    Task<string> DetectIntentAsync(string sessionId, string text);
 }
