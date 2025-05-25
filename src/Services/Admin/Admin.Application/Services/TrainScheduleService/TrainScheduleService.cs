@@ -50,7 +50,7 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
         {
             decimal basePrice = CalculateBasePrice(schedule.Distance);
 
-            var daysUntilDeparture = (getTrainSchedulesDto.DepartureTime - DateTime.Now).TotalDays;
+            var daysUntilDeparture = (getTrainSchedulesDto.DepartureDate - DateTime.Now).TotalDays;
             decimal priceMultiplier = 1m;
 
             if (daysUntilDeparture <= 7)
@@ -58,7 +58,7 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
                 priceMultiplier += 0.5m;
             }
 
-            if (getTrainSchedulesDto.ReturnTime.HasValue)
+            if (getTrainSchedulesDto.ReturnDate.HasValue)
             {
                 priceMultiplier -= 0.2m;
             }

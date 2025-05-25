@@ -22,6 +22,7 @@ public class SeatService : BaseService<Seat, AddSeatDto, AddSeatDto, SeatDto>, I
     private readonly IAdminUnitOfWork _adminUnitOfWork;
     private readonly IMapper _mapper;
     private readonly ICacheService _cacheService;
+
     private const int LOCK_DURATION_MINUTES = 5;
     private const string LOCK_PREFIX = "lock:";
     private const string SEATS_CACHE_KEY = "seats:traincar:{0}";
@@ -235,5 +236,47 @@ public class SeatService : BaseService<Seat, AddSeatDto, AddSeatDto, SeatDto>, I
             .FirstOrDefaultAsync(specification, includes);
 
         return _mapper.Map<SeatFullInformationDto>(seat);
+    }
+
+    public async Task<List<Guid>> GetRandomeAvailableSeatAsync(
+    Guid trainId,
+    Guid trainScheduleId,
+    DateTime journeyDate,
+    int count)
+    {
+        var specification = new TrainIdSpecification(trainId);
+        var trainCars = await _adminUnitOfWork.TrainCarRepository.ToListAsync<TrainCarDto>(spec: specification);
+
+        var availableSeatIds = new List<Guid>();
+
+        foreach (var trainCar in trainCars)
+        {
+            var seatDtos = await GetSeatsFromCacheOrDatabaseAsync(trainCar.Id);
+            if (!seatDtos.Any())
+            {
+                continue;
+            }
+
+            var bookingStatus = await GetBookingStatusAsync(seatDtos, trainScheduleId, journeyDate);
+            var lockStatus = await GetLockStatusAsync(seatDtos, trainScheduleId, journeyDate);
+
+            for (int i = 0; i < seatDtos.Count; i++)
+            {
+                var seatId = seatDtos[i].Id;
+                string seatIdStr = seatId.ToString();
+                bool isBooked = bookingStatus.TryGetValue(seatIdStr, out var booked) && booked;
+                bool isLocked = lockStatus[i];
+
+                if (!isBooked && !isLocked)
+                {
+                    availableSeatIds.Add(seatId);
+                }
+            }
+        }
+
+        var random = new Random();
+        var shuffled = availableSeatIds.OrderBy(x => random.Next()).Take(count).ToList();
+
+        return shuffled;
     }
 }

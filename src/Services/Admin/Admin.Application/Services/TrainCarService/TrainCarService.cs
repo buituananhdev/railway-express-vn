@@ -104,4 +104,10 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
         if (distance <= 500) return distance * 1200m;
         return distance * 1000m;
     }
+
+    public Task<List<TrainCarDto>> GetTrainCarsByTrainIdAsync(Guid trainId)
+    {
+        var specification = new TrainIdSpecification(trainId);
+        return _unitOfWork.TrainCarRepository.ToListAsync<TrainCarDto>(spec: specification);
+    }
 }

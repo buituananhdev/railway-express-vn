@@ -2,6 +2,7 @@
 using Admin.Domain.Enums;
 using AutoMapper;
 using Common.Protos;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Admin.Infrastructure.AutoMapper;
 
@@ -36,5 +37,24 @@ public class AutoMapperProfile : Profile
 
         CreateMap<TrainFullInformation, TrainFullInformationDto>()
             .ForMember(dest => dest.TrainName, opt => opt.MapFrom(src => src.TrainName ?? string.Empty));
+
+        // Mapping Timestamp → DateTime
+        CreateMap<Timestamp, DateTime>()
+            .ConvertUsing(src => src.ToDateTime());
+
+        CreateMap<DateTime, Timestamp>()
+            .ConvertUsing(src => Timestamp.FromDateTime(src.ToUniversalTime()));
+
+        CreateMap<DateTime?, Timestamp>()
+            .ConvertUsing(src => src.HasValue ? Timestamp.FromDateTime(src.Value.ToUniversalTime()) : null);
+
+        // Mapping chi tiết từ request → dto
+        CreateMap<GetTrainScheduleRequest, GetTrainSchedulesDto>()
+            .ForMember(dest => dest.DepartureStationId,
+                opt => opt.MapFrom(src => Guid.Parse(src.DepartureStationId)))
+            .ForMember(dest => dest.ArrivalStationId,
+                opt => opt.MapFrom(src => Guid.Parse(src.ArrivalStationId)))
+            .ForMember(dest => dest.DepartureDate,
+                opt => opt.MapFrom(src => src.DepartureDate.ToDateTime()));
     }
 }

@@ -1,4 +1,6 @@
-﻿using Admin.Application.Services;
+﻿using System.Collections.Generic;
+using Admin.Application.Dtos;
+using Admin.Application.Services;
 using AutoMapper;
 using Common.Protos;
 using Grpc.Core;
@@ -8,10 +10,14 @@ public class AdminService : Common.Protos.AdminGrpcService.AdminGrpcServiceBase
 {
     private readonly IMapper _mapper;
     private readonly ISeatService _seatService;
-    public AdminService(IMapper mapper, ISeatService seatService)
+    private readonly IStationService _stationService;
+    private readonly ITrainScheduleService _trainScheduleService;
+    public AdminService(IMapper mapper, ISeatService seatService, IStationService stationService, ITrainScheduleService trainScheduleService)
     {
         _mapper = mapper;
         _seatService = seatService;
+        _stationService = stationService;
+        _trainScheduleService = trainScheduleService;
     }
     public override async Task<GetSeatInformationResponse> GetSeatInformation(
         GetSeatInformationRequest request,
@@ -21,5 +27,36 @@ public class AdminService : Common.Protos.AdminGrpcService.AdminGrpcServiceBase
         var results = await _seatService.GetSeatWithTrainInformationAsync(seatId);
 
         return _mapper.Map<GetSeatInformationResponse>(results);
+    }
+
+    public override async Task<GetStationInformationResponse> GetStationInformation(GetStationInformationRequest request, ServerCallContext context)
+    {
+        var results = await _stationService.GetStationByNameAsync(request.StationName);
+        return new GetStationInformationResponse
+        {
+            StationId = results.Id.ToString()
+        };
+    }
+
+    public override async Task<GetTrainScheduleResponse> GetTrainSchedule(GetTrainScheduleRequest request, ServerCallContext context)
+    {
+        var results = await _trainScheduleService.GetTrainSchedulesAsync(_mapper.Map<GetTrainSchedulesDto>(request));
+        var schedule = results.OrderBy(s => Math.Abs((s.DepartureTime.TimeOfDay - request.DepartureTime.ToTimeSpan()).TotalMinutes)).First();
+        var response = new GetTrainScheduleResponse();
+        response.TrainScheduleId = schedule.Id.ToString();
+        response.TrainId = schedule.Train.Id.ToString();
+        response.BasePrice = (double)schedule.FromPrice;
+        return response;
+    }
+
+    public override async Task<GetRandomeAvailableSeatResponse> GetRandomeAvailableSeat(GetRandomeAvailableSeatRequest request, ServerCallContext context)
+    {
+        var trainCarId = Guid.Parse(request.TrainId);
+        var scheduleId = Guid.Parse(request.ScheduleId);
+        var journeyDate = request.JourneyDate.ToDateTime();
+        var availableSeats = await _seatService.GetRandomeAvailableSeatAsync(trainCarId, scheduleId, journeyDate, request.Quantity);
+        var response = new GetRandomeAvailableSeatResponse();
+        response.SeatIds.AddRange(availableSeats.ConvertAll(seatId => seatId.ToString()));
+        return response;
     }
 }

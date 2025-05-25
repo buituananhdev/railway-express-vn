@@ -20,4 +20,5 @@ public interface ISeatService
     Task<bool> IsSeatLocked(Guid seatId, Guid scheduleId, DateTime journeyDate);
     Task<int> GetAvailableSeatsAsync(Guid trainCarId, Guid scheduleId, DateTime journeyDate);
     Task<SeatFullInformationDto> GetSeatWithTrainInformationAsync(Guid seatId);
+    Task<List<Guid>> GetRandomeAvailableSeatAsync(Guid trainId, Guid trainScheduleId, DateTime journeyDate, int count);
 }

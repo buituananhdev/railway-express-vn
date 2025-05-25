@@ -16,4 +16,5 @@ public interface ITrainCarService
     Task DeleteAsync(Guid id);
     Task<TrainCarDto> GetByIdAsync(Guid id);
     Task<List<TrainCarDto>> GetTrainCarsAndPriceAsync(Guid trainId, Guid scheduleId, DateTime journeyDate);
+    Task<List<TrainCarDto>> GetTrainCarsByTrainIdAsync(Guid trainId);
 }
