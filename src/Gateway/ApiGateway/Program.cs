@@ -53,13 +53,12 @@ app.MapDefaultEndpoints();
 
 app.UseCors(builder =>
 {
-    var allowedOrigins = (app.Configuration["AllowedHosts"] ?? "http://localhost:5173;http://localhost:5174")
-                         .Split(';', StringSplitOptions.RemoveEmptyEntries);
-
-    builder.WithOrigins(allowedOrigins)
-           .AllowAnyMethod()
-           .AllowAnyHeader()
-           .AllowCredentials();
+    app.UseCors(builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
 });
 app.UseBaseConfig();
 app.MapReverseProxy();
