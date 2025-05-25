@@ -80,7 +80,7 @@ namespace Booking.Application.Services
         public async Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters)
         {
             _logger.LogInformation("Processing booking ticket request");
-            _logger.LogInformation("Booking ticket body: " + parameters.ToString());
+            _logger.LogInformation("Booking ticket body: " + parameters);
 
             var missingFields = GetMissingFields(parameters);
             if (missingFields.Count > 0)
