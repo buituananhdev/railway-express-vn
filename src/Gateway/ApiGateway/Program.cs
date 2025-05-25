@@ -53,12 +53,15 @@ app.MapDefaultEndpoints();
 
 app.UseCors(builder =>
 {
-    app.UseCors(builder =>
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
-    });
+    builder.WithOrigins(app.Configuration["AllowedHosts"] ?? "localhost")
+           .AllowAnyMethod()
+           .AllowAnyHeader()
+           .AllowCredentials();
+
+    builder.WithOrigins("http://localhost:5173", "http://localhost:5174", "https://railway-express-vn-booking-u1lb-738az7pj6-tuananh1003s-projects.vercel.app")
+           .AllowAnyMethod()
+           .AllowAnyHeader()
+           .AllowCredentials();
 });
 app.UseBaseConfig();
 app.MapReverseProxy();
