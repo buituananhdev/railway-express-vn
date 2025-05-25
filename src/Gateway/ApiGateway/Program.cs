@@ -53,12 +53,10 @@ app.MapDefaultEndpoints();
 
 app.UseCors(builder =>
 {
-    builder.WithOrigins(app.Configuration["AllowedHosts"] ?? "localhost")
-           .AllowAnyMethod()
-           .AllowAnyHeader()
-           .AllowCredentials();
+    var allowedOrigins = (app.Configuration["AllowedHosts"] ?? "http://localhost:5173;http://localhost:5174")
+                         .Split(';', StringSplitOptions.RemoveEmptyEntries);
 
-    builder.WithOrigins("http://localhost:5173", "http://localhost:5174")
+    builder.WithOrigins(allowedOrigins)
            .AllowAnyMethod()
            .AllowAnyHeader()
            .AllowCredentials();
