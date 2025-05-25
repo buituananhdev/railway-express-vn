@@ -34,6 +34,8 @@ namespace Booking.Application.Services
             public const string Time = "time";
             public const string Quantity = "quantity";
             public const string TicketNumber = "ticket_number";
+            public const string PassengerName = "passenger_name";
+            public const string PassengerEmail = "passenger_email";
         }
 
         private static readonly string[] RequiredBookingFields =
@@ -182,7 +184,9 @@ namespace Booking.Application.Services
             var departureStation = ExtractStringParameter(parameters, ParameterKeys.DepartureStation);
             var arrivalStation = ExtractStringParameter(parameters, ParameterKeys.ArrivalStation);
 
-            if (!int.TryParse(parameters[ParameterKeys.Quantity]?.ToString(), out var quantity) || quantity <= 0)
+            if (!double.TryParse(parameters[ParameterKeys.Quantity]?.ToString(), out var quantity) ||
+                quantity <= 0 ||
+                quantity % 1 != 0)
             {
                 return (false, null, "Số lượng vé không hợp lệ.");
             }
@@ -199,13 +203,29 @@ namespace Booking.Application.Services
                 return (false, null, Messages.InvalidTimeMessage);
             }
 
+            if (!parameters.TryGetValue(ParameterKeys.PassengerName, out var passengerNameObj) ||
+            passengerNameObj is not Dictionary<string, object> passengerNameDict ||
+            !passengerNameDict.TryGetValue("name", out var nameObj) ||
+            string.IsNullOrWhiteSpace(nameObj?.ToString()))
+            {
+                return (false, null, "Tên hành khách không hợp lệ hoặc bị thiếu.");
+            }
+
+            var passengerEmail = parameters[ParameterKeys.PassengerEmail]?.ToString();
+            if (string.IsNullOrWhiteSpace(passengerEmail))
+            {
+                return (false, null, "Email hành khách không được để trống.");
+            }
+
             var bookingInfo = new DialogflowCreateTicketRequest
             {
                 DepartureStation = departureStation,
                 ArrivalStation = arrivalStation,
-                Quantity = quantity,
+                Quantity = (int)quantity,
                 Date = date.Date,
-                Time = timeDateTime.TimeOfDay
+                Time = timeDateTime.TimeOfDay,
+                PassengerName = nameObj.ToString().Trim(),
+                PassengerEmail = passengerEmail?.Trim()
             };
 
             return (true, bookingInfo, null);
