@@ -6,4 +6,6 @@ public class DialogflowCreateTicketRequest
     public DateTime Date { get; set; }
     public int Quantity { get; set; }
     public TimeSpan Time { get; set; }
+    public string PassengerName { get; set; }
+    public string PassengerEmail { get; set; }
 }
