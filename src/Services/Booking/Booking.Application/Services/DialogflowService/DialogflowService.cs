@@ -58,8 +58,8 @@ namespace Booking.Application.Services
 
             _languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
 
-            var jsonCredentials = configuration["Dialogflow:JSON"];
-                //?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
+            var jsonCredentials = configuration["Dialogflow:JSON"]
+                ?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
 
             try
             {
@@ -67,7 +67,7 @@ namespace Booking.Application.Services
                 {
                     JsonCredentials = jsonCredentials
                 };
-                //_client = builder.Build();
+                _client = builder.Build();
 
                 _logger.LogInformation("DialogflowService initialized successfully for project: {ProjectId}", _projectId);
             }
