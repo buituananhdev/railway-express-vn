@@ -1,6 +1,7 @@
 ﻿using Admin.Application.Dtos;
 using Admin.Application.Repositories;
 using Admin.Domain.Entities;
+using Admin.Domain.Specifications;
 using AutoMapper;
 using Common.Application.Interfaces;
 using Common.Application.Pagination;
@@ -22,6 +23,12 @@ public class StationService : BaseService<Station, AddStationDto, AddStationDto,
     {
         _adminUnitOfWork = unitOfWork;
         _mapper = mapper;
+    }
+
+    public async Task<StationDto> GetStationByNameAsync(string stationName)
+    {
+        var specification = new StationNameSpecification(stationName);
+        return await _adminUnitOfWork.StationRepository.FirstOrDefaultAsync<StationDto>(spec: specification);
     }
 
     public async Task<List<StationDto>> GetStations()

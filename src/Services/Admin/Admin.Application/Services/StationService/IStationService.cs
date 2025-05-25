@@ -16,4 +16,5 @@ public interface IStationService
     Task DeleteAsync(Guid id);
     Task<StationDto> GetByIdAsync(Guid id);
     Task<List<StationDto>> GetStations();
+    Task<StationDto> GetStationByNameAsync(string stationName);
 }

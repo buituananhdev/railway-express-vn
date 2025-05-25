@@ -1,7 +1,4 @@
-﻿using Booking.Domain.Entities;
-using Booking.Domain.Enums;
-
-namespace Booking.Application.Dtos;
+﻿namespace Booking.Application.Dtos;
 public class AddTicketDto
 {
     public string? TicketNumber { get; set; } = string.Empty;

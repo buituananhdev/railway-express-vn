@@ -4,11 +4,15 @@ option csharp_namespace = "Common.Protos";
 
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 
 package admin;
 
 service AdminGrpcService {
   rpc GetSeatInformation (GetSeatInformationRequest) returns (GetSeatInformationResponse);
+  rpc GetStationInformation (GetStationInformationRequest) returns (GetStationInformationResponse);
+  rpc GetTrainSchedule (GetTrainScheduleRequest) returns (GetTrainScheduleResponse);
+  rpc GetRandomeAvailableSeat(GetRandomeAvailableSeatRequest) returns (GetRandomeAvailableSeatResponse);
 }
 
 message GetSeatInformationRequest {
@@ -29,4 +33,37 @@ message GetSeatInformationResponse {
   TrainCarFullInformation trainCar = 1;
   int32 seatNumber = 2;
   int32 status = 3;
+}
+
+message GetStationInformationRequest {
+    string stationName = 1;
+}
+
+message GetStationInformationResponse {
+    string stationId = 1;
+}
+
+message GetTrainScheduleRequest
+{
+    string departureStationId = 1;
+    string arrivalStationId = 2;
+    google.protobuf.Timestamp departureDate = 3;
+    google.protobuf.Duration departureTime = 4;
+}
+
+message GetTrainScheduleResponse {
+    string trainScheduleId = 1;
+    string trainId = 2;
+    google.protobuf.DoubleValue basePrice = 3;
+}
+
+message GetRandomeAvailableSeatRequest {
+    string trainId = 1;
+    int32 quantity = 2;
+    string scheduleId = 3;
+    google.protobuf.Timestamp journeyDate = 4;
+}
+
+message GetRandomeAvailableSeatResponse {
+    repeated string seatIds = 1;
 }

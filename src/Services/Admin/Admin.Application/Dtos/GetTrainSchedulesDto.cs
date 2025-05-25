@@ -3,6 +3,6 @@ public class GetTrainSchedulesDto
 {
     public Guid DepartureStationId { get; set; }
     public Guid ArrivalStationId { get; set; }
-    public DateTime DepartureTime { get; set; }
-    public DateTime? ReturnTime { get; set; } = null;
+    public DateTime DepartureDate { get; set; }
+    public DateTime? ReturnDate { get; set; } = null;
 }

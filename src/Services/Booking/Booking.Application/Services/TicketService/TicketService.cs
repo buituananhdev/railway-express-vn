@@ -10,6 +10,7 @@ using Common.Application.Interfaces;
 using Common.Application.Services;
 using Common.Domain.Specifications;
 using Common.Protos;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Logging;
 
 namespace Booking.Application.Services
@@ -247,7 +248,12 @@ namespace Booking.Application.Services
                         }
                     );
 
-                    var bookedTickets = await _bookingUnitOfWork.TicketRepository.ToListAsync(specification);
+                    var includes = new List<Expression<Func<Ticket, object>>>
+                    {
+                        t => t.TicketSeats
+                    };
+
+                    var bookedTickets = await _bookingUnitOfWork.TicketRepository.ToListAsync(spec: specification, includes: includes);
                     var bookedSeatIds = bookedTickets
                         .SelectMany(t => t.TicketSeats)
                         .Select(ts => ts.SeatId)
@@ -341,7 +347,40 @@ namespace Booking.Application.Services
             return ticketDto;
         }
 
-        public Task<TicketDto> CreateTicketForDialogfowAsync(DialogflowCreateTicketRequest request) => throw new NotImplementedException();
+        public async Task<TicketDto> CreateTicketForDialogfowAsync(DialogflowCreateTicketRequest request)
+        {
+            var departureStationId = await _adminGrpcServiceClient.GetStationInformationAsync(new GetStationInformationRequest { StationName = request.DepartureStation });
+            var arrivalStation = await _adminGrpcServiceClient.GetStationInformationAsync(new GetStationInformationRequest { StationName = request.ArrivalStation });
+            var scheduleRequest = new GetTrainScheduleRequest
+            {
+                DepartureStationId = departureStationId.StationId,
+                ArrivalStationId = arrivalStation.StationId,
+                DepartureDate = Timestamp.FromDateTime(request.Date.ToUniversalTime()),
+                DepartureTime = Duration.FromTimeSpan(request.Time),
+            };
+            var schedule = await _adminGrpcServiceClient.GetTrainScheduleAsync(scheduleRequest);
 
+            var seatIds = await _adminGrpcServiceClient.GetRandomeAvailableSeatAsync(new GetRandomeAvailableSeatRequest
+            {
+                TrainId = schedule.TrainId,
+                ScheduleId = schedule.TrainScheduleId,
+                JourneyDate = Timestamp.FromDateTime(request.Date.ToUniversalTime()),
+                Quantity = request.Quantity
+            });
+
+            var createDto = new AddTicketDto
+            {
+                TicketNumber = GenerateTicketNumber(),
+                SeatIds = seatIds.SeatIds.Select(id => Guid.Parse(id)).ToList(),
+                TrainId = Guid.Parse(schedule.TrainId),
+                JourneyDate = request.Date,
+                TrainScheduleId = Guid.Parse(schedule.TrainScheduleId),
+                TotalPrice = (decimal)schedule.BasePrice * request.Quantity
+            };
+
+            var ticketDto = await CreateAsync(createDto);
+
+            return ticketDto;
+        }
     }
 }

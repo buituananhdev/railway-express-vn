@@ -2,195 +2,144 @@
 using Booking.Domain.Enums;
 using Google.Cloud.Dialogflow.V2;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace Booking.Application.Services
 {
     public class DialogflowService : IDialogflowService
     {
         private readonly ITicketService _ticketService;
-        private readonly string _projectId;
-        private readonly string _jsonCredentials;
-        private readonly string _languageCode;
+        private readonly ILogger<DialogflowService> _logger;
         private readonly SessionsClient _client;
-        public DialogflowService(ITicketService ticketService, IConfiguration configuration)
-        {
-            _ticketService = ticketService;
-            _projectId = configuration["Dialogflow:ProjectId"]!;
-            _languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
-            _jsonCredentials = configuration["Dialogflow:JSON"]
-                               ?? throw new InvalidOperationException(
-                                   "Secret Dialogflow:JSON not found in configuration.");
+        private readonly string _projectId;
+        private readonly string _languageCode;
 
-            var builder = new SessionsClientBuilder
-            {
-                JsonCredentials = _jsonCredentials
-            };
-            _client = builder.Build();
-        }
-        public Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters)
+        private static class Messages
         {
-            var missingFields = CheckMissingFields(parameters);
-            if (missingFields.Any())
-            {
-                return Task.FromResult(new DialogflowResponse
-                {
-                    FulfillmentText = $"Vui lòng cung cấp thêm: {string.Join(", ", missingFields)}"
-                });
-            }
+            public const string MissingFieldsTemplate = "Vui lòng cung cấp thêm: {0}";
+            public const string InvalidDateMessage = "Ngày không hợp lệ. Vui lòng nhập lại.";
+            public const string InvalidTimeMessage = "Giờ không hợp lệ. Vui lòng nhập lại.";
+            public const string BookingInProgressMessage = "Vé của bạn đang được đặt. Vui lòng đợi trong giây lát...";
+            public const string TicketNotFoundMessage = "Không tìm thấy vé nào với mã vé này.";
+            public const string NoPassengerInfoMessage = "Không có thông tin hành khách";
+        }
+
+        private static class ParameterKeys
+        {
+            public const string DepartureStation = "departure_station";
+            public const string ArrivalStation = "arrival_station";
+            public const string Date = "date";
+            public const string Time = "time";
+            public const string Quantity = "quantity";
+            public const string TicketNumber = "ticket_number";
+        }
+
+        private static readonly string[] RequiredBookingFields =
+        {
+            ParameterKeys.DepartureStation,
+            ParameterKeys.ArrivalStation,
+            ParameterKeys.Date,
+            ParameterKeys.Quantity,
+            ParameterKeys.Time
+        };
+
+        public DialogflowService(
+            ITicketService ticketService,
+            IConfiguration configuration,
+            ILogger<DialogflowService> logger)
+        {
+            _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+            _projectId = configuration["Dialogflow:ProjectId"]
+                ?? throw new InvalidOperationException("Dialogflow:ProjectId not found in configuration.");
+
+            _languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
+
+            var jsonCredentials = configuration["Dialogflow:JSON"]
+                ?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
 
             try
             {
-                var departureStation = parameters["departure_station"]?.ToString();
-                var arrivalStation = parameters["arrival_station"]?.ToString();
-
-                // Parse quantity safely
-                var quantityObj = parameters["quantity"];
-                var quantity = Convert.ToInt32(quantityObj); // handles both int and double
-
-                // Parse date
-                var dateStr = parameters["date"]?.ToString();
-                if (!DateTime.TryParse(dateStr, out var date))
+                var builder = new SessionsClientBuilder
                 {
-                    return Task.FromResult(new DialogflowResponse
-                    {
-                        FulfillmentText = "Ngày không hợp lệ. Vui lòng nhập lại."
-                    });
-                }
-
-                // Parse time
-                var timeStr = parameters["time"]?.ToString();
-                if (!DateTime.TryParse(timeStr, out var timeDateTime))
-                {
-                    return Task.FromResult(new DialogflowResponse
-                    {
-                        FulfillmentText = "Giờ không hợp lệ. Vui lòng nhập lại."
-                    });
-                }
-
-                var bookingInfo = new DialogflowCreateTicketRequest
-                {
-                    DepartureStation = departureStation,
-                    ArrivalStation = arrivalStation,
-                    Quantity = quantity,
-                    Date = date.Date,
-                    Time = timeDateTime.TimeOfDay
+                    JsonCredentials = jsonCredentials
                 };
+                _client = builder.Build();
 
-                var result = new DialogflowResponse
-                {
-                    FulfillmentText = "Vé của bạn đang được đặt. Vui lòng đợi trong giây lát...",
-                    Payload = new
-                    {
-                        redirect = "http://localhost:5173/ok",
-                        bookingInfo
-                    }
-                };
-
-                return Task.FromResult(result);
+                _logger.LogInformation("DialogflowService initialized successfully for project: {ProjectId}", _projectId);
             }
             catch (Exception ex)
             {
-                return Task.FromResult(new DialogflowResponse
-                {
-                    FulfillmentText = $"Đã xảy ra lỗi khi xử lý yêu cầu: {ex.Message}"
-                });
+                _logger.LogError(ex, "Failed to initialize DialogflowService");
+                throw;
             }
+        }
+
+        public async Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters)
+        {
+            _logger.LogInformation("Processing booking ticket request");
+
+            var missingFields = GetMissingFields(parameters);
+            if (missingFields.Count > 0)
+            {
+                _logger.LogWarning("Missing required fields: {MissingFields}", string.Join(", ", missingFields));
+                return CreateErrorResponse(string.Format(Messages.MissingFieldsTemplate, string.Join(", ", missingFields)));
+            }
+
+            var extractResult = ExtractBookingParameters(parameters);
+            if (!extractResult.IsSuccess)
+            {
+                _logger.LogWarning("Parameter extraction failed: {Error}", extractResult.ErrorMessage);
+                return CreateErrorResponse(extractResult.ErrorMessage);
+            }
+
+            var bookingInfo = extractResult.BookingInfo;
+            _logger.LogInformation("Creating ticket for route: {Departure} -> {Arrival} on {Date}",
+                bookingInfo.DepartureStation, bookingInfo.ArrivalStation, bookingInfo.Date);
+
+            var ticket = await _ticketService.CreateTicketForDialogfowAsync(bookingInfo);
+
+            return new DialogflowResponse
+            {
+                FulfillmentText = Messages.BookingInProgressMessage,
+                Payload = new
+                {
+                    redirect = $"http://localhost:5173/booking/passenger-details?scheduleId={ticket.TrainScheduleId}&trainId={ticket.TrainId}&journeyDate={ticket.JourneyDate}",
+                    bookingInfo
+                }
+            };
         }
 
         public async Task<DialogflowResponse> HandleSearchTicket(Dictionary<string, object> parameters)
         {
-            var ticketNumber = parameters["ticket_number"]?.ToString();
+            var ticketNumber = ExtractStringParameter(parameters, ParameterKeys.TicketNumber);
+            if (string.IsNullOrWhiteSpace(ticketNumber))
+            {
+                _logger.LogWarning("Ticket number is missing or empty");
+                return CreateErrorResponse("Vui lòng cung cấp mã vé để tìm kiếm.");
+            }
+
+            _logger.LogInformation("Searching for ticket: {TicketNumber}", ticketNumber);
+
             var ticket = await _ticketService.GetTicketByTicketNumberAsync(ticketNumber);
             var message = GenerateTicketInfoMessage(ticket);
 
-            var result = new DialogflowResponse
+            return new DialogflowResponse
             {
                 FulfillmentText = message
-            };
-
-            return result;
-        }
-
-        private List<string> CheckMissingFields(Dictionary<string, object> parameters)
-        {
-            var requiredFields = new[] { "departure_station", "arrival_station", "date", "quantity", "time" };
-            return requiredFields.Where(f => !parameters.ContainsKey(f) || parameters[f] == null).ToList();
-        }
-
-        public string GenerateTicketInfoMessage(TicketDto ticket)
-        {
-            if (ticket == null)
-            {
-                return "Không tìm thấy vé nào với mã vé này.";
-            }
-
-            var passengerNames = ticket.PassengerDetails != null && ticket.PassengerDetails.Any()
-                ? string.Join(", ", ticket.PassengerDetails.Select(p => $"{p.FirstName} {p.LastName}"))
-                : "Không có thông tin hành khách";
-
-            var trainInfo = ticket.SeatInformation?.TrainCar?.Train?.TrainName ?? "N/A";
-
-            var carNumber = ticket.SeatInformation?.TrainCar?.CarNumber?.ToString() ?? "N/A";
-            var seatTypeText = GetSeatTypeText(ticket.SeatInformation?.TrainCar?.SeatType ?? 0);
-
-            var seatNumber = ticket.SeatInformation?.SeatNumber.ToString() ?? "N/A";
-            var totalSeats = ticket.TicketSeats?.Count ?? 0;
-
-            var statusText = GetStatusText(ticket.Status);
-            var bookingDateText = ticket.BookingDate.ToString("dd/MM/yyyy HH:mm");
-
-            var message = $"🎫 **THÔNG TIN VÉ TÀU**</br>" +
-                          $"━━━━━━━━━━━━━━━━━━━━━━</br>" +
-                          $"🆔 Mã vé: {ticket.TicketNumber}</br>" +
-                          $"🚂 Tàu: {trainInfo}</br>" +
-                          $"🚃 Toa: {carNumber}</br>" +
-                          $"💺 Ghế: {seatNumber} ({seatTypeText})</br>" +
-                          $"📊 Số lượng ghế: {totalSeats}</br>" +
-                          $"🗓️ Ngày khởi hành: {ticket.JourneyDate:dd/MM/yyyy}</br>" +
-                          $"📅 Ngày đặt vé: {bookingDateText}</br>" +
-                          $"💵 Tổng tiền: {ticket.TotalPrice:N0} VNĐ</br>" +
-                          $"📌 Trạng thái: {statusText}</br>" +
-                          $"👤 Hành khách: {passengerNames}";
-
-            // Thêm ghi chú nếu có
-            if (!string.IsNullOrEmpty(ticket.Remarks))
-            {
-                message += $"\n📝 Ghi chú: {ticket.Remarks}";
-            }
-
-            return message;
-        }
-
-
-        private string GetSeatTypeText(int seatType)
-        {
-            return seatType switch
-            {
-                1 => "Ghế cứng",
-                2 => "Ghế mềm",
-                3 => "Giường nằm cứng",
-                4 => "Giường nằm mềm",
-                5 => "VIP",
-                _ => "Không xác định"
-            };
-        }
-
-        private string GetStatusText(TicketStatusEnum status)
-        {
-            return status switch
-            {
-                TicketStatusEnum.Active => "✅ Đang hoạt động",
-                TicketStatusEnum.Used => "🎫 Đã sử dụng",
-                TicketStatusEnum.Cancelled => "❌ Đã hủy",
-                TicketStatusEnum.Expired => "⌛ Hết hạn",
-                TicketStatusEnum.Refunded => "💰 Đã hoàn tiền",
-                TicketStatusEnum.UnPaid => "💳 Chưa thanh toán",
-                _ => status.ToString()
             };
         }
 
         public async Task<string> DetectIntentAsync(string sessionId, string text)
         {
+            if (string.IsNullOrWhiteSpace(sessionId))
+                throw new ArgumentException("Session ID cannot be null or empty", nameof(sessionId));
+
+            if (string.IsNullOrWhiteSpace(text))
+                throw new ArgumentException("Text cannot be null or empty", nameof(text));
+
             var sessionName = SessionName.FromProjectSession(_projectId, sessionId);
             var request = new DetectIntentRequest
             {
@@ -205,8 +154,143 @@ namespace Booking.Application.Services
                 }
             };
 
+            _logger.LogDebug("Detecting intent for session: {SessionId}, text: {Text}", sessionId, text);
+
             var response = await _client.DetectIntentAsync(request);
             return response.QueryResult.FulfillmentText;
+        }
+
+        private List<string> GetMissingFields(Dictionary<string, object> parameters)
+        {
+            return RequiredBookingFields
+                .Where(field => !parameters.ContainsKey(field) ||
+                               parameters[field] == null ||
+                               string.IsNullOrWhiteSpace(parameters[field]?.ToString()))
+                .ToList();
+        }
+
+        private (bool IsSuccess, DialogflowCreateTicketRequest BookingInfo, string ErrorMessage) ExtractBookingParameters(
+            Dictionary<string, object> parameters)
+        {
+            var departureStation = ExtractStringParameter(parameters, ParameterKeys.DepartureStation);
+            var arrivalStation = ExtractStringParameter(parameters, ParameterKeys.ArrivalStation);
+
+            if (!int.TryParse(parameters[ParameterKeys.Quantity]?.ToString(), out var quantity) || quantity <= 0)
+            {
+                return (false, null, "Số lượng vé không hợp lệ.");
+            }
+
+            var dateStr = parameters[ParameterKeys.Date]?.ToString();
+            if (!DateTime.TryParse(dateStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            {
+                return (false, null, Messages.InvalidDateMessage);
+            }
+
+            var timeStr = parameters[ParameterKeys.Time]?.ToString();
+            if (!DateTime.TryParse(timeStr, CultureInfo.InvariantCulture, DateTimeStyles.None, out var timeDateTime))
+            {
+                return (false, null, Messages.InvalidTimeMessage);
+            }
+
+            var bookingInfo = new DialogflowCreateTicketRequest
+            {
+                DepartureStation = departureStation,
+                ArrivalStation = arrivalStation,
+                Quantity = quantity,
+                Date = date.Date,
+                Time = timeDateTime.TimeOfDay
+            };
+
+            return (true, bookingInfo, null);
+        }
+
+        private string ExtractStringParameter(Dictionary<string, object> parameters, string key)
+        {
+            return parameters.TryGetValue(key, out var value) ? value?.ToString()?.Trim() : null;
+        }
+
+        private DialogflowResponse CreateErrorResponse(string message)
+        {
+            return new DialogflowResponse
+            {
+                FulfillmentText = message
+            };
+        }
+
+        public string GenerateTicketInfoMessage(TicketDto ticket)
+        {
+            if (ticket == null)
+            {
+                return Messages.TicketNotFoundMessage;
+            }
+
+            var passengerNames = GetPassengerNames(ticket);
+            var trainInfo = ticket.SeatInformation?.TrainCar?.Train?.TrainName ?? "N/A";
+            var carNumber = ticket.SeatInformation?.TrainCar?.CarNumber?.ToString() ?? "N/A";
+            var seatTypeText = GetSeatTypeText(ticket.SeatInformation?.TrainCar?.SeatType ?? 0);
+            var seatNumber = ticket.SeatInformation?.SeatNumber.ToString() ?? "N/A";
+            var totalSeats = ticket.TicketSeats?.Count ?? 0;
+            var statusText = GetStatusText(ticket.Status);
+            var bookingDateText = ticket.BookingDate.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
+
+            var message = $"🎫 **THÔNG TIN VÉ TÀU**<br/>" +
+                         $"━━━━━━━━━━━<br/>" +
+                         $"🆔 Mã vé: {ticket.TicketNumber}<br/>" +
+                         $"🚂 Tàu: {trainInfo}<br/>" +
+                         $"🚃 Toa: {carNumber}<br/>" +
+                         $"💺 Ghế: {seatNumber} ({seatTypeText})<br/>" +
+                         $"📊 Số lượng ghế: {totalSeats}<br/>" +
+                         $"🗓️ Ngày khởi hành: {ticket.JourneyDate:dd/MM/yyyy}<br/>" +
+                         $"📅 Ngày đặt vé: {bookingDateText}<br/>" +
+                         $"💵 Tổng tiền: {ticket.TotalPrice:N0} VNĐ<br/>" +
+                         $"📌 Trạng thái: {statusText}<br/>" +
+                         $"👤 Hành khách: {passengerNames}";
+
+            if (!string.IsNullOrWhiteSpace(ticket.Remarks))
+            {
+                message += $"<br/>📝 Ghi chú: {ticket.Remarks}";
+            }
+
+            return message;
+        }
+
+        private string GetPassengerNames(TicketDto ticket)
+        {
+            if (ticket.PassengerDetails == null || !ticket.PassengerDetails.Any())
+            {
+                return Messages.NoPassengerInfoMessage;
+            }
+
+            return string.Join(", ", ticket.PassengerDetails
+                .Where(p => !string.IsNullOrWhiteSpace(p.FirstName) || !string.IsNullOrWhiteSpace(p.LastName))
+                .Select(p => $"{p.FirstName?.Trim()} {p.LastName?.Trim()}".Trim()));
+        }
+
+        private static string GetSeatTypeText(int seatType)
+        {
+            return seatType switch
+            {
+                1 => "Ghế cứng",
+                2 => "Ghế mềm",
+                3 => "Giường nằm cứng",
+                4 => "Giường nằm mềm",
+                5 => "VIP",
+                _ => "Không xác định"
+            };
+        }
+
+        private static string GetStatusText(TicketStatusEnum status)
+        {
+            return status switch
+            {
+                TicketStatusEnum.Active => "✅ Đang hoạt động",
+                TicketStatusEnum.Used => "🎫 Đã sử dụng",
+                TicketStatusEnum.Cancelled => "❌ Đã hủy",
+                TicketStatusEnum.Expired => "⌛ Hết hạn",
+                TicketStatusEnum.Refunded => "💰 Đã hoàn tiền",
+                TicketStatusEnum.UnPaid => "💳 Chưa thanh toán",
+                _ => status.ToString()
+            };
         }
     }
 }
