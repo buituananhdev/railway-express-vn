@@ -88,15 +88,14 @@ public static class HostBuilderExtensions
     public static WebApplication UseBaseConfig(this WebApplication app)
     {
         app.UseMiddleware<ExceptionMiddleware>();
-
+        app.UseMiddleware<RequestLoggingMiddleware>();
+        app.UseHttpsRedirection();
         app.UseSwagger();
         app.UseSwaggerUI();
-
-        app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
-
         app.MapControllers();
+
         return app;
     }
 
