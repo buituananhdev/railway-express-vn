@@ -4,6 +4,7 @@ using Google.Cloud.Dialogflow.V2;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using System.Text.Json;
 
 namespace Booking.Application.Services
 {
@@ -57,8 +58,8 @@ namespace Booking.Application.Services
 
             _languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
 
-            var jsonCredentials = configuration["Dialogflow:JSON"]
-                ?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
+            var jsonCredentials = configuration["Dialogflow:JSON"];
+                //?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
 
             try
             {
@@ -66,7 +67,7 @@ namespace Booking.Application.Services
                 {
                     JsonCredentials = jsonCredentials
                 };
-                _client = builder.Build();
+                //_client = builder.Build();
 
                 _logger.LogInformation("DialogflowService initialized successfully for project: {ProjectId}", _projectId);
             }
@@ -80,7 +81,12 @@ namespace Booking.Application.Services
         public async Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters)
         {
             _logger.LogInformation("Processing booking ticket request");
-            _logger.LogInformation("Booking ticket body: " + parameters);
+            string paramJson = JsonSerializer.Serialize(parameters, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            _logger.LogInformation("Booking ticket body: {Parameters}", paramJson);
 
             var missingFields = GetMissingFields(parameters);
             if (missingFields.Count > 0)
