@@ -8,8 +8,8 @@ namespace Notification.Infrastructure.Services;
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
-    private readonly ILogger _logger;
-    public EmailService(IConfiguration configuration, ILogger logger)
+    private readonly ILogger<EmailService> _logger;
+    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
     {
         _configuration = configuration;
         _logger = logger;
