@@ -8,22 +8,30 @@ using Common.Application.Interfaces;
 using Common.Application.Services;
 
 namespace Admin.Application.Services;
+
 public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCarDto, TrainCarDto>, ITrainCarService
 {
     private readonly IAdminUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly ISeatService _seatService;
+    private readonly ICacheService _cacheService;
+
+    private const string PRICE_CACHE_KEY = "price:traincar:{0}:schedule:{1}:date:{2}";
+    private const int PRICE_CACHE_MINUTES = 10;
+
     public TrainCarService(
         ITrainCarRepository repository,
         IAdminUnitOfWork unitOfWork,
         IMapper mapper,
         IPaginationService paginationService,
-        ISeatService seatService
+        ISeatService seatService,
+        ICacheService cacheService
         ) : base(repository, unitOfWork, mapper, paginationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _seatService = seatService;
+        _cacheService = cacheService;
     }
 
     public async Task<List<TrainCarDto>> GetTrainCarsAndPriceAsync(Guid trainId, Guid scheduleId, DateTime journeyDate)
@@ -31,20 +39,44 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
         try
         {
             var specification = new TrainIdSpecification(trainId);
-
             var trainCars = await _unitOfWork.TrainCarRepository.ToListAsync(
                 spec: specification,
                 orderBy: query => query.OrderByDescending(tc => tc.CarNumber)
             );
 
+            if (!trainCars.Any())
+            {
+                return new List<TrainCarDto>();
+            }
+
             var result = _mapper.Map<List<TrainCarDto>>(trainCars);
+
+            var schedule = await _unitOfWork.TrainScheduleRepository.GetByIdAsync(scheduleId);
+            if (schedule == null)
+            {
+                throw new InvalidOperationException($"Schedule with ID {scheduleId} not found");
+            }
+
+            var basePrice = CalculateBasePrice(schedule.Distance);
+            var daysUntilDeparture = (journeyDate - DateTime.Now).TotalDays;
+            var priceMultiplier = daysUntilDeparture <= 7 ? 1.5m : 1m;
+
+            var trainCarIds = result.Select(tc => tc.Id).ToList();
+
+            var availableSeatsDict = await _seatService.GetAvailableSeatsForMultipleTrainCarsAsync(
+                trainCarIds, scheduleId, journeyDate);
+
+            var pricingTasks = new List<Task>();
             foreach (var trainCarDto in result)
             {
-                var (fromPrice, toPrice) = await CalculateTrainCarPricesAsync(trainCarDto.Id, scheduleId, journeyDate);
-                trainCarDto.FromPrice = fromPrice;
-                trainCarDto.ToPrice = toPrice;
-                trainCarDto.AvailableSeats = await _seatService.GetAvailableSeatsAsync(trainCarDto.Id, scheduleId, journeyDate);
+                trainCarDto.AvailableSeats = availableSeatsDict.TryGetValue(trainCarDto.Id, out var availableSeats)
+                    ? availableSeats : 0;
+
+                pricingTasks.Add(SetTrainCarPricingAsync(trainCarDto, scheduleId, journeyDate, basePrice, priceMultiplier));
             }
+
+            await Task.WhenAll(pricingTasks);
+
             return result;
         }
         catch (Exception)
@@ -53,31 +85,48 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
         }
     }
 
-    private async Task<(decimal FromPrice, decimal ToPrice)> CalculateTrainCarPricesAsync(Guid trainCarId, Guid scheduleId, DateTime journeyDate)
+    private async Task SetTrainCarPricingAsync(
+        TrainCarDto trainCarDto,
+        Guid scheduleId,
+        DateTime journeyDate,
+        decimal basePrice,
+        decimal priceMultiplier)
     {
+        string cacheKey = string.Format(PRICE_CACHE_KEY,
+            trainCarDto.Id, scheduleId, journeyDate.Date.ToString("yyyyMMdd"));
 
-        var schedule = await _unitOfWork.TrainScheduleRepository
-            .GetByIdAsync(scheduleId);
+        var cachedPricing = await _cacheService.GetCacheAsync<TrainCarPricingDto>(cacheKey);
 
-        var trainCar = await _unitOfWork.TrainCarRepository.GetByIdAsync(trainCarId);
-
-        decimal basePrice = CalculateBasePrice(schedule.Distance);
-
-        var daysUntilDeparture = (journeyDate - DateTime.Now).TotalDays;
-
-        decimal priceMultiplier = 1m;
-        if (daysUntilDeparture <= 7)
+        if (cachedPricing != null)
         {
-            priceMultiplier += 0.5m;
+            trainCarDto.FromPrice = cachedPricing.FromPrice;
+            trainCarDto.ToPrice = cachedPricing.ToPrice;
+            return;
         }
 
-        bool isBusinessClass = trainCar.SeatType == SeatType.Business;
+        var (fromPrice, toPrice) = CalculateTrainCarPrices(trainCarDto.SeatType, basePrice, priceMultiplier);
 
+        trainCarDto.FromPrice = fromPrice;
+        trainCarDto.ToPrice = toPrice;
+
+        var pricingDto = new TrainCarPricingDto
+        {
+            FromPrice = fromPrice,
+            ToPrice = toPrice
+        };
+        await _cacheService.SetCacheAsync(cacheKey, pricingDto, TimeSpan.FromMinutes(PRICE_CACHE_MINUTES));
+    }
+
+    private static (decimal FromPrice, decimal ToPrice) CalculateTrainCarPrices(
+        SeatType seatType,
+        decimal basePrice,
+        decimal priceMultiplier)
+    {
+        bool isBusinessClass = seatType == SeatType.Business;
         decimal economyPrice = basePrice * priceMultiplier;
         decimal businessPrice = economyPrice * 1.3m;
 
         decimal fromPrice, toPrice;
-
         if (isBusinessClass)
         {
             fromPrice = businessPrice;
@@ -95,14 +144,17 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
         return (fromPrice, toPrice);
     }
 
-    private decimal CalculateBasePrice(int distance)
+    private static decimal CalculateBasePrice(int distance)
     {
-        if (distance < 10) return distance * 2000m;
-        if (distance <= 25) return distance * 1700m;
-        if (distance <= 50) return distance * 1500m;
-        if (distance <= 100) return distance * 1300m;
-        if (distance <= 500) return distance * 1200m;
-        return distance * 1000m;
+        return distance switch
+        {
+            < 10 => distance * 2000m,
+            <= 25 => distance * 1700m,
+            <= 50 => distance * 1500m,
+            <= 100 => distance * 1300m,
+            <= 500 => distance * 1200m,
+            _ => distance * 1000m
+        };
     }
 
     public Task<List<TrainCarDto>> GetTrainCarsByTrainIdAsync(Guid trainId)
@@ -110,4 +162,10 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
         var specification = new TrainIdSpecification(trainId);
         return _unitOfWork.TrainCarRepository.ToListAsync<TrainCarDto>(spec: specification);
     }
+}
+
+public class TrainCarPricingDto
+{
+    public decimal FromPrice { get; set; }
+    public decimal ToPrice { get; set; }
 }

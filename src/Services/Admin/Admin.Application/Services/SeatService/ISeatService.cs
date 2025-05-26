@@ -21,4 +21,6 @@ public interface ISeatService
     Task<int> GetAvailableSeatsAsync(Guid trainCarId, Guid scheduleId, DateTime journeyDate);
     Task<SeatFullInformationDto> GetSeatWithTrainInformationAsync(Guid seatId);
     Task<List<Guid>> GetRandomeAvailableSeatAsync(Guid trainId, Guid trainScheduleId, DateTime journeyDate, int count);
+    Task<Dictionary<Guid, int>> GetAvailableSeatsForMultipleTrainCarsAsync(List<Guid> trainCarIds, Guid scheduleId, DateTime journeyDate);
+    Task<Dictionary<Guid, List<SeatDto>>> GetSeatsByMultipleTrainCarsAndScheduleAsync(List<Guid> trainCarIds, Guid trainScheduleId, DateTime journeyDate);
 }

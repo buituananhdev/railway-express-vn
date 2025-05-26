@@ -9,6 +9,7 @@ using Common.Application.Services;
 using Common.Domain.Specifications;
 
 namespace Admin.Application.Services;
+
 public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleDto, AddTrainScheduleDto, TrainScheduleDto>, ITrainScheduleService
 {
     private readonly IAdminUnitOfWork _adminUnitOfWork;
@@ -24,8 +25,14 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
         _adminUnitOfWork = unitOfWork;
         _mapper = mapper;
     }
-    public async Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(GetTrainSchedulesDto getTrainSchedulesDto)
+
+    public async Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(GetTrainSchedulesDto request)
     {
+        var specification = new AndSpecification<TrainSchedule>(
+            new DepartureStationIdSpecification(request.DepartureStationId),
+            new ArrivalStationIdSpecification(request.ArrivalStationId)
+        );
+
         var includes = new List<Expression<Func<TrainSchedule, object>>>
         {
             schedule => schedule.DepartureStation!,
@@ -33,64 +40,73 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
             schedule => schedule.Train!
         };
 
-        var specification = new AndSpecification<TrainSchedule>(
-            new DepartureStationIdSpecification(getTrainSchedulesDto.DepartureStationId),
-            new ArrivalStationIdSpecification(getTrainSchedulesDto.ArrivalStationId)
-        );
-
         var schedules = await _adminUnitOfWork.TrainScheduleRepository
-            .ToListAsync(
-                spec: specification,
-                includes: includes
-            );
+            .ToListAsync(spec: specification, includes: includes);
 
-        var trainScheduleDtos = new List<TrainScheduleDto>();
+        if (!schedules.Any())
+            return new List<TrainScheduleDto>();
 
-        foreach (var schedule in schedules)
-        {
-            decimal basePrice = CalculateBasePrice(schedule.Distance);
+        // Pre-calculate pricing parameters once
+        var pricingContext = CalculatePricingContext(request.DepartureDate, request.ReturnDate);
 
-            var daysUntilDeparture = (getTrainSchedulesDto.DepartureDate - DateTime.Now).TotalDays;
-            decimal priceMultiplier = 1m;
+        // Use AutoMapper for bulk mapping and then enhance with pricing
+        var trainScheduleDtos = _mapper.Map<List<TrainScheduleDto>>(schedules);
 
-            if (daysUntilDeparture <= 7)
-            {
-                priceMultiplier += 0.5m;
-            }
-
-            if (getTrainSchedulesDto.ReturnDate.HasValue)
-            {
-                priceMultiplier -= 0.2m;
-            }
-
-            decimal economyPrice = basePrice * priceMultiplier;
-            decimal businessPrice = economyPrice * 1.3m;
-
-            trainScheduleDtos.Add(new TrainScheduleDto
-            {
-                Id = schedule.Id,
-                DepartureStationId = schedule.DepartureStationId,
-                ArrivalStationId = schedule.ArrivalStationId,
-                DepartureTime = schedule.DepartureTime,
-                ArrivalTime = schedule.ArrivalTime,
-                Duration = (schedule.ArrivalTime - schedule.DepartureTime).Minutes,
-                Distance = schedule.Distance,
-                FromPrice = Math.Round(economyPrice, 2),
-                ToPrice = Math.Round(businessPrice, 2),
-                Train = _mapper.Map<TrainDto>(schedule.Train)
-            });
-        }
+        // Apply pricing calculations efficiently
+        ApplyPricingToSchedules(trainScheduleDtos, schedules, pricingContext);
 
         return trainScheduleDtos;
     }
 
-    private decimal CalculateBasePrice(int distance)
+    private static PricingContext CalculatePricingContext(DateTime departureDate, DateTime? returnDate)
     {
-        if (distance < 10) return distance * 2000m;
-        if (distance <= 25) return distance * 1700m;
-        if (distance <= 50) return distance * 1500m;
-        if (distance <= 100) return distance * 1300m;
-        if (distance <= 500) return distance * 1200m;
-        return distance * 1000m;
+        var daysUntilDeparture = (departureDate - DateTime.Now).TotalDays;
+        var priceMultiplier = 1m;
+
+        if (daysUntilDeparture <= 7)
+            priceMultiplier += 0.5m;
+
+        if (returnDate.HasValue)
+            priceMultiplier -= 0.2m;
+
+        return new PricingContext(priceMultiplier);
     }
+
+    private static void ApplyPricingToSchedules(
+        List<TrainScheduleDto> dtos,
+        List<TrainSchedule> schedules,
+        PricingContext pricingContext)
+    {
+        for (int i = 0; i < dtos.Count; i++)
+        {
+            var dto = dtos[i];
+            var schedule = schedules[i];
+
+            var basePrice = CalculateBasePrice(schedule.Distance);
+            var economyPrice = basePrice * pricingContext.PriceMultiplier;
+            var businessPrice = economyPrice * 1.3m;
+
+            dto.FromPrice = Math.Round(economyPrice, 2);
+            dto.ToPrice = Math.Round(businessPrice, 2);
+            dto.Duration = CalculateDurationInMinutes(schedule.DepartureTime, schedule.ArrivalTime);
+        }
+    }
+
+    private static int CalculateDurationInMinutes(DateTime departureTime, DateTime arrivalTime)
+    {
+        var duration = arrivalTime - departureTime;
+        return (int)duration.TotalMinutes;
+    }
+
+    private static decimal CalculateBasePrice(int distance) => distance switch
+    {
+        < 10 => distance * 2000m,
+        <= 25 => distance * 1700m,
+        <= 50 => distance * 1500m,
+        <= 100 => distance * 1300m,
+        <= 500 => distance * 1200m,
+        _ => distance * 1000m
+    };
+
+    private readonly record struct PricingContext(decimal PriceMultiplier);
 }
