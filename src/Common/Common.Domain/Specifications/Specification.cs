@@ -85,6 +85,34 @@ public class OrSpecification<T> : Specification<T>
     }
 }
 
+public class OrSpecificationMultiple<T> : Specification<T>
+{
+    private readonly IEnumerable<Specification<T>> _specifications;
+
+    public OrSpecificationMultiple(IEnumerable<Specification<T>> specifications)
+    {
+        _specifications = specifications;
+    }
+
+    public override Expression<Func<T, bool>> ToExpression()
+    {
+        var parameter = Expression.Parameter(typeof(T));
+        Expression? combined = null;
+
+        foreach (var spec in _specifications)
+        {
+            var expression = spec.ToExpression();
+            var visitor = new ParameterReplacer(expression.Parameters[0], parameter);
+            var body = visitor.Visit(expression.Body);
+
+            combined = combined == null ? body! : Expression.OrElse(combined, body!);
+        }
+
+        return Expression.Lambda<Func<T, bool>>(combined ?? Expression.Constant(false), parameter);
+    }
+}
+
+
 public class AndSpecificationMultiple<T> : Specification<T>
 {
     private readonly IEnumerable<Specification<T>> _specifications;

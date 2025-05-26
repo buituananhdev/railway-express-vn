@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Booking.Application.Services;
+using Booking.Domain.Specifications.Ticket;
 using Common.Protos;
 using Grpc.Core;
 
@@ -32,10 +33,13 @@ public class BookingService : Common.Protos.BookingGrpcService.BookingGrpcServic
 
     public override async Task<GetTicketPriceResponse> GetTicketPrice(GetTicketPriceRequest request, ServerCallContext context)
     {
-        var ticket = await _ticketService.GetByIdAsync(Guid.Parse(request.TicketId));
+        var ticketIds = request.TicketIds.Where(id => Guid.TryParse(id, out _))
+                                            .Select(id => Guid.Parse(id))
+                                            .ToList();
+        var price = await _ticketService.GetTicketPricesByIdsAsync(ticketIds);
         return new GetTicketPriceResponse
         {
-            Price = (double)ticket.TotalPrice
+            Price = price
         };
     }
 
