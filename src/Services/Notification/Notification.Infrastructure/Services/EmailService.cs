@@ -2,20 +2,24 @@
 using Notification.Application.Interfaces;
 using MailKit.Net.Smtp;
 using MimeKit;
+using Microsoft.Extensions.Logging;
 
 namespace Notification.Infrastructure.Services;
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
-    public EmailService(IConfiguration configuration)
+    private readonly ILogger _logger;
+    public EmailService(IConfiguration configuration, ILogger logger)
     {
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task SendEmailAsync(string to, string subject, string body, byte[] attachment)
     {
         try
         {
+            _logger.LogInformation("Sending email to {To} with subject {Subject}", to, subject);
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(_configuration.GetSection("SMTPConfigs:Displayname").Value, _configuration.GetSection("SMTPConfigs:Email").Value));
             message.To.Add(new MailboxAddress("", to));
