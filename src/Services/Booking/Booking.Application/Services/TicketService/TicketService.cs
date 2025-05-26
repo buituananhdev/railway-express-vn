@@ -153,7 +153,7 @@ namespace Booking.Application.Services
                             await CacheSeatBookingInfoAsync(seatId, createDto.TrainScheduleId, createDto.JourneyDate);
                         }
 
-                        var ticket =  _mapper.Map<TicketDto>(entity);
+                        var ticket = _mapper.Map<TicketDto>(entity);
                         ticket.TicketSeats = ticketSeatDtos;
                         return ticket;
                     },
@@ -381,6 +381,20 @@ namespace Booking.Application.Services
             var ticketDto = await CreateAsync(createDto);
 
             return ticketDto;
+        }
+
+        public async Task<double> GetTicketPricesByIdsAsync(List<Guid> ticketIds)
+        {
+            var specifications = ticketIds
+                .Select(id => new TicketIdSpecification(id))
+                .Cast<Specification<Ticket>>()
+                .ToList();
+
+            var specification = new OrSpecificationMultiple<Ticket>(specifications);
+
+            var tickets = await _bookingUnitOfWork.TicketRepository.ToListAsync(specification);
+
+            return tickets.Sum(t => (double)t.TotalPrice);
         }
     }
 }

@@ -22,4 +22,5 @@ public interface ITicketService
     Task<TicketDto> GetTicketWithPassengerInfoAsync(Guid ticketId);
     Task<TicketDto> GetTicketByTicketNumberAsync(string ticketNumber);
     Task<TicketDto> CreateTicketForDialogfowAsync(DialogflowCreateTicketRequest request);
+    Task<double> GetTicketPricesByIdsAsync(List<Guid> ticketIds);
 }

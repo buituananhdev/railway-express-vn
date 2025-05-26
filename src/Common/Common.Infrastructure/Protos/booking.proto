@@ -24,7 +24,7 @@ message BatchCheckSeatStatusResponse  {
 }
 
 message GetTicketPriceRequest {
-   string ticketId = 1;
+   repeated string ticketIds = 1;
 }
 
 message GetTicketPriceResponse {

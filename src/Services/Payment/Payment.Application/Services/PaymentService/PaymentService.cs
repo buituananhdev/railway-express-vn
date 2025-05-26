@@ -9,6 +9,7 @@ using Payment.Application.Dtos;
 using Payment.Application.Repositories;
 using Payment.Domain.Entities;
 using Payment.Domain.Enums;
+using System.Security.Cryptography;
 
 namespace Payment.Application.Services.PaymentService;
 
@@ -16,8 +17,10 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
 {
     private readonly BookingGrpcService.BookingGrpcServiceClient _bookingGrpcServiceClient;
     private readonly IPaymentUnitOfWork _unitOfWork;
-    private static readonly Random _random = new Random();
     private readonly IPublishEndpoint _publishEndpoint;
+
+    private static readonly ThreadLocal<Random> _threadLocalRandom = new(() => new Random(GetCryptoRandomSeed()));
+
     public PaymentService(
         IPaymentRepository repository,
         IPaymentUnitOfWork unitOfWork,
@@ -34,7 +37,6 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
 
     public override async Task<PaymentRecordDto> UpdateAsync(Guid id, UpdatePaymentRecordDto updatePayment)
     {
-
         var payment = await _unitOfWork.PaymentRepository.GetByIdAsync(id)
             ?? throw new NotFoundException($"Entity with id {id} not found");
 
@@ -48,8 +50,11 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
         {
             payment.Status = PaymentStatusEnum.Paid;
             payment.IsSentETicket = true;
-            await SendETicketAsync(payment, payment.TicketIds);
-            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.TicketIds, 0));
+
+            var sendETicketTask = SendETicketAsync(payment, payment.TicketIds);
+            var publishEventTask = _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.TicketIds, 0));
+
+            await Task.WhenAll(sendETicketTask, publishEventTask);
         }
         else
         {
@@ -62,7 +67,6 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
         return _mapper.Map<PaymentRecordDto>(payment);
     }
 
-
     public async Task<Guid> CreateTemporaryPaymentRecordAsync(List<Guid> ticketIds)
     {
         if (ticketIds == null || !ticketIds.Any())
@@ -70,47 +74,44 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
             throw new ArgumentException("Ticket IDs cannot be null or empty", nameof(ticketIds));
         }
 
+        var ticketIdStrings = ticketIds.Select(g => g.ToString()).ToList();
+
         var paymentNo = GeneratePaymentNumber();
 
-        var tasks = new List<Task<GetTicketPriceResponse>>();
+        var request = new GetTicketPriceRequest();
+        request.TicketIds.AddRange(ticketIdStrings);
 
-        foreach (var ticketId in ticketIds)
-        {
-            var call = _bookingGrpcServiceClient.GetTicketPriceAsync(
-                new GetTicketPriceRequest { TicketId = ticketId.ToString() });
-            tasks.Add(call.ResponseAsync);
-        }
-
-        var results = await Task.WhenAll(tasks);
-
-        decimal totalAmount = results.Sum(result => (decimal)result.Price);
+        var response = await _bookingGrpcServiceClient.GetTicketPriceAsync(request,
+            deadline: DateTime.UtcNow.AddSeconds(30));
 
         var paymentRecord = new PaymentRecord
         {
             PaymentNo = paymentNo,
             Description = $"Thanh toan cho don hang {paymentNo}",
             TicketIds = ticketIds,
-            Amount = totalAmount,
-            Status = Domain.Enums.PaymentStatusEnum.UnPaid,
+            Amount = (decimal)response.Price,
+            Status = PaymentStatusEnum.UnPaid,
         };
 
         await _unitOfWork.PaymentRepository.AddAsync(paymentRecord);
         await _unitOfWork.SaveChangesAsync();
+
         return paymentRecord.Id;
     }
 
     private static string GeneratePaymentNumber()
     {
-        // Use thread-safe random number generation
-        int randomNumber;
-        lock (_random)
-        {
-            randomNumber = _random.Next(100000, 1000000);
-        }
-
+        var randomNumber = _threadLocalRandom.Value!.Next(100000, 1000000);
         return $"PO-{randomNumber}";
     }
 
+    private static int GetCryptoRandomSeed()
+    {
+        using var rng = RandomNumberGenerator.Create();
+        var bytes = new byte[4];
+        rng.GetBytes(bytes);
+        return BitConverter.ToInt32(bytes, 0);
+    }
     private async Task SendETicketAsync(PaymentRecord payment, List<Guid> ticketIds)
     {
         var ticketInfos = new List<GetTicketInformationResponse>();
