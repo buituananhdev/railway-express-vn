@@ -58,7 +58,7 @@ app.UseCors(builder =>
            .AllowAnyHeader()
            .AllowCredentials();
 
-    builder.WithOrigins("http://localhost:5173", "http://localhost:5174", "https://railway-express-vn-booking-u1lb-738az7pj6-tuananh1003s-projects.vercel.app")
+    builder.WithOrigins("http://localhost:5173", "http://localhost:5174", "https://railway-express-vn-booking-u1lb.vercel.app", "https://vetau.site")
            .AllowAnyMethod()
            .AllowAnyHeader()
            .AllowCredentials();
