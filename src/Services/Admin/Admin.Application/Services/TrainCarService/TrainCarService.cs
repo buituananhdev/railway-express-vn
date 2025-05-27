@@ -13,24 +13,21 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
 {
     private readonly IAdminUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
-    private readonly ISeatService _seatService;
     private readonly ICacheService _cacheService;
 
-    private const string PRICE_CACHE_KEY = "price:traincar:{0}:schedule:{1}:date:{2}";
-    private const int PRICE_CACHE_MINUTES = 10;
+    private const string TRAINCARS_CACHE_KEY = "traincars:train:{0}:schedule:{1}:date:{2}";
+    private const int CACHE_HOURS = 24;
 
     public TrainCarService(
         ITrainCarRepository repository,
         IAdminUnitOfWork unitOfWork,
         IMapper mapper,
         IPaginationService paginationService,
-        ISeatService seatService,
         ICacheService cacheService
         ) : base(repository, unitOfWork, mapper, paginationService)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
-        _seatService = seatService;
         _cacheService = cacheService;
     }
 
@@ -38,6 +35,15 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
     {
         try
         {
+            string cacheKey = string.Format(TRAINCARS_CACHE_KEY,
+                trainId, scheduleId, journeyDate.Date.ToString("yyyyMMdd"));
+
+            var cachedResult = await _cacheService.GetCacheAsync<List<TrainCarDto>>(cacheKey);
+            if (cachedResult != null && cachedResult.Any())
+            {
+                return cachedResult;
+            }
+
             var specification = new TrainIdSpecification(trainId);
             var trainCars = await _unitOfWork.TrainCarRepository.ToListAsync(
                 spec: specification,
@@ -61,21 +67,14 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
             var daysUntilDeparture = (journeyDate - DateTime.Now).TotalDays;
             var priceMultiplier = daysUntilDeparture <= 7 ? 1.5m : 1m;
 
-            var trainCarIds = result.Select(tc => tc.Id).ToList();
-
-            var availableSeatsDict = await _seatService.GetAvailableSeatsForMultipleTrainCarsAsync(
-                trainCarIds, scheduleId, journeyDate);
-
-            var pricingTasks = new List<Task>();
             foreach (var trainCarDto in result)
             {
-                trainCarDto.AvailableSeats = availableSeatsDict.TryGetValue(trainCarDto.Id, out var availableSeats)
-                    ? availableSeats : 0;
-
-                pricingTasks.Add(SetTrainCarPricingAsync(trainCarDto, scheduleId, journeyDate, basePrice, priceMultiplier));
+                var (fromPrice, toPrice) = CalculateTrainCarPrices(trainCarDto.SeatType, basePrice, priceMultiplier);
+                trainCarDto.FromPrice = fromPrice;
+                trainCarDto.ToPrice = toPrice;
             }
 
-            await Task.WhenAll(pricingTasks);
+            await _cacheService.SetCacheAsync(cacheKey, result, TimeSpan.FromHours(CACHE_HOURS));
 
             return result;
         }
@@ -83,38 +82,6 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
         {
             throw;
         }
-    }
-
-    private async Task SetTrainCarPricingAsync(
-        TrainCarDto trainCarDto,
-        Guid scheduleId,
-        DateTime journeyDate,
-        decimal basePrice,
-        decimal priceMultiplier)
-    {
-        string cacheKey = string.Format(PRICE_CACHE_KEY,
-            trainCarDto.Id, scheduleId, journeyDate.Date.ToString("yyyyMMdd"));
-
-        var cachedPricing = await _cacheService.GetCacheAsync<TrainCarPricingDto>(cacheKey);
-
-        if (cachedPricing != null)
-        {
-            trainCarDto.FromPrice = cachedPricing.FromPrice;
-            trainCarDto.ToPrice = cachedPricing.ToPrice;
-            return;
-        }
-
-        var (fromPrice, toPrice) = CalculateTrainCarPrices(trainCarDto.SeatType, basePrice, priceMultiplier);
-
-        trainCarDto.FromPrice = fromPrice;
-        trainCarDto.ToPrice = toPrice;
-
-        var pricingDto = new TrainCarPricingDto
-        {
-            FromPrice = fromPrice,
-            ToPrice = toPrice
-        };
-        await _cacheService.SetCacheAsync(cacheKey, pricingDto, TimeSpan.FromMinutes(PRICE_CACHE_MINUTES));
     }
 
     private static (decimal FromPrice, decimal ToPrice) CalculateTrainCarPrices(
@@ -162,10 +129,4 @@ public class TrainCarService : BaseService<TrainCar, AddTrainCarDto, AddTrainCar
         var specification = new TrainIdSpecification(trainId);
         return _unitOfWork.TrainCarRepository.ToListAsync<TrainCarDto>(spec: specification);
     }
-}
-
-public class TrainCarPricingDto
-{
-    public decimal FromPrice { get; set; }
-    public decimal ToPrice { get; set; }
 }
