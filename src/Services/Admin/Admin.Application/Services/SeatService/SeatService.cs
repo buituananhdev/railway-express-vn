@@ -28,9 +28,8 @@ public class SeatService : BaseService<Seat, AddSeatDto, AddSeatDto, SeatDto>, I
     private const string SEATS_CACHE_KEY = "seats:traincar:{0}";
     private const int SEATS_CACHE_MINUTES = 60;
     private const string STATUS_CACHE_KEY = "status:schedule:{0}:date:{1}";
-    private const int STATUS_CACHE_MINUTES = 1;
     private const string AVAILABLE_SEATS_CACHE_KEY = "available:seats:{0}:{1}:{2}";
-    private const int AVAILABLE_SEATS_CACHE_SECONDS = 30;
+    private const int AVAILABLE_SEATS_CACHE_SECONDS = 10;
 
     public SeatService(
         ISeatRepository repository,
