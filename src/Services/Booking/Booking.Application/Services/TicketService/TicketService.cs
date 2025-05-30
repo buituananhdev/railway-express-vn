@@ -23,6 +23,7 @@ namespace Booking.Application.Services
         private readonly ICacheService _cacheService;
         private readonly ILogger<TicketService> _logger;
         private readonly ITicketSeatService _ticketSeatService;
+        private readonly IBookingOrderService _bookingOrderService;
         private readonly AdminGrpcService.AdminGrpcServiceClient _adminGrpcServiceClient;
 
         private const string SEAT_LOCK_KEY_PREFIX = "seat:lock:";
@@ -37,6 +38,7 @@ namespace Booking.Application.Services
             ICacheService cacheService,
             ILogger<TicketService> logger,
             ITicketSeatService ticketSeatService,
+            IBookingOrderService bookingOrderService,
             AdminGrpcService.AdminGrpcServiceClient adminGrpcServiceClient)
             : base(repository, unitOfWork, mapper, paginationService)
         {
@@ -47,6 +49,7 @@ namespace Booking.Application.Services
             _logger = logger;
             _ticketSeatService = ticketSeatService;
             _adminGrpcServiceClient = adminGrpcServiceClient;
+            _bookingOrderService = bookingOrderService;
         }
 
         public override async Task<TicketDto> CreateAsync(AddTicketDto createDto)
@@ -83,6 +86,17 @@ namespace Booking.Application.Services
                             throw new InvalidOperationException($"Seat {seatId} is already booked for this schedule and date.");
                         }
 
+                        BookingOrderDto bookingOrder;
+                        if(createDto.TicketType == TicketTypeEnum.Normal)
+                        {
+                            bookingOrder = await _bookingOrderService.CreateAsync(new AddBookingOrderDto());
+                        }
+                        else
+                        {
+                            bookingOrder = await _bookingOrderService.GetByIdAsync((Guid)createDto.BookingOrderId);
+                        }
+
+                        createDto.BookingOrderId = bookingOrder.Id;
                         var entity = _mapper.Map<Ticket>(createDto);
                         await _bookingUnitOfWork.TicketRepository.AddAsync(entity);
                         await _bookingUnitOfWork.SaveChangesAsync();
@@ -278,18 +292,15 @@ namespace Booking.Application.Services
             }
         }
 
-        public async Task UpdateTicketStatusAsync(Guid ticketId, TicketStatusEnum status)
+        public async Task UpdateTicketsStatusAsync(Guid bookingOrderId, TicketStatusEnum status)
         {
-            try
+            var specification = new BookingOrderIdSpecification(bookingOrderId);
+            var tickets = await _bookingUnitOfWork.TicketRepository.ToListForUpdateAsync<Ticket>(spec: specification);
+            foreach (var ticket in tickets)
             {
-                var ticket = await _bookingUnitOfWork.TicketRepository.GetByIdAsync(ticketId);
                 ticket.Status = status;
-                await _bookingUnitOfWork.SaveChangesAsync();
             }
-            catch (Exception ex)
-            {
-                throw;
-            }
+            await _bookingUnitOfWork.SaveChangesAsync();
         }
 
         private string GenerateTicketNumber()
@@ -312,16 +323,19 @@ namespace Booking.Application.Services
             return ticketNumber;
         }
 
-        public Task<TicketDto> GetTicketWithPassengerInfoAsync(Guid ticketId)
+        public async Task<List<TicketDto>> GetTicketWithPassengerInfoAsync(Guid bookingOrderId)
         {
-            var specification = new AndSpecificationMultiple<Ticket>(
-                new List<Specification<Ticket>>
-                {
-                    new TicketIdSpecification(ticketId)
-                }
-            );
+            var specification = new BookingOrderIdSpecification(bookingOrderId);
 
-            return GetTicketAsync(specification);
+            var tickets = await _bookingUnitOfWork.TicketRepository.ToListAsync<TicketDto>(spec: specification);
+
+            foreach (var ticket in tickets)
+            {
+                var request = new GetSeatInformationRequest { SeatId = ticket.TicketSeats.FirstOrDefault()?.SeatId.ToString() };
+                var seatInformation = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
+                ticket.SeatInformation = _mapper.Map<Seat>(seatInformation);
+            }
+            return tickets;
         }
 
         public Task<TicketDto> GetTicketByTicketNumberAsync(string ticketNumber)
@@ -383,18 +397,15 @@ namespace Booking.Application.Services
             return ticketDto;
         }
 
-        public async Task<double> GetTicketPricesByIdsAsync(List<Guid> ticketIds)
+        public async Task<double> GetTicketPricesByBookingOrderAsync(Guid bookingOrderId)
         {
-            var specifications = ticketIds
-                .Select(id => new TicketIdSpecification(id))
-                .Cast<Specification<Ticket>>()
-                .ToList();
-
-            var specification = new OrSpecificationMultiple<Ticket>(specifications);
+            var specification = new BookingOrderIdSpecification(bookingOrderId);
 
             var tickets = await _bookingUnitOfWork.TicketRepository.ToListAsync(specification);
 
             return tickets.Sum(t => (double)t.TotalPrice);
         }
+
+        public Task CancelTicketAsync(Guid ticketId) => throw new NotImplementedException();
     }
 }

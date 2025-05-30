@@ -51,15 +51,15 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
             payment.Status = PaymentStatusEnum.Paid;
             payment.IsSentETicket = true;
 
-            var sendETicketTask = SendETicketAsync(payment, payment.TicketIds);
-            var publishEventTask = _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.TicketIds, 0));
+            var sendETicketTask = SendETicketAsync(payment, payment.BookingOrderId);
+            var publishEventTask = _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.BookingOrderId, 0));
 
             await Task.WhenAll(sendETicketTask, publishEventTask);
         }
         else
         {
             payment.Status = PaymentStatusEnum.Failed;
-            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.TicketIds, 2));
+            await _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.BookingOrderId, 2));
         }
 
         _repository.Update(payment);
@@ -67,19 +67,11 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
         return _mapper.Map<PaymentRecordDto>(payment);
     }
 
-    public async Task<Guid> CreateTemporaryPaymentRecordAsync(List<Guid> ticketIds)
+    public async Task<Guid> CreateTemporaryPaymentRecordAsync(Guid bookingOrderId)
     {
-        if (ticketIds == null || !ticketIds.Any())
-        {
-            throw new ArgumentException("Ticket IDs cannot be null or empty", nameof(ticketIds));
-        }
-
-        var ticketIdStrings = ticketIds.Select(g => g.ToString()).ToList();
-
         var paymentNo = GeneratePaymentNumber();
 
-        var request = new GetTicketPriceRequest();
-        request.TicketIds.AddRange(ticketIdStrings);
+        var request = new GetTicketPriceRequest { BookingOrderId = bookingOrderId.ToString() };
 
         var response = await _bookingGrpcServiceClient.GetTicketPriceAsync(request,
             deadline: DateTime.UtcNow.AddSeconds(30));
@@ -88,7 +80,7 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
         {
             PaymentNo = paymentNo,
             Description = $"Thanh toan cho don hang {paymentNo}",
-            TicketIds = ticketIds,
+            BookingOrderId = bookingOrderId,
             Amount = (decimal)response.Price,
             Status = PaymentStatusEnum.UnPaid,
         };
@@ -112,17 +104,12 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
         rng.GetBytes(bytes);
         return BitConverter.ToInt32(bytes, 0);
     }
-    private async Task SendETicketAsync(PaymentRecord payment, List<Guid> ticketIds)
+    private async Task SendETicketAsync(PaymentRecord payment, Guid bookingOrderId)
     {
-        var ticketInfos = new List<GetTicketInformationResponse>();
-        foreach (var ticketId in ticketIds)
-        {
-            var ticketInfo = await _bookingGrpcServiceClient.GetTicketInformationAsync(
-                new GetTicketInformationRequest { TicketId = ticketId.ToString() });
-            ticketInfos.Add(ticketInfo);
-        }
-
-        foreach (var ticket in ticketInfos)
+        var response = await _bookingGrpcServiceClient.GetTicketInformationAsync(
+                new GetTicketInformationRequest { BookingOrderId = bookingOrderId.ToString() });
+        var tickets = response.Tickets;
+        foreach (var ticket in tickets)
         {
             var mainPassenger = ticket.PassengerDetails
                 .Where(p => (bool)p.IsMainPassenger)

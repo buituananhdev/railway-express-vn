@@ -11,6 +11,8 @@ public partial class BookingContext : DbContext, IDataContext
     public virtual DbSet<Ticket> Tickets { get; set; } = null!;
     public virtual DbSet<PassengerInfo> PassengerInfos { get; set; } = null!;
     public virtual DbSet<TicketSeat> TicketSeats { get; set; } = null!;
+    public virtual DbSet<BookingOrder> BookingOrders { get; set; } = null!;
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -123,6 +125,18 @@ public partial class BookingContext : DbContext, IDataContext
             entity.HasIndex(e => new { e.TicketId, e.SeatId })
                 .IsUnique()
                 .HasDatabaseName("IX_TicketSeats_TicketId_SeatId");
+        });
+
+        // BookingOrder configuration
+        modelBuilder.Entity<BookingOrder>(entity =>
+        {
+            entity.Property(e => e.CreatedAt)
+                .IsRequired();
+
+            entity.HasMany(b => b.Tickets)
+                .WithOne(t => t.BookingOrder)
+                .HasForeignKey(t => t.BookingOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -43,7 +43,7 @@ public class AutoMapperProfile : Profile
             .ForMember(dest => dest.IdentityNumber, opt => opt.MapFrom(src => src.IdentityNumber));
 
         // TicketDto -> GetTicketInformationResponse
-        CreateMap<TicketDto, GetTicketInformationResponse>()
+        CreateMap<TicketDto, TicketInformation>()
             .ForMember(dest => dest.PassengerId, opt => opt.MapFrom(src => src.PassengerId))
             .ForMember(dest => dest.TrainId, opt => opt.MapFrom(src => src.TrainId.ToString()))
             .ForMember(dest => dest.TrainScheduleId, opt => opt.MapFrom(src => src.TrainScheduleId.ToString()))

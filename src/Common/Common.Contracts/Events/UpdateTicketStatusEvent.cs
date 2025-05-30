@@ -1,6 +1,6 @@
 ﻿namespace Common.Contracts.Events;
 public record UpdateTicketStatusEvent
 (
-    List<Guid> TicketIds,
+    Guid BookingOrderId,
     int Status
 );

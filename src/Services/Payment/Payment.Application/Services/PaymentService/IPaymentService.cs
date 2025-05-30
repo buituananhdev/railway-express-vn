@@ -15,5 +15,5 @@ public interface IPaymentService
     Task<PaymentRecordDto> UpdateAsync(Guid id, UpdatePaymentRecordDto updateDto);
     Task DeleteAsync(Guid id);
     Task<PaymentRecordDto> GetByIdAsync(Guid id);
-    Task<Guid> CreateTemporaryPaymentRecordAsync(List<Guid> ticketIds);
+    Task<Guid> CreateTemporaryPaymentRecordAsync(Guid bookingOrderId);
 }

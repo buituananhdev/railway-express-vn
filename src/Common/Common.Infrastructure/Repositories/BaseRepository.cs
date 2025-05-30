@@ -108,6 +108,15 @@ public class BaseRepository<T> : IBaseRepository<T> where T : class
             .ApplySpecification(spec)
             .ApplyIncludes(includes);
     }
+
+    public Task<List<T>> ToListForUpdateAsync<TDto>(Specification<T>? spec = null, List<Expression<Func<T, object>>>? includes = null, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? page = null, int? size = null)
+    {
+        return _dbSet.ApplySpecification(spec)
+            .ApplyIncludes(includes)
+            .ApplyOrder(orderBy)
+            .ApplyPaging(page, size)
+            .ToListAsync();
+    }
 }
 
 internal static class RepositoryExtensions

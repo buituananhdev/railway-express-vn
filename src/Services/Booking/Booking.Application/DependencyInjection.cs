@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<IPassengerInfoService, PassengerInfoService>();
         services.AddScoped<IDialogflowService, DialogflowService>();
         services.AddScoped<ITicketSeatService, TicketSeatService>();
+        services.AddScoped<IBookingOrderService, BookingOrderService>();
 
         services.AddGrpcClient<AdminGrpcService.AdminGrpcServiceClient>(o =>
         {

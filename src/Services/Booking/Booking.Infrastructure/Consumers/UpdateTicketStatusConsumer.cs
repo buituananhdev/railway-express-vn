@@ -1,4 +1,5 @@
 ﻿using Booking.Application.Services;
+using Booking.Domain.Entities;
 using Booking.Domain.Enums;
 using Common.Contracts.Events;
 using MassTransit;
@@ -14,9 +15,6 @@ public sealed class UpdateTicketStatusConsumer : IConsumer<UpdateTicketStatusEve
     }
     public async Task Consume(ConsumeContext<UpdateTicketStatusEvent> context)
     {
-        foreach (var ticketId in context.Message.TicketIds)
-        {
-            await _ticketService.UpdateTicketStatusAsync(ticketId, (TicketStatusEnum)context.Message.Status);
-        }
+        await _ticketService.UpdateTicketsStatusAsync(context.Message.BookingOrderId, (TicketStatusEnum)context.Message.Status);
     }
 }

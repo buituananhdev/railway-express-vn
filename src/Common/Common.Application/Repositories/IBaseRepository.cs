@@ -39,6 +39,12 @@ public interface IBaseRepository<T> where T : class
         Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
         int? page = null, int? size = null);
 
+    Task<List<T>> ToListForUpdateAsync<TDto>(
+        Specification<T>? spec = null,
+        List<Expression<Func<T, object>>>? includes = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+        int? page = null, int? size = null);
+
     Task<bool> AnyAsync(Specification<T>? spec = null);
 
     IQueryable<T> GetQueryable(
