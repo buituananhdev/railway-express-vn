@@ -14,7 +14,9 @@ public class TicketDto : BaseDto
     public DateTime JourneyDate { get; set; }
     public decimal TotalPrice { get; set; }
     public TicketStatusEnum Status { get; set; }
+    public TicketTypeEnum TicketType { get; set; }
     public string? Remarks { get; set; }
+    public Guid? BookingOrderId { get; set; }
     public List<PassengerInfoDto>? PassengerDetails { get; set; }
     public List<TicketSeatDto>? TicketSeats { get; set; }
 }

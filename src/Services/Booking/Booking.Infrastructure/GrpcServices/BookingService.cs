@@ -33,21 +33,22 @@ public class BookingService : Common.Protos.BookingGrpcService.BookingGrpcServic
 
     public override async Task<GetTicketPriceResponse> GetTicketPrice(GetTicketPriceRequest request, ServerCallContext context)
     {
-        var ticketIds = request.TicketIds.Where(id => Guid.TryParse(id, out _))
-                                            .Select(id => Guid.Parse(id))
-                                            .ToList();
-        var price = await _ticketService.GetTicketPricesByIdsAsync(ticketIds);
+        var price = await _ticketService.GetTicketPricesByBookingOrderAsync(Guid.Parse(request.BookingOrderId));
         return new GetTicketPriceResponse
         {
             Price = price
         };
     }
 
-    public override async Task<GetTicketInformationResponse> GetTicketInformation(
+    public override async Task<GetTicketInformationResponses> GetTicketInformation(
         GetTicketInformationRequest request,
         ServerCallContext context)
     {
-        var ticket = await _ticketService.GetTicketWithPassengerInfoAsync(Guid.Parse(request.TicketId));
-        return _mapper.Map<GetTicketInformationResponse>(ticket);
+        var tickets = await _ticketService.GetTicketWithPassengerInfoAsync(Guid.Parse(request.BookingOrderId));
+        var result = _mapper.Map<List<TicketInformation>>(tickets);
+        return new GetTicketInformationResponses
+        {
+            Tickets = { result }
+        };
     }
 }

@@ -4,7 +4,7 @@ namespace Payment.Application.Dtos;
 public class AddPaymentRecordDto
 {
     public string PaymentNo { get; set; }
-    public List<Guid> TicketIds { get; set; }
+    public Guid BookingOrderId { get; set; }
     public PaymentStatusEnum Status { get; set; }
     public string? Description { get; set; }
     public string? IpAddress { get; set; }

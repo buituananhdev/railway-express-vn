@@ -51,5 +51,9 @@ public class AutoMapperProfile : Profile
 
         CreateMap<TrainFullInformation, Train>()
             .ForMember(dest => dest.TrainName, opt => opt.MapFrom(src => src.TrainName ?? string.Empty));
+
+        CreateMap<BookingOrderDto, BookingOrder>().ReverseMap();
+
+        CreateMap<AddBookingOrderDto, BookingOrder>().ReverseMap();
     }
 }

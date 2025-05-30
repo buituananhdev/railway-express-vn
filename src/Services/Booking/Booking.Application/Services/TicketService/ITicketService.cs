@@ -18,9 +18,10 @@ public interface ITicketService
     Task<TicketDto> GetByIdAsync(Guid id);
     Task<bool> IsSeatBookedForScheduleAsync(Guid seatId, Guid scheduleId, DateTime journeyDate);
     Task<Dictionary<Guid, bool>> AreSeatsBookedForScheduleAsync(List<Guid> seatIds, Guid scheduleId, DateTime journeyDate);
-    Task UpdateTicketStatusAsync(Guid ticketId, TicketStatusEnum status);
-    Task<TicketDto> GetTicketWithPassengerInfoAsync(Guid ticketId);
+    Task UpdateTicketsStatusAsync(Guid bookingOrderId, TicketStatusEnum status);
+    Task<List<TicketDto>> GetTicketWithPassengerInfoAsync(Guid bookingOrderId);
     Task<TicketDto> GetTicketByTicketNumberAsync(string ticketNumber);
     Task<TicketDto> CreateTicketForDialogfowAsync(DialogflowCreateTicketRequest request);
-    Task<double> GetTicketPricesByIdsAsync(List<Guid> ticketIds);
+    Task<double> GetTicketPricesByBookingOrderAsync(Guid bookingOrderId);
+    Task CancelTicketAsync(Guid ticketId);
 }

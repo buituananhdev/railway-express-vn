@@ -8,34 +8,38 @@ import "google/protobuf/timestamp.proto";
 package booking;
 
 service BookingGrpcService {
- rpc BatchCheckSeatStatus (BatchCheckSeatStatusRequest) returns (BatchCheckSeatStatusResponse);
- rpc GetTicketPrice (GetTicketPriceRequest) returns (GetTicketPriceResponse);
- rpc GetTicketInformation (GetTicketInformationRequest) returns (GetTicketInformationResponse);
+  rpc BatchCheckSeatStatus (BatchCheckSeatStatusRequest) returns (BatchCheckSeatStatusResponse);
+  rpc GetTicketPrice (GetTicketPriceRequest) returns (GetTicketPriceResponse);
+  rpc GetTicketInformation (GetTicketInformationRequest) returns (GetTicketInformationResponses);
 }
 
 message BatchCheckSeatStatusRequest {
- repeated string seatIds = 1;
- string scheduleId = 2;
- google.protobuf.Timestamp journeyDate = 3;
+  repeated string seatIds = 1;
+  string scheduleId = 2;
+  google.protobuf.Timestamp journeyDate = 3;
 }
 
-message BatchCheckSeatStatusResponse  {
- map<string, bool> seatStatuses = 1;
+message BatchCheckSeatStatusResponse {
+  map<string, bool> seatStatuses = 1;
 }
 
 message GetTicketPriceRequest {
-   repeated string ticketIds = 1;
+  string bookingOrderId = 1;
 }
 
 message GetTicketPriceResponse {
-   double price = 1;
+  double price = 1;
 }
 
 message GetTicketInformationRequest {
-   string ticketId = 1;
+  string bookingOrderId = 1;
 }
 
-message GetTicketInformationResponse {
+message GetTicketInformationResponses {
+  repeated TicketInformation tickets = 1;
+}
+
+message TicketInformation {
   string id = 1;
   string ticketNumber = 2;
   google.protobuf.StringValue passengerId = 3;
@@ -44,7 +48,7 @@ message GetTicketInformationResponse {
   string trainScheduleId = 6;
   google.protobuf.Timestamp bookingDate = 7;
   google.protobuf.Timestamp journeyDate = 8;
-  google.protobuf.DoubleValue totalPrice = 9; 
+  google.protobuf.DoubleValue totalPrice = 9;
   int32 status = 10;
   google.protobuf.StringValue remarks = 11;
   repeated PassengerInfo passengerDetails = 12;

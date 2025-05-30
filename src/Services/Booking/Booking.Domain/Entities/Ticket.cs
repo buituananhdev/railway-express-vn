@@ -12,7 +12,10 @@ public class Ticket : BaseEntity
     public DateTime JourneyDate { get; set; }
     public decimal TotalPrice { get; set; }
     public TicketStatusEnum Status { get; set; } = TicketStatusEnum.UnPaid;
+    public TicketTypeEnum TicketType { get; set; } = TicketTypeEnum.Normal;
     public string? Remarks { get; set; }
     public ICollection<PassengerInfo> PassengerDetails { get; set; }
     public ICollection<TicketSeat> TicketSeats { get; set; }
+    public Guid? BookingOrderId { get; set; }
+    public BookingOrder BookingOrder { get; set; }
 }

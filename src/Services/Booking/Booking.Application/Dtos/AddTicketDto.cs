@@ -1,4 +1,6 @@
-﻿namespace Booking.Application.Dtos;
+﻿using Booking.Domain.Enums;
+
+namespace Booking.Application.Dtos;
 public class AddTicketDto
 {
     public string? TicketNumber { get; set; } = string.Empty;
@@ -8,4 +10,6 @@ public class AddTicketDto
     public Guid TrainScheduleId { get; set; }
     public decimal TotalPrice { get; set; }
     public DateTime JourneyDate { get; set; }
+    public TicketTypeEnum? TicketType { get; set; }
+    public Guid? BookingOrderId { get; set; }
 }
