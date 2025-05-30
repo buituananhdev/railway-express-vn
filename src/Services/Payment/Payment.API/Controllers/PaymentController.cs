@@ -14,7 +14,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreatePaymentAsync(Guid bookingOrderId)
+    public async Task<IActionResult> CreatePaymentAsync([FromBody]Guid bookingOrderId)
     {
         var result = await _paymentService.CreateTemporaryPaymentRecordAsync(bookingOrderId);
         return Ok(result);
