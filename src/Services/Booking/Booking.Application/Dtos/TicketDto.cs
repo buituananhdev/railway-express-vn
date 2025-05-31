@@ -8,7 +8,7 @@ public class TicketDto : BaseDto
     public string TicketNumber { get; set; }
     public Guid? PassengerId { get; set; }
     public Guid TrainId { get; set; }
-    public Seat? SeatInformation {  get; set; }
+    public List<Seat>? SeatInformations {  get; set; }
     public Guid TrainScheduleId { get; set; }
     public DateTime BookingDate { get; set; } = DateTime.Now;
     public DateTime JourneyDate { get; set; }

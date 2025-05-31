@@ -252,21 +252,24 @@ namespace Booking.Application.Services
             }
 
             var passengerNames = GetPassengerNames(ticket);
-            var trainInfo = ticket.SeatInformation?.TrainCar?.Train?.TrainName ?? "N/A";
-            var carNumber = ticket.SeatInformation?.TrainCar?.CarNumber?.ToString() ?? "N/A";
-            var seatTypeText = GetSeatTypeText(ticket.SeatInformation?.TrainCar?.SeatType ?? 0);
-            var seatNumber = ticket.SeatInformation?.SeatNumber.ToString() ?? "N/A";
-            var totalSeats = ticket.TicketSeats?.Count ?? 0;
+            var seatDetails = ticket.SeatInformations?.Select(seat =>
+            {
+                var train = seat.TrainCar?.Train?.TrainName ?? "N/A";
+                var carNumber = seat.TrainCar?.CarNumber?.ToString() ?? "N/A";
+                var seatType = GetSeatTypeText(seat.TrainCar?.SeatType ?? 0);
+                var seatNumber = seat.SeatNumber.ToString() ?? "N/A";
+
+                return $"🚂 Tàu: {train} - 🚃 Toa: {carNumber} - 💺 Ghế: {seatNumber} ({seatType})";
+            }) ?? new List<string> { "Không có thông tin ghế." };
+
             var statusText = GetStatusText(ticket.Status);
             var bookingDateText = ticket.BookingDate.ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture);
 
             var message = $"🎫 **THÔNG TIN VÉ TÀU**<br/>" +
                          $"━━━━━━━━━━━<br/>" +
                          $"🆔 Mã vé: {ticket.TicketNumber}<br/>" +
-                         $"🚂 Tàu: {trainInfo}<br/>" +
-                         $"🚃 Toa: {carNumber}<br/>" +
-                         $"💺 Ghế: {seatNumber} ({seatTypeText})<br/>" +
-                         $"📊 Số lượng ghế: {totalSeats}<br/>" +
+                         string.Join("<br/>", seatDetails) + "<br/>" +
+                         $"📊 Số lượng ghế: {ticket.SeatInformations?.Count ?? 0}<br/>" +
                          $"🗓️ Ngày khởi hành: {ticket.JourneyDate:dd/MM/yyyy}<br/>" +
                          $"📅 Ngày đặt vé: {bookingDateText}<br/>" +
                          $"💵 Tổng tiền: {ticket.TotalPrice:N0} VNĐ<br/>" +

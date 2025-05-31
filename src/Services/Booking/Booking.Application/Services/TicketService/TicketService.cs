@@ -87,7 +87,7 @@ namespace Booking.Application.Services
                         }
 
                         BookingOrderDto bookingOrder;
-                        if(createDto.TicketType == TicketTypeEnum.Normal)
+                        if (createDto.TicketType == TicketTypeEnum.Normal)
                         {
                             bookingOrder = await _bookingOrderService.CreateAsync(new AddBookingOrderDto());
                         }
@@ -333,7 +333,7 @@ namespace Booking.Application.Services
             {
                 var request = new GetSeatInformationRequest { SeatId = ticket.TicketSeats.FirstOrDefault()?.SeatId.ToString() };
                 var seatInformation = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
-                ticket.SeatInformation = _mapper.Map<Seat>(seatInformation);
+                ticket.SeatInformations.Add(_mapper.Map<Seat>(seatInformation));
             }
             return tickets;
         }
@@ -341,6 +341,12 @@ namespace Booking.Application.Services
         public Task<TicketDto> GetTicketByTicketNumberAsync(string ticketNumber)
         {
             var specification = new TicketNumberSpecification(ticketNumber);
+            return GetTicketAsync(specification);
+        }
+
+        public override Task<TicketDto> GetByIdAsync(Guid ticketId)
+        {
+            var specification = new TicketIdSpecification(ticketId);
             return GetTicketAsync(specification);
         }
 
@@ -355,9 +361,13 @@ namespace Booking.Application.Services
             var ticket = await _bookingUnitOfWork.TicketRepository
                 .FirstOrDefaultAsync(specification, includes);
             var ticketDto = _mapper.Map<TicketDto>(ticket);
-            var request = new GetSeatInformationRequest { SeatId = ticket.TicketSeats.FirstOrDefault().SeatId.ToString() };
-            var seatInformation = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
-            ticketDto.SeatInformation = _mapper.Map<Seat>(seatInformation);
+            var seatInformation = new List<Seat>();
+            foreach (var ticketSeat in ticket.TicketSeats)
+            {
+                var request = new GetSeatInformationRequest { SeatId = ticketSeat.SeatId.ToString() };
+                var seat = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
+                seatInformation.Add(_mapper.Map<Seat>(seatInformation));
+            }
             return ticketDto;
         }
 
@@ -406,6 +416,10 @@ namespace Booking.Application.Services
             return tickets.Sum(t => (double)t.TotalPrice);
         }
 
-        public Task CancelTicketAsync(Guid ticketId) => throw new NotImplementedException();
+        public async Task CancelTicketAsync(Guid ticketId)
+        {
+            var ticket = await _bookingUnitOfWork.TicketRepository.GetByIdAsync(ticketId);
+            ticket.Status = TicketStatusEnum.Cancelled;
+        }
     }
 }
