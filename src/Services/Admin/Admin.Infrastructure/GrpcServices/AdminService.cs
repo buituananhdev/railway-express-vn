@@ -59,4 +59,13 @@ public class AdminService : Common.Protos.AdminGrpcService.AdminGrpcServiceBase
         response.SeatIds.AddRange(availableSeats.ConvertAll(seatId => seatId.ToString()));
         return response;
     }
+
+    public override async Task<GetTrainScheduleInformationResponse> GetTrainScheduleInformation(
+        GetTrainScheduleInformationRequest request,
+        ServerCallContext context)
+    {
+        var scheduleId = Guid.Parse(request.ScheduleId);
+        var results = await _trainScheduleService.GetTrainScheduleInformationAsync(scheduleId);
+        return _mapper.Map<GetTrainScheduleInformationResponse>(results);
+    }
 }

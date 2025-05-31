@@ -6,7 +6,9 @@ public class TrainScheduleDto : BaseDto
 {
     public TrainDto Train { get; set; }
     public Guid DepartureStationId { get; set; }
+    public StationDto? ArrivalStation { get; set; }
     public Guid ArrivalStationId { get; set; }
+    public StationDto? DepartureStation { get; set; }
     public int Distance { get; set; }
     public DateTime DepartureTime { get; set; }
     public DateTime ArrivalTime { get; set; }

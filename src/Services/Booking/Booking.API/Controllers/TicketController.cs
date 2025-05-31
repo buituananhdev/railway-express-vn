@@ -49,4 +49,11 @@ public class TicketController : ControllerBase
         var ticket = await _ticketService.GetByIdAsync(ticketId);
         return Ok(ticket);
     }
+
+    [HttpGet("ticket-number/{ticketNumber}")]
+    public async Task<IActionResult> GetTicketByTicketNumberAsync([FromRoute] string ticketNumber)
+    {
+        var ticket = await _ticketService.GetTicketByTicketNumberAsync(ticketNumber);
+        return Ok(ticket);
+    }
 }

@@ -16,4 +16,5 @@ public interface ITrainScheduleService
     Task DeleteAsync(Guid id);
     Task<TrainScheduleDto> GetByIdAsync(Guid id);
     Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(GetTrainSchedulesDto getTrainSchedulesDto);
+    Task<TrainScheduleDto> GetTrainScheduleInformationAsync(Guid scheduleId);
 }
