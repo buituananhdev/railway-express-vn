@@ -56,5 +56,41 @@ public class AutoMapperProfile : Profile
                 opt => opt.MapFrom(src => Guid.Parse(src.ArrivalStationId)))
             .ForMember(dest => dest.DepartureDate,
                 opt => opt.MapFrom(src => src.DepartureDate.ToDateTime()));
+
+        CreateMap<GetTrainScheduleInformationResponse, TrainScheduleDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.Parse(src.Id)))
+                .ForMember(dest => dest.ArrivalStation, opt => opt.MapFrom(src => src.ArrivalStation))
+                .ForMember(dest => dest.DepartureStation, opt => opt.MapFrom(src => src.DepartureStation))
+                .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime.ToDateTime()))
+                .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime.ToDateTime()))
+                .ForMember(dest => dest.ArrivalStationId, opt => opt.MapFrom(src => Guid.Parse(src.ArrivalStation.Id)))
+                .ForMember(dest => dest.DepartureStationId, opt => opt.MapFrom(src => Guid.Parse(src.DepartureStation.Id)))
+                .ForMember(dest => dest.Train, opt => opt.Ignore())
+                .ForMember(dest => dest.Distance, opt => opt.Ignore())
+                .ForMember(dest => dest.Duration, opt => opt.Ignore())
+                .ForMember(dest => dest.FromPrice, opt => opt.Ignore())
+                .ForMember(dest => dest.ToPrice, opt => opt.Ignore());
+
+        CreateMap<TrainScheduleDto, GetTrainScheduleInformationResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+                .ForMember(dest => dest.ArrivalStation, opt => opt.MapFrom(src => src.ArrivalStation))
+                .ForMember(dest => dest.DepartureStation, opt => opt.MapFrom(src => src.DepartureStation))
+                .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => Timestamp.FromDateTime(src.DepartureTime.ToUniversalTime())))
+                .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => Timestamp.FromDateTime(src.ArrivalTime.ToUniversalTime())));
+
+        CreateMap<Station, StationDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.Parse(src.Id)))
+                .ForMember(dest => dest.StationName, opt => opt.MapFrom(src => src.StationName))
+                .ForMember(dest => dest.CityName, opt => opt.MapFrom(src => src.CityName))
+                .ForMember(dest => dest.KilometricPoint, opt => opt.Ignore())
+                .ForMember(dest => dest.Location, opt => opt.Ignore())
+                .ForMember(dest => dest.StationOrder, opt => opt.Ignore())
+                .ForMember(dest => dest.Coordinates, opt => opt.Ignore())
+                .ForMember(dest => dest.TrainAtStation, opt => opt.Ignore());
+
+        CreateMap<StationDto, Station>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+                .ForMember(dest => dest.StationName, opt => opt.MapFrom(src => src.StationName))
+                .ForMember(dest => dest.CityName, opt => opt.MapFrom(src => src.CityName));
     }
 }

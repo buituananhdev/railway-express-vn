@@ -1,4 +1,4 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 option csharp_namespace = "Common.Protos";
 
@@ -13,6 +13,7 @@ service AdminGrpcService {
   rpc GetStationInformation (GetStationInformationRequest) returns (GetStationInformationResponse);
   rpc GetTrainSchedule (GetTrainScheduleRequest) returns (GetTrainScheduleResponse);
   rpc GetRandomeAvailableSeat(GetRandomeAvailableSeatRequest) returns (GetRandomeAvailableSeatResponse);
+  rpc GetTrainScheduleInformation(GetTrainScheduleInformationRequest) returns (GetTrainScheduleInformationResponse);
 }
 
 message GetSeatInformationRequest {
@@ -66,4 +67,22 @@ message GetRandomeAvailableSeatRequest {
 
 message GetRandomeAvailableSeatResponse {
     repeated string seatIds = 1;
+}
+
+message GetTrainScheduleInformationRequest {
+    string scheduleId = 1;
+}
+
+message Station {
+  string id = 1;
+  string stationName = 2;
+  string cityName = 3;
+}
+
+message GetTrainScheduleInformationResponse {
+  string id = 1;
+  Station arrivalStation = 4;
+  Station departureStation = 6;
+  google.protobuf.Timestamp departureTime = 8;
+  google.protobuf.Timestamp arrivalTime = 9;
 }

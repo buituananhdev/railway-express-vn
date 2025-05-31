@@ -148,6 +148,18 @@ namespace Booking.Application.Services
                             throw new InvalidOperationException($"Seats {string.Join(", ", bookedSeats)} are already booked.");
                         }
 
+                        BookingOrderDto bookingOrder;
+                        if (createDto.TicketType == TicketTypeEnum.Normal)
+                        {
+                            bookingOrder = await _bookingOrderService.CreateAsync(new AddBookingOrderDto());
+                        }
+                        else
+                        {
+                            bookingOrder = await _bookingOrderService.GetByIdAsync((Guid)createDto.BookingOrderId);
+                        }
+
+                        createDto.BookingOrderId = bookingOrder.Id;
+
                         var entity = _mapper.Map<Ticket>(createDto);
                         await _bookingUnitOfWork.TicketRepository.AddAsync(entity);
                         await _bookingUnitOfWork.SaveChangesAsync();
@@ -362,13 +374,19 @@ namespace Booking.Application.Services
             var ticket = await _bookingUnitOfWork.TicketRepository
                 .FirstOrDefaultAsync(specification, includes);
             var ticketDto = _mapper.Map<TicketDto>(ticket);
-            var seatInformation = new List<Seat>();
             foreach (var ticketSeat in ticket.TicketSeats)
             {
                 var request = new GetSeatInformationRequest { SeatId = ticketSeat.SeatId.ToString() };
                 var seat = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
-                seatInformation.Add(_mapper.Map<Seat>(seatInformation));
+                ticketDto.SeatInformations ??= new List<Seat>();
+                ticketDto.SeatInformations.Add(_mapper.Map<Seat>(seat));
             }
+            var schedule = await _adminGrpcServiceClient.GetTrainScheduleInformationAsync(new GetTrainScheduleInformationRequest
+            {
+                ScheduleId = ticket.TrainScheduleId.ToString()
+            });
+            ticketDto.TrainSchedule = _mapper.Map<TrainSchedule>(schedule);
+
             return ticketDto;
         }
 

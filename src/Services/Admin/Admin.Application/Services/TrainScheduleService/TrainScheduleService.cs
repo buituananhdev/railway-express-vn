@@ -3,6 +3,7 @@ using Admin.Application.Dtos;
 using Admin.Application.Repositories;
 using Admin.Domain.Entities;
 using Admin.Domain.Specifications;
+using Admin.Domain.Specifications.TrainSchedule;
 using AutoMapper;
 using Common.Application.Interfaces;
 using Common.Application.Services;
@@ -46,13 +47,10 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
         if (!schedules.Any())
             return new List<TrainScheduleDto>();
 
-        // Pre-calculate pricing parameters once
         var pricingContext = CalculatePricingContext(request.DepartureDate, request.ReturnDate);
 
-        // Use AutoMapper for bulk mapping and then enhance with pricing
         var trainScheduleDtos = _mapper.Map<List<TrainScheduleDto>>(schedules);
 
-        // Apply pricing calculations efficiently
         ApplyPricingToSchedules(trainScheduleDtos, schedules, pricingContext);
 
         return trainScheduleDtos;
@@ -107,6 +105,18 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
         <= 500 => distance * 1200m,
         _ => distance * 1000m
     };
+
+    public async Task<TrainScheduleDto> GetTrainScheduleInformationAsync(Guid scheduleId)
+    {
+        var specification = new TrainScheduleIdSpecification(scheduleId);
+        var includes = new List<Expression<Func<TrainSchedule, object>>>
+        {
+            schedule => schedule.DepartureStation!,
+            schedule => schedule.ArrivalStation!,
+        };
+        var schedule = await _adminUnitOfWork.TrainScheduleRepository.FirstOrDefaultAsync<TrainScheduleDto>(spec: specification, includes: includes);
+        return schedule;
+    }
 
     private readonly record struct PricingContext(decimal PriceMultiplier);
 }

@@ -2,6 +2,7 @@
 using Booking.Application.Dtos;
 using Booking.Domain.Entities;
 using Common.Protos;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Booking.Application.AutoMapper;
 public class AutoMapperProfile : Profile
@@ -55,5 +56,29 @@ public class AutoMapperProfile : Profile
         CreateMap<BookingOrderDto, BookingOrder>().ReverseMap();
 
         CreateMap<AddBookingOrderDto, BookingOrder>().ReverseMap();
+
+        CreateMap<GetTrainScheduleInformationResponse, TrainSchedule>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.Parse(src.Id)))
+                .ForMember(dest => dest.ArrivalStation, opt => opt.MapFrom(src => src.ArrivalStation))
+                .ForMember(dest => dest.DepartureStation, opt => opt.MapFrom(src => src.DepartureStation))
+                .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => src.DepartureTime.ToDateTime()))
+                .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => src.ArrivalTime.ToDateTime()));
+
+        CreateMap<TrainSchedule, GetTrainScheduleInformationResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+                .ForMember(dest => dest.ArrivalStation, opt => opt.MapFrom(src => src.ArrivalStation))
+                .ForMember(dest => dest.DepartureStation, opt => opt.MapFrom(src => src.DepartureStation))
+                .ForMember(dest => dest.DepartureTime, opt => opt.MapFrom(src => Timestamp.FromDateTime(src.DepartureTime.ToUniversalTime())))
+                .ForMember(dest => dest.ArrivalTime, opt => opt.MapFrom(src => Timestamp.FromDateTime(src.ArrivalTime.ToUniversalTime())));
+
+        CreateMap<Common.Protos.Station, Booking.Application.Dtos.Station>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => Guid.Parse(src.Id)))
+                .ForMember(dest => dest.StationName, opt => opt.MapFrom(src => src.StationName))
+                .ForMember(dest => dest.CityName, opt => opt.MapFrom(src => src.CityName));
+
+        CreateMap<Booking.Application.Dtos.Station, Common.Protos.Station>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id.ToString()))
+                .ForMember(dest => dest.StationName, opt => opt.MapFrom(src => src.StationName))
+                .ForMember(dest => dest.CityName, opt => opt.MapFrom(src => src.CityName));
     }
 }
