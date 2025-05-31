@@ -35,4 +35,18 @@ public class TicketController : ControllerBase
         var passengerDetails = await _passengerInfoService.GetPassengerDetailsByTicketIdAsync(ticketId);
         return Ok(passengerDetails);
     }
+
+    [HttpGet("{ticketId}/cancel")]
+    public async Task<IActionResult> CancelTicketAsync(Guid ticketId)
+    {
+        await _ticketService.CancelTicketAsync(ticketId);
+        return NoContent();
+    }
+
+    [HttpGet("{ticketId}")]
+    public async Task<IActionResult> GetTicketByIdAsync(Guid ticketId)
+    {
+        var ticket = await _ticketService.GetByIdAsync(ticketId);
+        return Ok(ticket);
+    }
 }
