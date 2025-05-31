@@ -333,6 +333,7 @@ namespace Booking.Application.Services
             {
                 var request = new GetSeatInformationRequest { SeatId = ticket.TicketSeats.FirstOrDefault()?.SeatId.ToString() };
                 var seatInformation = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
+                ticket.SeatInformations ??= new List<Seat>();
                 ticket.SeatInformations.Add(_mapper.Map<Seat>(seatInformation));
             }
             return tickets;

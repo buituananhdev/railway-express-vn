@@ -129,7 +129,7 @@ public class SeedData
 
     public static async Task Main()
     {
-        var connectionstring = "Server=localhost;Port=3306;Database=RailwayExpresVN_DEV1;Uid=root;Pwd=123456Aa;";
+        var connectionstring = "Server=railwaymysql.mysql.database.azure.com;Port=3306;Database=AZURE_RailwayExpresVN;Uid=mysqladmin;Pwd=pAssw0rd!;";
         var options = new DbContextOptionsBuilder<AdminContext>()
             .UseMySql(connectionstring, ServerVersion.AutoDetect(connectionstring))
             .Options;
