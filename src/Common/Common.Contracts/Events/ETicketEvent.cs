@@ -1,11 +1,10 @@
 ﻿namespace Common.Contracts.Events;
-public record PaymentSuccessEvent
+public record ETicketEvent
 (
     string TicketNumber,
     string PassengerName,
     string Email,
     string TicketType,
-    string BookingCode,
     JourneyInfo Journey,
     DateTime BookingDate,
     string LogoUrl,

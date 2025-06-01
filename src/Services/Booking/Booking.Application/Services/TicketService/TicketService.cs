@@ -8,9 +8,11 @@ using Booking.Domain.Specifications;
 using Booking.Domain.Specifications.Ticket;
 using Common.Application.Interfaces;
 using Common.Application.Services;
+using Common.Contracts.Events;
 using Common.Domain.Specifications;
 using Common.Protos;
 using Google.Protobuf.WellKnownTypes;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 
 namespace Booking.Application.Services
@@ -24,6 +26,7 @@ namespace Booking.Application.Services
         private readonly ILogger<TicketService> _logger;
         private readonly ITicketSeatService _ticketSeatService;
         private readonly IBookingOrderService _bookingOrderService;
+        private readonly IPublishEndpoint _publishEndpoint;
         private readonly AdminGrpcService.AdminGrpcServiceClient _adminGrpcServiceClient;
 
         private const string SEAT_LOCK_KEY_PREFIX = "seat:lock:";
@@ -39,6 +42,7 @@ namespace Booking.Application.Services
             ILogger<TicketService> logger,
             ITicketSeatService ticketSeatService,
             IBookingOrderService bookingOrderService,
+            IPublishEndpoint publishEndpoint,
             AdminGrpcService.AdminGrpcServiceClient adminGrpcServiceClient)
             : base(repository, unitOfWork, mapper, paginationService)
         {
@@ -50,6 +54,7 @@ namespace Booking.Application.Services
             _ticketSeatService = ticketSeatService;
             _adminGrpcServiceClient = adminGrpcServiceClient;
             _bookingOrderService = bookingOrderService;
+            _publishEndpoint = publishEndpoint;
         }
 
         public override async Task<TicketDto> CreateAsync(AddTicketDto createDto)
@@ -440,6 +445,80 @@ namespace Booking.Application.Services
             var ticket = await _bookingUnitOfWork.TicketRepository.GetByIdAsync(ticketId);
             ticket.Status = TicketStatusEnum.Cancelled;
             await _bookingUnitOfWork.SaveChangesAsync();
+        }
+
+        public async Task SendETicketAsync(Guid bookingOrderId)
+        {
+            var specification = new BookingOrderIdSpecification(bookingOrderId);
+            var includes = new List<Expression<Func<Ticket, object>>>
+            {
+                t => t.PassengerDetails,
+                t => t.TicketSeats,
+            };
+            var tickets = await _bookingUnitOfWork.TicketRepository.ToListAsync<TicketDto>(spec: specification, includes: includes);
+            
+            foreach (var ticket in tickets)
+            {
+                foreach (var ticketSeat in ticket.TicketSeats)
+                {
+                    var request = new GetSeatInformationRequest { SeatId = ticketSeat.SeatId.ToString() };
+                    var seat = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
+                    ticket.SeatInformations ??= new List<Seat>();
+                    ticket.SeatInformations.Add(_mapper.Map<Seat>(seat));
+                }
+
+                var schedule = await _adminGrpcServiceClient.GetTrainScheduleInformationAsync(new GetTrainScheduleInformationRequest
+                {
+                    ScheduleId = ticket.TrainScheduleId.ToString()
+                });
+
+                ticket.TrainSchedule = _mapper.Map<TrainSchedule>(schedule);
+
+                if (ticket.PassengerDetails == null || !ticket.PassengerDetails.Any())
+                {
+                    continue;
+                }
+
+                foreach (var passenger in ticket.PassengerDetails)
+                {
+                    var passengerSeat = ticket.TicketSeats?.FirstOrDefault(ts => ts.PassengerInfoId == passenger.Id);
+                    var seatInfo = ticket.SeatInformations?.FirstOrDefault(s => s.Id == passengerSeat.SeatId.ToString());
+
+                    string ticketTypeName = GetTicketTypeName(ticket.TicketType);
+
+                    var eTicketEvent = new ETicketEvent(
+                        TicketNumber: ticket.TicketNumber,
+                        PassengerName: $"{passenger.FirstName} {passenger.LastName}",
+                        Email: passenger.Email,
+                        TicketType: ticketTypeName,
+                        Journey: new JourneyInfo(
+                            DepartureStation: ticket.TrainSchedule?.DepartureStation?.StationName ?? "Unknown",
+                            ArrivalStation: ticket.TrainSchedule?.ArrivalStation?.StationName ?? "Unknown",
+                            DepartureDate: ticket.TrainSchedule?.DepartureTime.Date ?? ticket.JourneyDate.Date,
+                            ArrivalDate: ticket.TrainSchedule?.ArrivalTime.Date ?? ticket.JourneyDate.Date,
+                            DepartureTime: ticket.TrainSchedule?.DepartureTime.TimeOfDay ?? TimeSpan.Zero,
+                            ArrivalTime: ticket.TrainSchedule?.ArrivalTime.TimeOfDay ?? TimeSpan.Zero,
+                            TrainNumber: seatInfo?.TrainCar?.Train?.TrainName ?? "Unknown",
+                            CarriageNumber: seatInfo?.TrainCar?.CarNumber?.ToString() ?? "Unknown",
+                            SeatNumber: seatInfo?.SeatNumber.ToString() ?? "Unknown"
+                        ),
+                        BookingDate: ticket.BookingDate,
+                        QrCodeUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748769468/website_qrcode_x2rv6u.jpg?_s=public-apps",
+                        LogoUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748230281/logo_mfewmk.jpg?_s=public-apps"
+                    );
+
+                    await _publishEndpoint.Publish(eTicketEvent);
+                }
+            }
+        }
+
+        private string GetTicketTypeName(TicketTypeEnum ticketType)
+        {
+            return ticketType switch
+            {
+                TicketTypeEnum.Normal => "Vé thường",
+                TicketTypeEnum.Return => "Vé khứ hồi",
+            };
         }
     }
 }

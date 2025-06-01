@@ -21,19 +21,20 @@ message GetSeatInformationRequest {
 }
 
 message TrainFullInformation {
-  string trainName = 1;
+  string trainName = 2;
 }
 
 message TrainCarFullInformation {
   int32 carNumber = 1;
-  int32 seatType = 3;
-  TrainFullInformation train = 5;
+  int32 seatType = 2;
+  TrainFullInformation train = 3;
 }
 
 message GetSeatInformationResponse {
-  TrainCarFullInformation trainCar = 1;
-  int32 seatNumber = 2;
-  int32 status = 3;
+  string id = 1;
+  TrainCarFullInformation trainCar = 2;
+  int32 seatNumber = 3;
+  int32 status = 4;
 }
 
 message GetStationInformationRequest {

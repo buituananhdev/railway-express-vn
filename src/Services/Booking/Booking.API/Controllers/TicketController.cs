@@ -56,4 +56,11 @@ public class TicketController : ControllerBase
         var ticket = await _ticketService.GetTicketByTicketNumberAsync(ticketNumber);
         return Ok(ticket);
     }
+
+    [HttpPost("booking-order/{bookingOrderId}/send-eticket")]
+    public async Task<IActionResult> SendETicketAsync([FromRoute] Guid bookingOrderId)
+    {
+        await _ticketService.SendETicketAsync(bookingOrderId);
+        return NoContent();
+    }
 }

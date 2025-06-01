@@ -25,7 +25,7 @@ public static class DependencyInjection
         {
             x.SetKebabCaseEndpointNameFormatter();
             x.AddConsumer<EmailConsumer>();
-            x.AddConsumer<PaymentSuccessComsumer>();
+            x.AddConsumer<ETicketComsumer>();
 
             x.UsingRabbitMq((context, cfg) =>
             {
@@ -40,7 +40,7 @@ public static class DependencyInjection
                 cfg.ReceiveEndpoint(settings.QueueName, e =>
                 {
                     e.ConfigureConsumer<EmailConsumer>(context);
-                    e.ConfigureConsumer<PaymentSuccessComsumer>(context);
+                    e.ConfigureConsumer<ETicketComsumer>(context);
 
                     e.UseMessageRetry(r => r.Exponential(5, TimeSpan.FromSeconds(1),
                                                  TimeSpan.FromSeconds(30),
