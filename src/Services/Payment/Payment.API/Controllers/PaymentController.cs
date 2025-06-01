@@ -33,4 +33,11 @@ public class PaymentController : ControllerBase
         var result = await _paymentService.UpdateAsync(id, updateDto);
         return Ok(result);
     }
+
+    [HttpGet("booking-order/{bookingOrderId}")]
+    public async Task<IActionResult> GetPaymentByBookingOrderIdAsync(Guid bookingOrderId)
+    {
+        var result = await _paymentService.GetPaymentByBookingOrderIdAsync(bookingOrderId);
+        return Ok(result);
+    }
 }

@@ -9,6 +9,7 @@ using Payment.Application.Dtos;
 using Payment.Application.Repositories;
 using Payment.Domain.Entities;
 using Payment.Domain.Enums;
+using Payment.Domain.Specifications;
 using System.Security.Cryptography;
 
 namespace Payment.Application.Services.PaymentService;
@@ -138,5 +139,12 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
             );
             await _publishEndpoint.Publish(event1);
         }
+    }
+
+    public async Task<PaymentRecordDto> GetPaymentByBookingOrderIdAsync(Guid bookingOrderId)
+    {
+        var specification = new BookingOrderIdSpecification(bookingOrderId);
+        var payment = await _unitOfWork.PaymentRepository.FirstOrDefaultAsync<PaymentRecordDto>(spec: specification);
+        return payment ?? throw new NotFoundException($"Payment record for booking order {bookingOrderId} not found.");
     }
 }

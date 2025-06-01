@@ -439,6 +439,7 @@ namespace Booking.Application.Services
         {
             var ticket = await _bookingUnitOfWork.TicketRepository.GetByIdAsync(ticketId);
             ticket.Status = TicketStatusEnum.Cancelled;
+            await _bookingUnitOfWork.SaveChangesAsync();
         }
     }
 }
