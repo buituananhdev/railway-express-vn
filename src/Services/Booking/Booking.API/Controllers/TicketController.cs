@@ -36,7 +36,7 @@ public class TicketController : ControllerBase
         return Ok(passengerDetails);
     }
 
-    [HttpGet("{ticketId}/cancel")]
+    [HttpPost("{ticketId}/cancel")]
     public async Task<IActionResult> CancelTicketAsync(Guid ticketId)
     {
         await _ticketService.CancelTicketAsync(ticketId);
