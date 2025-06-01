@@ -44,6 +44,7 @@ public static class DependencyInjection
         {
             x.SetKebabCaseEndpointNameFormatter();
             x.AddConsumer<UpdateTicketStatusConsumer>();
+            x.AddConsumer<SendETicketConsumer>();
 
             x.UsingRabbitMq((context, cfg) =>
             {

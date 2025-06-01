@@ -24,4 +24,5 @@ public interface ITicketService
     Task<TicketDto> CreateTicketForDialogfowAsync(DialogflowCreateTicketRequest request);
     Task<double> GetTicketPricesByBookingOrderAsync(Guid bookingOrderId);
     Task CancelTicketAsync(Guid ticketId);
+    Task SendETicketAsync(Guid bookingOrderId);
 }

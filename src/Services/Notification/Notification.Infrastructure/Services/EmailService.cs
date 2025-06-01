@@ -30,7 +30,7 @@ public class EmailService : IEmailService
                 HtmlBody = body
             };
 
-            builder.Attachments.Add("ticket.pdf", attachment, ContentType.Parse("application/pdf"));
+            builder.Attachments.Add("vedientu.pdf", attachment, ContentType.Parse("application/pdf"));
 
             message.Body = builder.ToMessageBody();
 

@@ -52,7 +52,7 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
             payment.Status = PaymentStatusEnum.Paid;
             payment.IsSentETicket = true;
 
-            var sendETicketTask = SendETicketAsync(payment, payment.BookingOrderId);
+            var sendETicketTask = _publishEndpoint.Publish(new SendETicketEvent(payment.BookingOrderId));
             var publishEventTask = _publishEndpoint.Publish(new UpdateTicketStatusEvent(payment.BookingOrderId, 0));
 
             await Task.WhenAll(sendETicketTask, publishEventTask);
@@ -104,41 +104,6 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
         var bytes = new byte[4];
         rng.GetBytes(bytes);
         return BitConverter.ToInt32(bytes, 0);
-    }
-    private async Task SendETicketAsync(PaymentRecord payment, Guid bookingOrderId)
-    {
-        var response = await _bookingGrpcServiceClient.GetTicketInformationAsync(
-                new GetTicketInformationRequest { BookingOrderId = bookingOrderId.ToString() });
-        var tickets = response.Tickets;
-        foreach (var ticket in tickets)
-        {
-            var mainPassenger = ticket.PassengerDetails
-                .Where(p => (bool)p.IsMainPassenger)
-                .FirstOrDefault();
-
-            var event1 = new PaymentSuccessEvent(
-                TicketNumber: ticket.TicketNumber,
-                PassengerName: mainPassenger.FirstName + mainPassenger.LastName,
-                Email: mainPassenger.Email,
-                TicketType: "First Class",
-                BookingCode: payment.PaymentNo,
-                Journey: new JourneyInfo(
-                    DepartureStation: "Hanoi",
-                    ArrivalStation: "Ho Chi Minh City",
-                    DepartureDate: ticket.JourneyDate.ToDateTime(),
-                    ArrivalDate: ticket.JourneyDate.ToDateTime(),
-                    DepartureTime: new TimeSpan(8, 30, 0),
-                    ArrivalTime: new TimeSpan(18, 45, 0),
-                    TrainNumber: "SE1",
-                    CarriageNumber: "A5",
-                    SeatNumber: "12B"
-                ),
-                BookingDate: DateTime.UtcNow,
-                QrCodeUrl: "https://example.com/qrcode.png",
-                LogoUrl: "https://example.com/logo.png"
-            );
-            await _publishEndpoint.Publish(event1);
-        }
     }
 
     public async Task<PaymentRecordDto> GetPaymentByBookingOrderIdAsync(Guid bookingOrderId)

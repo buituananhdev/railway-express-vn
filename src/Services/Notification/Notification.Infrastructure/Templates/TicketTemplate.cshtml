@@ -1,4 +1,4 @@
-﻿@model Common.Contracts.Events.PaymentSuccessEvent
+﻿@model Common.Contracts.Events.ETicketEvent
 
 <!doctype html>
 <html lang="vi">
@@ -11,400 +11,443 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Roboto', Arial, sans-serif;
         }
 
         body {
-            background-color: #f0f0f0;
-            margin: 0 !important;
-            padding: 0 !important;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
         }
 
         .ticket-container {
-            background-color: white;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-            width: 100%;
-            max-width: 100%;
-            margin: 0 !important;
-            padding: 0 !important;
-            box-shadow: none !important;
-            page-break-inside: avoid;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         .header {
-            background-color: #2c5282;
-            padding: 15px 0;
-            text-align: center;
+            background: #16a34a;
             color: white;
-            position: relative;
+            padding: 25px;
+            text-align: center;
         }
 
         .logo {
-            height: 40px;
+            height: 45px;
             margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 5px;
         }
 
         .header h1 {
             font-size: 24px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
         }
 
         .ticket-body {
-            padding: 20px;
+            padding: 30px;
         }
 
         .ticket-number {
-            text-align: right;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 15px;
-        }
-
-        .ticket-type {
-            background-color: #f8f9fa;
-            border-left: 4px solid #e53e3e;
-            padding: 12px;
-            margin: 20px 0;
-            border-radius: 4px;
+            background: #f0fdf4;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #16a34a;
+            margin-bottom: 25px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
         }
 
-            .ticket-type .highlight {
-                color: #e53e3e;
-                font-weight: bold;
+            .ticket-number .label {
+                color: #666;
+                font-size: 14px;
+            }
+
+            .ticket-number .value {
+                font-family: monospace;
                 font-size: 16px;
+                font-weight: bold;
+                color: #16a34a;
             }
 
         .section {
-            margin-bottom: 25px;
+            margin-bottom: 10px;
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e5e5e5;
         }
 
         .section-title {
-            color: #2c5282;
             font-size: 16px;
             font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
             padding-bottom: 8px;
-            border-bottom: 1px solid #e2e8f0;
-            margin-bottom: 12px;
+            border-bottom: 2px solid #16a34a;
+            display: inline-block;
         }
 
-        .journey-info {
+        .passenger-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+
+        .journey-route {
+            background: #f0fdf4;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            justify-content: space-between;
+            border: 1px solid #bbf7d0;
         }
 
         .station {
+            text-align: center;
             flex: 1;
         }
 
-            .station .value {
-                font-size: 18px;
-                font-weight: bold;
-            }
-
-            .station .label {
-                font-size: 12px;
-                color: #718096;
-            }
-
-        .journey-arrow {
-            margin: 0 15px;
-            color: #a0aec0;
-            font-size: 20px;
-        }
-
-        .journey-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 15px;
-        }
-
-        .journey-date-time {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .date-time-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 5px;
-        }
-
-        .date-time-item {
-            flex: 1;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .info-item {
-            margin-bottom: 10px;
-        }
-
-        .label {
+        .station-label {
             font-size: 12px;
-            color: #718096;
-            margin-bottom: 4px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
         }
 
-        .value {
-            font-size: 15px;
-            font-weight: 500;
+        .station-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #15803d;
         }
 
-        .seat-details {
+        .route-arrow {
+            margin: 0 20px;
+            font-size: 24px;
+            color: #16a34a;
+        }
+
+        .datetime-grid {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: #ebf4ff;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 10px;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        .seat-item {
+        .datetime-card {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
             text-align: center;
         }
 
-        .seat-label {
-            font-size: 11px;
-            color: #4a5568;
-            margin-bottom: 2px;
+        .departure-card {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
         }
 
-        .seat-value {
-            font-size: 18px;
+        .arrival-card {
+            background: #dcfce7;
+            border: 1px solid #22c55e;
+        }
+
+        .datetime-label {
+            font-size: 12px;
             font-weight: bold;
-            color: #2a4365;
+            margin-bottom: 5px;
+            text-transform: uppercase;
         }
 
-        .divider {
-            height: 40px;
-            width: 1px;
-            background-color: #cbd5e0;
+        .departure-card .datetime-label {
+            color: #92400e;
         }
 
-        .price-info {
-            background-color: #f0f9ff;
-            padding: 15px;
-            border-radius: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .arrival-card .datetime-label {
+            color: #166534;
         }
 
-        .price-value {
+        .datetime-date {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .datetime-time {
             font-size: 20px;
             font-weight: bold;
-            color: #e53e3e;
         }
 
-        .price-details {
-            font-size: 13px;
-            color: #718096;
+        .departure-card .datetime-time {
+            color: #d97706;
         }
 
-        .barcode-section {
+        .arrival-card .datetime-time {
+            color: #16a34a;
+        }
+
+        .train-details {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 25px 0;
-            border-top: 1px dashed #e2e8f0;
-            padding-top: 15px;
+            gap: 10px;
+        }
+
+        .train-detail {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e5e5e5;
+        }
+
+            .train-detail:hover {
+                border-color: #16a34a;
+            }
+
+        .train-detail-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .train-detail-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .verification-section {
+            background: #f0fdf4;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+            border: 1px solid #bbf7d0;
+        }
+
+        .qr-container {
+            text-align: center;
+            flex-shrink: 0;
         }
 
         .qr-code {
-            text-align: center;
-        }
-
-            .qr-code img {
-                width: 100px;
-                height: 100px;
-                margin-bottom: 5px;
-            }
-
-            .qr-code p {
-                font-size: 12px;
-                color: #718096;
-            }
-
-        .boarding-info {
-            flex: 1;
-            padding-left: 20px;
-        }
-
-        .boarding-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #2d3748;
-        }
-
-        .boarding-text {
-            font-size: 13px;
-            color: #718096;
+            width: 100px;
+            height: 100px;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            border: 2px dashed #16a34a;
             margin-bottom: 8px;
         }
 
-        .return-journey {
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px dashed #cbd5e0;
+        .qr-label {
+            font-size: 12px;
+            color: #15803d;
+            font-weight: bold;
         }
+
+        .instructions {
+            flex: 1;
+        }
+
+        .instructions-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #15803d;
+            margin-bottom: 12px;
+        }
+
+        .instruction-item {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #374151;
+            padding-left: 15px;
+            position: relative;
+        }
+
+            .instruction-item:before {
+                content: "•";
+                color: #16a34a;
+                font-weight: bold;
+                position: absolute;
+                left: 0;
+            }
 
         .footer {
-            background-color: #f7fafc;
-            padding: 15px;
+            background: #f9fafb;
+            padding: 20px;
             text-align: center;
-            font-size: 12px;
-            color: #718096;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #e5e5e5;
         }
 
-        .ticket-body,
-        .journey-details,
-        .seat-details {
-            page-break-inside: avoid;
+        .footer-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #16a34a;
+            margin-bottom: 10px;
+        }
+
+        .footer-contacts {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .footer-note {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+        }
+
+        /* Highlight accents */
+        .accent-yellow {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .accent-green {
+            background: #dcfce7;
+            color: #166534;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        body
+        {
+            background: white;
+            padding: 0;
         }
 
         .ticket-container {
-            max-width: 100% !important;
-            width: 100% !important;
+            box-shadow: none;
+            border-radius: 0;
         }
 
-        .info-grid {
-            grid-template-columns: 1fr !important;
-        }
-
-        .journey-details {
-            grid-template-columns: 1fr !important;
-        }
     </style>
 </head>
 <body>
     <div class="ticket-container">
         <div class="header">
             <img src="@Model.LogoUrl" alt="Logo Đường Sắt" class="logo" />
-            <h1>E-Ticket</h1>
+            <h1>E-TICKET</h1>
+            <div class="subtitle">ĐƯỜNG SẮT VIỆT NAM</div>
         </div>
 
         <div class="ticket-body">
-            <div class="ticket-number">Mã vé: #@Model.TicketNumber</div>
-
-            <div class="section">
-                <div class="section-title">Thông tin hành khách</div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="label">Họ và tên</div>
-                        <div class="value">@Model.PassengerName</div>
-                    </div>
-                </div>
+            <div class="ticket-number">
+                <span class="label">Mã vé / Ticket No.</span>
+                <span class="value">@Model.TicketNumber</span>
             </div>
 
-            <div class="ticket-type">
+            <div class="section">
+                <div class="section-title">👤 Thông tin hành khách</div>
                 <div>
-                    <span class="label">Loại vé</span>
-                    <span class="highlight">@Model.TicketType</span>
+                    <div style="color: #666; font-size: 13px; margin-bottom: 5px;">Họ và tên / Full Name</div>
+                    <div class="passenger-name">@Model.PassengerName</div>
                 </div>
-                <div class="label">Mã đặt chỗ: <span class="value">@Model.BookingCode</span></div>
             </div>
 
             <div class="section">
-                <div class="section-title">Chuyến đi</div>
+                <div class="section-title">🚂 Thông tin chuyến đi</div>
 
-                <div class="journey-info">
+                <div class="journey-route">
                     <div class="station">
-                        <div class="label">Ga đón</div>
-                        <div class="value">@Model.Journey.DepartureStation</div>
+                        <div class="station-label">Ga đi</div>
+                        <div class="station-name">@Model.Journey.DepartureStation</div>
                     </div>
-                    <div class="journey-arrow">→</div>
+                    <div class="route-arrow">🚄</div>
                     <div class="station">
-                        <div class="label">Ga đến</div>
-                        <div class="value">@Model.Journey.ArrivalStation</div>
+                        <div class="station-label">Ga đến</div>
+                        <div class="station-name">@Model.Journey.ArrivalStation</div>
                     </div>
                 </div>
 
-                <div class="journey-details">
-                    <div class="journey-date-time">
-                        <div class="date-time-group">
-                            <div class="date-time-item">
-                                <div class="label">Ngày đi</div>
-                                <div class="value">@Model.Journey.DepartureDate.ToString("dd/MM/yyyy")</div>
-                            </div>
-                            <div class="date-time-item">
-                                <div class="label">Giờ đi</div>
-                                <div class="value">@Model.Journey.DepartureTime.ToString(@"hh\:mm")</div>
-                            </div>
-                        </div>
-                        <div class="date-time-group">
-                            <div class="date-time-item">
-                                <div class="label">Ngày đến</div>
-                                <div class="value">@Model.Journey.ArrivalDate.ToString("dd/MM/yyyy")</div>
-                            </div>
-                            <div class="date-time-item">
-                                <div class="label">Giờ đến</div>
-                                <div class="value">@Model.Journey.ArrivalTime.ToString(@"hh\:mm") @(Model.Journey.DepartureDate.Date != Model.Journey.ArrivalDate.Date ? "(+1)" : "")</div>
-                            </div>
+                <div class="datetime-grid">
+                    <div class="datetime-card departure-card">
+                        <div class="datetime-label">⏰ Khởi hành</div>
+                        <div class="datetime-date">@Model.Journey.DepartureDate.ToString("dd/MM/yyyy")</div>
+                        <div class="datetime-time">@Model.Journey.DepartureTime.ToString(@"hh\:mm")</div>
+                    </div>
+                    <div class="datetime-card arrival-card">
+                        <div class="datetime-label">🏁 Đến nơi</div>
+                        <div class="datetime-date">@Model.Journey.ArrivalDate.ToString("dd/MM/yyyy")</div>
+                        <div class="datetime-time">
+                            @Model.Journey.ArrivalTime.ToString(@"hh\:mm")
+                            @if (Model.Journey.DepartureDate.Date != Model.Journey.ArrivalDate.Date)
+                            {
+                                <span style="font-size: 12px; opacity: 0.7;">(+1)</span>
+                            }
                         </div>
                     </div>
+                </div>
 
-                    <div class="seat-details">
-                        <div class="seat-item">
-                            <div class="seat-label">Số tàu</div>
-                            <div class="seat-value">@Model.Journey.TrainNumber</div>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="seat-item">
-                            <div class="seat-label">Toa số</div>
-                            <div class="seat-value">@Model.Journey.CarriageNumber</div>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="seat-item">
-                            <div class="seat-label">Ghế số</div>
-                            <div class="seat-value">@Model.Journey.SeatNumber</div>
-                        </div>
+                <div class="train-details">
+                    <div class="train-detail">
+                        <div class="train-detail-label">🚂 Số tàu</div>
+                        <div class="train-detail-value">@Model.Journey.TrainNumber</div>
+                    </div>
+                    <div class="train-detail">
+                        <div class="train-detail-label">🚃 Toa số</div>
+                        <div class="train-detail-value">@Model.Journey.CarriageNumber</div>
+                    </div>
+                    <div class="train-detail">
+                        <div class="train-detail-label">💺 Ghế số</div>
+                        <div class="train-detail-value">@Model.Journey.SeatNumber</div>
                     </div>
                 </div>
             </div>
 
-            <div class="barcode-section">
-                <div class="qr-code">
-                    <img src="@Model.QrCodeUrl" alt="QR Code" />
-                    <p>Quét mã để xác thực vé</p>
+            <div class="verification-section">
+                <div class="qr-container">
+                    <img src="@Model.QrCodeUrl" alt="QR Code" class="qr-code" />
+                    <div class="qr-label">Quét mã xác thực</div>
                 </div>
 
-                <div class="boarding-info">
-                    <div class="boarding-title">Lưu ý khi lên tàu:</div>
-                    <div class="boarding-text">
-                        • Vui lòng có mặt tại ga trước giờ khởi hành ít nhất 30 phút
+                <div class="instructions">
+                    <div class="instructions-title">⚠️ Lưu ý quan trọng</div>
+                    <div class="instruction-item">
+                        Vui lòng có mặt tại ga trước giờ khởi hành ít nhất <span class="accent-yellow">30 phút</span>
                     </div>
-                    <div class="boarding-text">
-                        • Mang theo CMND/CCCD để đối chiếu khi lên tàu
+                    <div class="instruction-item">
+                        Mang theo <span class="accent-green">CMND/CCCD</span> để đối chiếu khi lên tàu
                     </div>
-                    <div class="boarding-text">
-                        • Xuất trình e-ticket này hoặc mã vé khi được yêu cầu
+                    <div class="instruction-item">
+                        Xuất trình <span class="accent-green">Vé điện tử</span> này hoặc mã vé khi được yêu cầu
                     </div>
-                    <div class="boarding-text">
-                        • Mọi thắc mắc vui lòng liên hệ hotline: 1900 0000
+                    <div class="instruction-item">
+                        Mọi thắc mắc vui lòng liên hệ hotline: <span class="accent-yellow">1900 0000</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="footer">
-            <p>
-                Vé này là tài sản của Đường Sắt Việt Nam<br />
-                Website: www.duongsatvietnam.vn | Email: support@duongsatvietnam.vn<br />
+            <div class="footer-title">🌿 ĐƯỜNG SẮT VIỆT NAM 🌿</div>
+            <div class="footer-contacts">
+                🌐 duongsatvietnam.vn | 📞 1900 0000 | ✉️ support@duongsatvietnam.vn
+            </div>
+            <div class="footer-note">
                 Cảm ơn quý khách đã sử dụng dịch vụ của chúng tôi!
-            </p>
+            </div>
         </div>
     </div>
 </body>

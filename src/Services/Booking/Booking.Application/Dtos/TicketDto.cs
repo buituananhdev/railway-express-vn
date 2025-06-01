@@ -41,6 +41,7 @@ public class TrainSchedule
 
 public class Seat
 {
+    public string Id { get; set; }
     public TrainCar TrainCar { get; set; }
     public int SeatNumber { get; set; }
     public int Status { get; set; }
