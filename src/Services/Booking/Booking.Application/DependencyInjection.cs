@@ -20,6 +20,11 @@ public static class DependencyInjection
             o.Address = new Uri(configuration["GRPC:Admin"]);
         });
 
+        services.AddGrpcClient<PaymentGrpcService.PaymentGrpcServiceClient>(o =>
+        {
+            o.Address = new Uri(configuration["GRPC:Payment"]);
+        });
+
         return services;
     }
 }
