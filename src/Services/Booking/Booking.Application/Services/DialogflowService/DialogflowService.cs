@@ -5,16 +5,19 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Text.Json;
+using Common.Protos;
 
 namespace Booking.Application.Services
 {
     public class DialogflowService : IDialogflowService
     {
         private readonly ITicketService _ticketService;
+        private readonly IPassengerInfoService _passengerInfoService;
         private readonly ILogger<DialogflowService> _logger;
         private readonly SessionsClient _client;
         private readonly string _projectId;
         private readonly string _languageCode;
+        private readonly PaymentGrpcService.PaymentGrpcServiceClient _paymentGrpcServiceClient;
 
         private static class Messages
         {
@@ -36,6 +39,9 @@ namespace Booking.Application.Services
             public const string TicketNumber = "ticket_number";
             public const string PassengerName = "passenger_name";
             public const string PassengerEmail = "passenger_email";
+            public const string PassengerIdentity = "passenger_identity";
+            public const string PassengerPhone = "passenger_phone";
+            public const string PaymentType = "payment_type";
         }
 
         private static readonly string[] RequiredBookingFields =
@@ -44,17 +50,25 @@ namespace Booking.Application.Services
             ParameterKeys.ArrivalStation,
             ParameterKeys.Date,
             ParameterKeys.Quantity,
-            ParameterKeys.Time
+            ParameterKeys.Time,
+            ParameterKeys.PassengerName,
+            ParameterKeys.PassengerEmail,
+            ParameterKeys.PassengerIdentity,
+            ParameterKeys.PassengerPhone,
+            ParameterKeys.PaymentType
         };
 
         public DialogflowService(
             ITicketService ticketService,
+            IPassengerInfoService passengerInfoService,
             IConfiguration configuration,
-            ILogger<DialogflowService> logger)
+            ILogger<DialogflowService> logger,
+            PaymentGrpcService.PaymentGrpcServiceClient paymentGrpcServiceClient)
         {
             _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
+            _passengerInfoService = passengerInfoService ?? throw new ArgumentNullException(nameof(passengerInfoService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
+            _paymentGrpcServiceClient = paymentGrpcServiceClient;
             _projectId = configuration["Dialogflow:ProjectId"]
                 ?? throw new InvalidOperationException("Dialogflow:ProjectId not found in configuration.");
 
@@ -109,13 +123,37 @@ namespace Booking.Application.Services
                 bookingInfo.DepartureStation, bookingInfo.ArrivalStation, bookingInfo.Date);
 
             var ticket = await _ticketService.CreateTicketForDialogfowAsync(bookingInfo);
+            if (ticket == null)
+            {
+                _logger.LogError("Failed to create ticket for booking info: {BookingInfo}", bookingInfo);
+                return CreateErrorResponse("Không thể tạo vé. Vui lòng thử lại sau.");
+            }
 
+            var addPassengerDto = new AddPassengerInfoDto
+            {
+                IsMainPassenger = true,
+                AgeGroup = AgeGroupEnum.Adult,
+                FirstName = parameters[ParameterKeys.PassengerName]?.ToString(),
+                LastName = parameters[ParameterKeys.PassengerName]?.ToString(),
+                Email = parameters[ParameterKeys.PassengerEmail]?.ToString(),
+                PhoneNumber = parameters[ParameterKeys.PassengerPhone]?.ToString(),
+                IdentityNumber = parameters[ParameterKeys.PassengerIdentity]?.ToString(),
+            };
+
+            var passengerInfo = await _passengerInfoService.AddPassengerInfoAsync(addPassengerDto);
+            var request = new CreatePaymentRequest
+            {
+                BookingOrderId = ticket.BookingOrderId.ToString(),
+                PaymentType = (int)parameters[ParameterKeys.PaymentType],
+            };
+
+            var response = await _paymentGrpcServiceClient.CreatePaymentAsync(request);
             return new DialogflowResponse
             {
                 FulfillmentText = Messages.BookingInProgressMessage,
                 Payload = new
                 {
-                    redirect = $"http://localhost:5173/booking/passenger-details?scheduleId={ticket.TrainScheduleId}&trainId={ticket.TrainId}&journeyDate={ticket.JourneyDate}",
+                    redirect = response.PaymentUrl,
                     bookingInfo
                 }
             };
@@ -179,7 +217,7 @@ namespace Booking.Application.Services
         }
 
         private (bool IsSuccess, DialogflowCreateTicketRequest BookingInfo, string ErrorMessage) ExtractBookingParameters(
-            Dictionary<string, object> parameters)
+    Dictionary<string, object> parameters)
         {
             var departureStation = ExtractStringParameter(parameters, ParameterKeys.DepartureStation);
             var arrivalStation = ExtractStringParameter(parameters, ParameterKeys.ArrivalStation);
@@ -203,10 +241,32 @@ namespace Booking.Application.Services
                 return (false, null, Messages.InvalidTimeMessage);
             }
 
-            if (!parameters.TryGetValue(ParameterKeys.PassengerName, out var passengerNameObj) ||
-            passengerNameObj is not Dictionary<string, object> passengerNameDict ||
-            !passengerNameDict.TryGetValue("name", out var nameObj) ||
-            string.IsNullOrWhiteSpace(nameObj?.ToString()))
+            string passengerName = null;
+            if (parameters.TryGetValue(ParameterKeys.PassengerName, out var passengerNameObj))
+            {
+                switch (passengerNameObj)
+                {
+                    case JsonElement jsonElement when jsonElement.ValueKind == JsonValueKind.Object:
+                        if (jsonElement.TryGetProperty("name", out var nameProp))
+                        {
+                            passengerName = nameProp.GetString();
+                        }
+                        break;
+
+                    case Dictionary<string, object> dict:
+                        if (dict.TryGetValue("name", out var nameObj))
+                        {
+                            passengerName = nameObj?.ToString();
+                        }
+                        break;
+
+                    default:
+                        passengerName = passengerNameObj?.ToString();
+                        break;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(passengerName))
             {
                 return (false, null, "Tên hành khách không hợp lệ hoặc bị thiếu.");
             }
@@ -224,7 +284,7 @@ namespace Booking.Application.Services
                 Quantity = (int)quantity,
                 Date = date.Date,
                 Time = timeDateTime.TimeOfDay,
-                PassengerName = nameObj.ToString().Trim(),
+                PassengerName = passengerName?.Trim(),
                 PassengerEmail = passengerEmail?.Trim()
             };
 

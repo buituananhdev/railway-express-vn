@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "Common.Protos";
+
+package payment;
+
+service PaymentGrpcService {
+  rpc CreatePayment (CreatePaymentRequest) returns (CreatePaymentResponse);
+}
+
+message CreatePaymentRequest {
+  string bookingOrderId = 1;
+  int32 paymentType = 2;
+}
+
+message CreatePaymentResponse {
+  string paymentUrl = 1;
+}
