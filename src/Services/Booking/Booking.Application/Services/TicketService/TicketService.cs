@@ -15,6 +15,7 @@ using Google.Protobuf.WellKnownTypes;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using NanoidDotNet;
 
 namespace Booking.Application.Services
 {
@@ -32,6 +33,7 @@ namespace Booking.Application.Services
 
         private const string SEAT_LOCK_KEY_PREFIX = "seat:lock:";
         private const int LOCK_TIMEOUT_SECONDS = 5;
+        private const string ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
         public TicketService(
             ITicketRepository repository,
@@ -323,22 +325,7 @@ namespace Booking.Application.Services
 
         private string GenerateTicketNumber()
         {
-            int remainingChars = 7;
-
-            string timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-            Random random = new Random();
-            int randomPart = random.Next(1000);
-
-            string uniqueIdentifier = $"{timestamp}{randomPart:D3}";
-
-            if (uniqueIdentifier.Length > remainingChars)
-            {
-                uniqueIdentifier = uniqueIdentifier.Substring(uniqueIdentifier.Length - remainingChars);
-            }
-
-            string ticketNumber = $"#BO-{uniqueIdentifier}";
-
-            return ticketNumber;
+            return $"#BO-{Nanoid.Generate(ALPHABET, size: 7)}";
         }
 
         public async Task<List<TicketDto>> GetTicketWithPassengerInfoAsync(Guid bookingOrderId)
@@ -530,26 +517,26 @@ namespace Booking.Application.Services
 
                         string ticketTypeName = GetTicketTypeName(ticket.TicketType);
 
-                        var eTicketEvent = new ETicketEvent(
-                            TicketNumber: ticket.TicketNumber,
-                            PassengerName: $"{passenger.FirstName} {passenger.LastName}",
-                            Email: passenger.Email,
-                            TicketType: ticketTypeName,
-                            Journey: new JourneyInfo(
-                                DepartureStation: ticket.TrainSchedule?.DepartureStation?.StationName ?? "Unknown",
-                                ArrivalStation: ticket.TrainSchedule?.ArrivalStation?.StationName ?? "Unknown",
-                                DepartureDate: ticket.TrainSchedule?.DepartureTime.Date ?? ticket.JourneyDate.Date,
-                                ArrivalDate: ticket.TrainSchedule?.ArrivalTime.Date ?? ticket.JourneyDate.Date,
-                                DepartureTime: ticket.TrainSchedule?.DepartureTime.TimeOfDay ?? TimeSpan.Zero,
-                                ArrivalTime: ticket.TrainSchedule?.ArrivalTime.TimeOfDay ?? TimeSpan.Zero,
-                                TrainNumber: seatInfo?.TrainCar?.Train?.TrainName ?? "Unknown",
-                                CarriageNumber: seatInfo?.TrainCar?.CarNumber?.ToString() ?? "Unknown",
-                                SeatNumber: seatInfo?.SeatNumber.ToString() ?? "Unknown"
-                            ),
-                            BookingDate: ticket.BookingDate,
-                            QrCodeUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748769468/website_qrcode_x2rv6u.jpg?_s=public-apps",
-                            LogoUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748230281/logo_mfewmk.jpg?_s=public-apps"
-                        );
+                    var eTicketEvent = new ETicketEvent(
+                        TicketNumber: ticket.TicketNumber,
+                        PassengerName: $"{passenger.FirstName} {passenger.LastName}",
+                        Email: ticket.PassengerDetails.Where(p => p.IsMainPassenger).Select(p => p.Email).FirstOrDefault(),
+                        TicketType: ticketTypeName,
+                        Journey: new JourneyInfo(
+                            DepartureStation: ticket.TrainSchedule?.DepartureStation?.StationName ?? "Unknown",
+                            ArrivalStation: ticket.TrainSchedule?.ArrivalStation?.StationName ?? "Unknown",
+                            DepartureDate: ticket.TrainSchedule?.DepartureTime.Date ?? ticket.JourneyDate.Date,
+                            ArrivalDate: ticket.TrainSchedule?.ArrivalTime.Date ?? ticket.JourneyDate.Date,
+                            DepartureTime: ticket.TrainSchedule?.DepartureTime.TimeOfDay ?? TimeSpan.Zero,
+                            ArrivalTime: ticket.TrainSchedule?.ArrivalTime.TimeOfDay ?? TimeSpan.Zero,
+                            TrainNumber: seatInfo?.TrainCar?.Train?.TrainName ?? "Unknown",
+                            CarriageNumber: seatInfo?.TrainCar?.CarNumber?.ToString() ?? "Unknown",
+                            SeatNumber: seatInfo?.SeatNumber.ToString() ?? "Unknown"
+                        ),
+                        BookingDate: ticket.BookingDate,
+                        QrCodeUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748769468/website_qrcode_x2rv6u.jpg?_s=public-apps",
+                        LogoUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748230281/logo_mfewmk.jpg?_s=public-apps"
+                    );
 
                         _logger.LogInformation("SEND_E_TICKET => Publishing ETicketEvent for TicketNumber: {TicketNumber}, Passenger: {PassengerName}", ticket.TicketNumber, passenger.Email);
                         await _publishEndpoint.Publish(eTicketEvent);

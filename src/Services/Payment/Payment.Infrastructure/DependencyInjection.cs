@@ -34,6 +34,11 @@ public static class DependencyInjection
         services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
 
+        services.AddGrpc(options =>
+        {
+            options.EnableDetailedErrors = true;
+        });
+
         services.AddMassTransit(x =>
         {
             x.SetKebabCaseEndpointNameFormatter();

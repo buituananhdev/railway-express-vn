@@ -5,12 +5,12 @@ using Common.Application.Services;
 using Common.Contracts.Events;
 using Common.Protos;
 using MassTransit;
+using NanoidDotNet;
 using Payment.Application.Dtos;
 using Payment.Application.Repositories;
 using Payment.Domain.Entities;
 using Payment.Domain.Enums;
 using Payment.Domain.Specifications;
-using System.Security.Cryptography;
 
 namespace Payment.Application.Services.PaymentService;
 
@@ -19,8 +19,7 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
     private readonly BookingGrpcService.BookingGrpcServiceClient _bookingGrpcServiceClient;
     private readonly IPaymentUnitOfWork _unitOfWork;
     private readonly IPublishEndpoint _publishEndpoint;
-
-    private static readonly ThreadLocal<Random> _threadLocalRandom = new(() => new Random(GetCryptoRandomSeed()));
+    private const string ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     public PaymentService(
         IPaymentRepository repository,
@@ -92,24 +91,15 @@ public class PaymentService : BaseService<PaymentRecord, AddPaymentRecordDto, Up
         return paymentRecord.Id;
     }
 
-    private static string GeneratePaymentNumber()
-    {
-        var randomNumber = _threadLocalRandom.Value!.Next(100000, 1000000);
-        return $"PO-{randomNumber}";
-    }
-
-    private static int GetCryptoRandomSeed()
-    {
-        using var rng = RandomNumberGenerator.Create();
-        var bytes = new byte[4];
-        rng.GetBytes(bytes);
-        return BitConverter.ToInt32(bytes, 0);
-    }
-
     public async Task<PaymentRecordDto> GetPaymentByBookingOrderIdAsync(Guid bookingOrderId)
     {
         var specification = new BookingOrderIdSpecification(bookingOrderId);
         var payment = await _unitOfWork.PaymentRepository.FirstOrDefaultAsync<PaymentRecordDto>(spec: specification);
         return payment ?? throw new NotFoundException($"Payment record for booking order {bookingOrderId} not found.");
+    }
+
+    private string GeneratePaymentNumber()
+    {
+        return $"#PO-{Nanoid.Generate(ALPHABET, size: 7)}";
     }
 }
