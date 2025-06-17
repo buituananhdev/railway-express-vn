@@ -70,7 +70,8 @@ public class TrainsController : ControllerBase
     {
         var trains = await _trainService.GetListAsync(paginationParams);
         return Ok(trains);
-    } 
+    }
+
     [HttpGet("{trainId}/train-cars")]
     public async Task<IActionResult> GetTrainCars(Guid trainId, [FromQuery] Guid trainScheduleId, [FromQuery] DateTime journeyDate)
     {

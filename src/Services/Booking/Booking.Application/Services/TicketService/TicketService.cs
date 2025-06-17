@@ -14,6 +14,7 @@ using Common.Protos;
 using Google.Protobuf.WellKnownTypes;
 using MassTransit;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Booking.Application.Services
 {
@@ -449,67 +450,118 @@ namespace Booking.Application.Services
 
         public async Task SendETicketAsync(Guid bookingOrderId)
         {
+            _logger.LogInformation("SEND_E_TICKET => Begin SendETicketAsync with bookingOrderId: {BookingOrderId}", bookingOrderId);
+
             var specification = new BookingOrderIdSpecification(bookingOrderId);
             var includes = new List<Expression<Func<Ticket, object>>>
             {
                 t => t.PassengerDetails,
                 t => t.TicketSeats,
             };
+
             var tickets = await _bookingUnitOfWork.TicketRepository.ToListAsync<TicketDto>(spec: specification, includes: includes);
-            
+            _logger.LogInformation("SEND_E_TICKET => Fetched {TicketCount} tickets", tickets?.Count);
+
             foreach (var ticket in tickets)
             {
+                _logger.LogInformation("SEND_E_TICKET => Processing Ticket: {TicketNumber}", ticket.TicketNumber);
+                _logger.LogInformation("SEND_E_TICKET => Ticket JSON: {TicketJson}", JsonConvert.SerializeObject(ticket));
+
                 foreach (var ticketSeat in ticket.TicketSeats)
                 {
-                    var request = new GetSeatInformationRequest { SeatId = ticketSeat.SeatId.ToString() };
-                    var seat = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
-                    ticket.SeatInformations ??= new List<Seat>();
-                    ticket.SeatInformations.Add(_mapper.Map<Seat>(seat));
+                    try
+                    {
+                        _logger.LogInformation("SEND_E_TICKET => Fetching SeatInfo for SeatId: {SeatId}", ticketSeat.SeatId);
+                        var request = new GetSeatInformationRequest { SeatId = ticketSeat.SeatId.ToString() };
+                        var seat = await _adminGrpcServiceClient.GetSeatInformationAsync(request);
+                        if (seat == null)
+                        {
+                            _logger.LogWarning("SEND_E_TICKET => Seat information is null for SeatId: {SeatId}", ticketSeat.SeatId);
+                            continue;
+                        }
+
+                        ticket.SeatInformations ??= new List<Seat>();
+                        ticket.SeatInformations.Add(_mapper.Map<Seat>(seat));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "SEND_E_TICKET => Error fetching seat information for SeatId: {SeatId}", ticketSeat.SeatId);
+                        throw;
+                    }
                 }
 
-                var schedule = await _adminGrpcServiceClient.GetTrainScheduleInformationAsync(new GetTrainScheduleInformationRequest
+                try
                 {
-                    ScheduleId = ticket.TrainScheduleId.ToString()
-                });
+                    _logger.LogInformation("SEND_E_TICKET => Fetching TrainSchedule for ScheduleId: {ScheduleId}", ticket.TrainScheduleId);
+                    var schedule = await _adminGrpcServiceClient.GetTrainScheduleInformationAsync(new GetTrainScheduleInformationRequest
+                    {
+                        ScheduleId = ticket.TrainScheduleId.ToString()
+                    });
 
-                ticket.TrainSchedule = _mapper.Map<TrainSchedule>(schedule);
+                    ticket.TrainSchedule = _mapper.Map<TrainSchedule>(schedule);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "SEND_E_TICKET => Error fetching TrainSchedule for ScheduleId: {ScheduleId}", ticket.TrainScheduleId);
+                }
 
                 if (ticket.PassengerDetails == null || !ticket.PassengerDetails.Any())
                 {
+                    _logger.LogWarning("SEND_E_TICKET => Ticket {TicketNumber} has no passenger details", ticket.TicketNumber);
                     continue;
                 }
 
                 foreach (var passenger in ticket.PassengerDetails)
                 {
-                    var passengerSeat = ticket.TicketSeats?.FirstOrDefault(ts => ts.PassengerInfoId == passenger.Id);
-                    var seatInfo = ticket.SeatInformations?.FirstOrDefault(s => s.Id == passengerSeat.SeatId.ToString());
+                    try
+                    {
+                        var passengerSeat = ticket.TicketSeats?.FirstOrDefault(ts => ts.PassengerInfoId == passenger.Id);
+                        if (passengerSeat == null)
+                        {
+                            _logger.LogWarning("SEND_E_TICKET => No seat found for passenger {PassengerId}", passenger.Id);
+                            continue;
+                        }
 
-                    string ticketTypeName = GetTicketTypeName(ticket.TicketType);
+                        var seatInfo = ticket.SeatInformations?.FirstOrDefault(s => s.Id == passengerSeat.SeatId.ToString());
+                        if (seatInfo == null)
+                        {
+                            _logger.LogWarning("SEND_E_TICKET => No seatInfo found for SeatId: {SeatId}", passengerSeat.SeatId);
+                        }
 
-                    var eTicketEvent = new ETicketEvent(
-                        TicketNumber: ticket.TicketNumber,
-                        PassengerName: $"{passenger.FirstName} {passenger.LastName}",
-                        Email: passenger.Email,
-                        TicketType: ticketTypeName,
-                        Journey: new JourneyInfo(
-                            DepartureStation: ticket.TrainSchedule?.DepartureStation?.StationName ?? "Unknown",
-                            ArrivalStation: ticket.TrainSchedule?.ArrivalStation?.StationName ?? "Unknown",
-                            DepartureDate: ticket.TrainSchedule?.DepartureTime.Date ?? ticket.JourneyDate.Date,
-                            ArrivalDate: ticket.TrainSchedule?.ArrivalTime.Date ?? ticket.JourneyDate.Date,
-                            DepartureTime: ticket.TrainSchedule?.DepartureTime.TimeOfDay ?? TimeSpan.Zero,
-                            ArrivalTime: ticket.TrainSchedule?.ArrivalTime.TimeOfDay ?? TimeSpan.Zero,
-                            TrainNumber: seatInfo?.TrainCar?.Train?.TrainName ?? "Unknown",
-                            CarriageNumber: seatInfo?.TrainCar?.CarNumber?.ToString() ?? "Unknown",
-                            SeatNumber: seatInfo?.SeatNumber.ToString() ?? "Unknown"
-                        ),
-                        BookingDate: ticket.BookingDate,
-                        QrCodeUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748769468/website_qrcode_x2rv6u.jpg?_s=public-apps",
-                        LogoUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748230281/logo_mfewmk.jpg?_s=public-apps"
-                    );
+                        string ticketTypeName = GetTicketTypeName(ticket.TicketType);
 
-                    await _publishEndpoint.Publish(eTicketEvent);
+                        var eTicketEvent = new ETicketEvent(
+                            TicketNumber: ticket.TicketNumber,
+                            PassengerName: $"{passenger.FirstName} {passenger.LastName}",
+                            Email: passenger.Email,
+                            TicketType: ticketTypeName,
+                            Journey: new JourneyInfo(
+                                DepartureStation: ticket.TrainSchedule?.DepartureStation?.StationName ?? "Unknown",
+                                ArrivalStation: ticket.TrainSchedule?.ArrivalStation?.StationName ?? "Unknown",
+                                DepartureDate: ticket.TrainSchedule?.DepartureTime.Date ?? ticket.JourneyDate.Date,
+                                ArrivalDate: ticket.TrainSchedule?.ArrivalTime.Date ?? ticket.JourneyDate.Date,
+                                DepartureTime: ticket.TrainSchedule?.DepartureTime.TimeOfDay ?? TimeSpan.Zero,
+                                ArrivalTime: ticket.TrainSchedule?.ArrivalTime.TimeOfDay ?? TimeSpan.Zero,
+                                TrainNumber: seatInfo?.TrainCar?.Train?.TrainName ?? "Unknown",
+                                CarriageNumber: seatInfo?.TrainCar?.CarNumber?.ToString() ?? "Unknown",
+                                SeatNumber: seatInfo?.SeatNumber.ToString() ?? "Unknown"
+                            ),
+                            BookingDate: ticket.BookingDate,
+                            QrCodeUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748769468/website_qrcode_x2rv6u.jpg?_s=public-apps",
+                            LogoUrl: "https://res.cloudinary.com/ddqjbrc8q/image/upload/fl_preserve_transparency/v1748230281/logo_mfewmk.jpg?_s=public-apps"
+                        );
+
+                        _logger.LogInformation("SEND_E_TICKET => Publishing ETicketEvent for TicketNumber: {TicketNumber}, Passenger: {PassengerName}", ticket.TicketNumber, passenger.Email);
+                        await _publishEndpoint.Publish(eTicketEvent);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "SEND_E_TICKET => Error while processing passenger {PassengerId} for ticket {TicketNumber}", passenger.Id, ticket.TicketNumber);
+                    }
                 }
             }
+
+            _logger.LogInformation("SEND_E_TICKET => Finished processing SendETicketAsync for bookingOrderId: {BookingOrderId}", bookingOrderId);
         }
 
         private string GetTicketTypeName(TicketTypeEnum ticketType)
