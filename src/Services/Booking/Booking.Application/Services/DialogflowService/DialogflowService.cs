@@ -140,7 +140,7 @@ namespace Booking.Application.Services
                 IdentityNumber = parameters[ParameterKeys.PassengerIdentity]?.ToString(),
             };
 
-            var passengerInfo = await _passengerInfoService.AddPassengerInfoAsync(addPassengerDto);
+            _passengerInfoService.AddPassengerInfoAsync(addPassengerDto);
             var request = new CreatePaymentRequest
             {
                 BookingOrderId = ticket.BookingOrderId.ToString(),
