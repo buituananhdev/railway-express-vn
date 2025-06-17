@@ -15,6 +15,7 @@ using Google.Protobuf.WellKnownTypes;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using NanoidDotNet;
 
 namespace Booking.Application.Services
 {
