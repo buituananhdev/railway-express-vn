@@ -1,6 +1,8 @@
-﻿using Booking.Application.Repositories;
+﻿using Booking.Application.Interfaces;
+using Booking.Application.Repositories;
 using Booking.Infrastructure.Consumers;
 using Booking.Infrastructure.Repositories;
+using Booking.Infrastructure.SSE;
 using Common.Application.Repositories;
 using Common.Infrastructure;
 using Common.Infrastructure.Repositories;
@@ -34,6 +36,8 @@ public static class DependencyInjection
         services.AddScoped<IPassengerInfoRepository, PassengerInfoRepository>();
         services.AddScoped<ITicketSeatRepository, TicketSeatRepository>();
         services.AddScoped<IBookingOrderRepository, BookingOrderRepository>();
+
+        services.AddSingleton<ISSEPublisher, SSEPublisher>();
 
         services.AddGrpc(options =>
         {

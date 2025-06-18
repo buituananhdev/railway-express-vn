@@ -19,7 +19,7 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
 
     private const string TRAIN_SCHEDULES_CACHE_KEY = "train_schedules";
     private const string TRAIN_SCHEDULE_INFO_CACHE_KEY = "train_schedule_info";
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(15);
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
     private static readonly TimeSpan InfoCacheDuration = TimeSpan.FromHours(1);
 
     private static readonly List<Expression<Func<TrainSchedule, object>>> DefaultIncludes = new List<Expression<Func<TrainSchedule, object>>>
