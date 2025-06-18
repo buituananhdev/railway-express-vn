@@ -19,6 +19,7 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
 
     private const string TRAIN_SCHEDULES_CACHE_KEY = "train_schedules";
     private const string TRAIN_SCHEDULE_INFO_CACHE_KEY = "train_schedule_info";
+    private const string TRAIN_SCHEDULE_CLOSEST_TIME_CACHE_KEY = "train_schedule_closest_time";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
     private static readonly TimeSpan InfoCacheDuration = TimeSpan.FromHours(1);
 
@@ -72,6 +73,59 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
         await _cacheService.SetCacheAsync(cacheKey, result, CacheDuration);
 
         return result;
+    }
+
+    public async Task<TrainScheduleDto?> GetTrainScheduleClosestTimeAsync(GetTrainSchedulesDto request, TimeSpan target)
+    {
+        var cacheKey = GenerateClosestTimeCacheKey(request, target);
+
+        var cachedResult = await _cacheService.GetCacheAsync<TrainScheduleDto>(cacheKey);
+        if (cachedResult != null)
+        {
+            return cachedResult;
+        }
+
+        var schedules = await FetchSchedulesFromDatabase(request);
+
+        if (!schedules.Any())
+        {
+            await _cacheService.SetCacheAsync(cacheKey, (TrainScheduleDto?)null, TimeSpan.FromMinutes(5));
+            return null;
+        }
+
+        var closestSchedule = FindClosestScheduleByTime(schedules, target);
+
+        if (closestSchedule == null)
+        {
+            await _cacheService.SetCacheAsync(cacheKey, (TrainScheduleDto?)null, TimeSpan.FromMinutes(5));
+            return null;
+        }
+
+        var pricingContext = CalculatePricingContext(request.DepartureDate, request.ReturnDate);
+        var result = MapScheduleToDto(closestSchedule, pricingContext);
+
+        await _cacheService.SetCacheAsync(cacheKey, result, CacheDuration);
+
+        return result;
+    }
+
+    private static TrainSchedule? FindClosestScheduleByTime(List<TrainSchedule> schedules, TimeSpan target)
+    {
+        return schedules
+            .OrderBy(schedule => Math.Abs((schedule.DepartureTime.TimeOfDay - target).TotalMinutes))
+            .FirstOrDefault();
+    }
+
+    private static string GenerateClosestTimeCacheKey(GetTrainSchedulesDto request, TimeSpan target)
+    {
+        var key = $"{TRAIN_SCHEDULE_CLOSEST_TIME_CACHE_KEY}:{request.DepartureStationId}:{request.ArrivalStationId}:{request.DepartureDate:yyyyMMdd}:{target:hhmm}";
+
+        if (request.ReturnDate.HasValue)
+        {
+            key += $":{request.ReturnDate.Value:yyyyMMdd}";
+        }
+
+        return key;
     }
 
     private async Task<List<TrainSchedule>> FetchSchedulesFromDatabase(GetTrainSchedulesDto request)
@@ -146,17 +200,6 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
         }
 
         return schedule;
-    }
-
-    public async Task InvalidateSchedulesCacheAsync(Guid departureStationId, Guid arrivalStationId)
-    {
-        var pattern = $"{TRAIN_SCHEDULES_CACHE_KEY}:{departureStationId}:{arrivalStationId}:*";
-    }
-
-    public async Task InvalidateScheduleInfoCacheAsync(Guid scheduleId)
-    {
-        var cacheKey = $"{TRAIN_SCHEDULE_INFO_CACHE_KEY}:{scheduleId}";
-        await _cacheService.RemoveCacheAsync(cacheKey);
     }
 
     private static decimal CalculateBasePrice(int distance) => distance switch

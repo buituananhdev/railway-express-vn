@@ -468,32 +468,22 @@ public class SeatService : BaseService<Seat, AddSeatDto, AddSeatDto, SeatDto>, I
         int count)
     {
         var specification = new TrainIdSpecification(trainId);
-        var trainCars = await _adminUnitOfWork.TrainCarRepository.ToListAsync<TrainCarDto>(spec: specification);
+        var trainCar = await _adminUnitOfWork.TrainCarRepository.FirstOrDefaultAsync<TrainCarDto>(spec: specification);
 
         var availableSeatIds = new List<Guid>();
+        var seatDtos = await GetSeatsFromCacheOrDatabaseAsync(trainCar.Id);
 
-        foreach (var trainCar in trainCars)
+        var lockStatus = await GetLockStatusAsync(seatDtos, trainScheduleId, journeyDate);
+
+        for (int i = 0; i < seatDtos.Count; i++)
         {
-            var seatDtos = await GetSeatsFromCacheOrDatabaseAsync(trainCar.Id);
-            if (!seatDtos.Any())
+            var seatId = seatDtos[i].Id;
+            string seatIdStr = seatId.ToString();
+            bool isLocked = lockStatus[i];
+
+            if (!isLocked)
             {
-                continue;
-            }
-
-            var bookingStatus = await GetBookingStatusAsync(seatDtos, trainScheduleId, journeyDate);
-            var lockStatus = await GetLockStatusAsync(seatDtos, trainScheduleId, journeyDate);
-
-            for (int i = 0; i < seatDtos.Count; i++)
-            {
-                var seatId = seatDtos[i].Id;
-                string seatIdStr = seatId.ToString();
-                bool isBooked = bookingStatus.TryGetValue(seatIdStr, out var booked) && booked;
-                bool isLocked = lockStatus[i];
-
-                if (!isBooked && !isLocked)
-                {
-                    availableSeatIds.Add(seatId);
-                }
+                availableSeatIds.Add(seatId);
             }
         }
 

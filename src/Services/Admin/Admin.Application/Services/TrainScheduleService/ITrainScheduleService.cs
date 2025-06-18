@@ -17,4 +17,5 @@ public interface ITrainScheduleService
     Task<TrainScheduleDto> GetByIdAsync(Guid id);
     Task<List<TrainScheduleDto>> GetTrainSchedulesAsync(GetTrainSchedulesDto getTrainSchedulesDto);
     Task<TrainScheduleDto> GetTrainScheduleInformationAsync(Guid scheduleId);
+    Task<TrainScheduleDto?> GetTrainScheduleClosestTimeAsync(GetTrainSchedulesDto request, TimeSpan target);
 }
