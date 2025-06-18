@@ -23,9 +23,9 @@ public static class Extensions
         {
             http.AddStandardResilienceHandler().Configure(options =>
             {
-                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(20);
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(60);
 
-                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(10);
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(30);
 
                 options.Retry.MaxRetryAttempts = 2;
                 options.Retry.Delay = TimeSpan.FromMilliseconds(300);
