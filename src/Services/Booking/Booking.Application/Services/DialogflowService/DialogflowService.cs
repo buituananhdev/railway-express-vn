@@ -71,29 +71,29 @@ namespace Booking.Application.Services
             _passengerInfoService = passengerInfoService ?? throw new ArgumentNullException(nameof(passengerInfoService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _paymentGrpcServiceClient = paymentGrpcServiceClient;
-            //_projectId = configuration["Dialogflow:ProjectId"]
-            //    ?? throw new InvalidOperationException("Dialogflow:ProjectId not found in configuration.");
+            _projectId = configuration["Dialogflow:ProjectId"]
+                ?? throw new InvalidOperationException("Dialogflow:ProjectId not found in configuration.");
 
-            //_languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
+            _languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
 
-            //var jsonCredentials = configuration["Dialogflow:JSON"]
-            //    ?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
+            var jsonCredentials = configuration["Dialogflow:JSON"]
+                ?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
 
-            //try
-            //{
-            //    var builder = new SessionsClientBuilder
-            //    {
-            //        JsonCredentials = jsonCredentials
-            //    };
-            //    _client = builder.Build();
+            try
+            {
+                var builder = new SessionsClientBuilder
+                {
+                    JsonCredentials = jsonCredentials
+                };
+                _client = builder.Build();
 
-            //    _logger.LogInformation("DialogflowService initialized successfully for project: {ProjectId}", _projectId);
-            //}
-            //catch (Exception ex)
-            //{
-            //    _logger.LogError(ex, "Failed to initialize DialogflowService");
-            //    throw;
-            //}
+                _logger.LogInformation("DialogflowService initialized successfully for project: {ProjectId}", _projectId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to initialize DialogflowService");
+                throw;
+            }
         }
 
         public async Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters)
