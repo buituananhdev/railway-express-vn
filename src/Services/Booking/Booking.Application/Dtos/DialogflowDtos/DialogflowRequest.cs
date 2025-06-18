@@ -5,6 +5,9 @@ public class DialogflowRequest
 {
     [JsonProperty("queryResult")]
     public QueryResult QueryResult { get; set; }
+
+    [JsonProperty("session")]
+    public string Session { get; set; }
 }
 
 public class QueryResult

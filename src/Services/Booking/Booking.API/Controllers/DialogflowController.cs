@@ -23,7 +23,7 @@ public class DialogflowController : ControllerBase
         switch (intentName)
         {
             case "booking_ticket":
-                var result1 = await _dialogflowService.HandleBookingTicket(parameters);
+                var result1 = await _dialogflowService.HandleBookingTicket(parameters, request.Session);
                 return Ok(result1);
 
             case "search_ticket":

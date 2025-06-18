@@ -99,7 +99,7 @@ namespace Booking.Application.Services
             }
         }
 
-        public async Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters)
+        public async Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters, string session)
         {
             
             var extractResult = ExtractBookingParameters(parameters);
@@ -170,8 +170,10 @@ namespace Booking.Application.Services
             _logger.LogInformation("CreatePayment took {Elapsed} ms", sw.ElapsedMilliseconds);
             sw.Restart();
 
-            if (parameters.TryGetValue("sessionId", out var sidObj) && sidObj is string sessionId && !string.IsNullOrWhiteSpace(sessionId))
+            if (string.IsNullOrEmpty(session))
             {
+                string[] parts = session.Split('/');
+                string sessionId = parts.Last();
                 await _ssePublisher.SendAsync(sessionId, "paymentUrl", new { PaymentUrl = response.PaymentUrl });
                 _logger.LogInformation("Sent PaymentUrl SSE to session {SessionId}", sessionId);
             }
