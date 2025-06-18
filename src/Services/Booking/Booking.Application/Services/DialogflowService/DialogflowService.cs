@@ -47,20 +47,6 @@ namespace Booking.Application.Services
             public const string PaymentType = "payment_type";
         }
 
-        private static readonly string[] RequiredBookingFields =
-        {
-            ParameterKeys.DepartureStation,
-            ParameterKeys.ArrivalStation,
-            ParameterKeys.Date,
-            ParameterKeys.Quantity,
-            ParameterKeys.Time,
-            ParameterKeys.PassengerName,
-            ParameterKeys.PassengerEmail,
-            ParameterKeys.PassengerIdentity,
-            ParameterKeys.PassengerPhone,
-            ParameterKeys.PaymentType
-        };
-
         public DialogflowService(
             ITicketService ticketService,
             IPassengerInfoService passengerInfoService,
@@ -170,13 +156,13 @@ namespace Booking.Application.Services
             _logger.LogInformation("CreatePayment took {Elapsed} ms", sw.ElapsedMilliseconds);
             sw.Restart();
 
-            if (string.IsNullOrEmpty(session))
-            {
-                string[] parts = session.Split('/');
-                string sessionId = parts.Last();
-                await _ssePublisher.SendAsync(sessionId, "paymentUrl", new { PaymentUrl = response.PaymentUrl });
-                _logger.LogInformation("Sent PaymentUrl SSE to session {SessionId}", sessionId);
-            }
+            //if (string.IsNullOrEmpty(session))
+            //{
+            //    string[] parts = session.Split('/');
+            //    string sessionId = parts.Last();
+            //    await _ssePublisher.SendAsync(sessionId, "paymentUrl", new { PaymentUrl = response.PaymentUrl });
+            //    _logger.LogInformation("Sent PaymentUrl SSE to session {SessionId}", sessionId);
+            //}
 
             return new DialogflowResponse
             {
@@ -235,15 +221,6 @@ namespace Booking.Application.Services
 
             var response = await _client.DetectIntentAsync(request);
             return response.QueryResult.FulfillmentText;
-        }
-
-        private List<string> GetMissingFields(Dictionary<string, object> parameters)
-        {
-            return RequiredBookingFields
-                .Where(field => !parameters.ContainsKey(field) ||
-                               parameters[field] == null ||
-                               string.IsNullOrWhiteSpace(parameters[field]?.ToString()))
-                .ToList();
         }
 
         private (bool IsSuccess, DialogflowCreateTicketRequest BookingInfo, string ErrorMessage) ExtractBookingParameters(

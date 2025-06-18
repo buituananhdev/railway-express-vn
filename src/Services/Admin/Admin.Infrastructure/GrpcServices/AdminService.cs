@@ -48,23 +48,13 @@ public class AdminService : Common.Protos.AdminGrpcService.AdminGrpcServiceBase
             ArrivalStationId = Guid.Parse(request.ArrivalStationId),
             DepartureDate = request.DepartureDate.ToDateTime()
         };
-
-        var schedules = await _trainScheduleService.GetTrainSchedulesAsync(dto)
-                                                   .ConfigureAwait(false);
-
-        if (schedules.Count == 0)
-            throw new RpcException(new Status(StatusCode.NotFound,
-                               "Không tìm thấy lịch tàu phù hợp"));
-
         var target = request.DepartureTime.ToTimeSpan();
-        var bestMatch = schedules.MinBy(s =>
-            Math.Abs((s.DepartureTime.TimeOfDay - target).TotalMinutes));
-
+        var schedule = await _trainScheduleService.GetTrainScheduleClosestTimeAsync(dto, target);
         return new GetTrainScheduleResponse
         {
-            TrainScheduleId = bestMatch.Id.ToString(),
-            TrainId = bestMatch.Train.Id.ToString(),
-            BasePrice = (double)bestMatch.FromPrice
+            TrainScheduleId = schedule.Id.ToString(),
+            TrainId = schedule.Train.Id.ToString(),
+            BasePrice = (double)schedule.FromPrice
         };
     }
 
