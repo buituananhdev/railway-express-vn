@@ -118,7 +118,8 @@ public class SeatService : BaseService<Seat, AddSeatDto, AddSeatDto, SeatDto>, I
             SeatIds = { seatIds.Select(s => s.ToString()) }
         };
 
-        var result = await _bookingGrpcServiceClient.BatchCheckSeatStatusAsync(request);
+        var callOptions = new Grpc.Core.CallOptions(deadline: DateTime.UtcNow.AddSeconds(30));
+        var result = await _bookingGrpcServiceClient.BatchCheckSeatStatusAsync(request, callOptions);
         return result.SeatStatuses.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
 
@@ -178,7 +179,8 @@ public class SeatService : BaseService<Seat, AddSeatDto, AddSeatDto, SeatDto>, I
             SeatIds = { seats.Select(s => s.Id.ToString()) }
         };
 
-        var result = await _bookingGrpcServiceClient.BatchCheckSeatStatusAsync(request);
+        var callOptions = new Grpc.Core.CallOptions(deadline: DateTime.UtcNow.AddSeconds(30));
+        var result = await _bookingGrpcServiceClient.BatchCheckSeatStatusAsync(request, callOptions);
         return result.SeatStatuses;
     }
 
