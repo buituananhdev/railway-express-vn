@@ -18,7 +18,7 @@
     </PackageReference>
     <PackageReference Include="MassTransit" Version="8.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
     <PackageReference Include="Nanoid" Version="3.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
@@ -27,6 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\Common.Application\Common.Application.csproj" />
     <ProjectReference Include="..\..\..\Common\Common.Contracts\Common.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Common\Common.Infrastructure\Common.Infrastructure.csproj" />
     <ProjectReference Include="..\Booking.Domain\Booking.Domain.csproj" />
   </ItemGroup>
 

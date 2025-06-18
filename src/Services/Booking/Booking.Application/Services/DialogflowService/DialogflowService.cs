@@ -7,8 +7,8 @@ using System.Globalization;
 using System.Text.Json;
 using Common.Protos;
 using System.Diagnostics;
-using System.Net.Sockets;
 using Booking.Application.Interfaces;
+using Common.Infrastructure.Utils;
 
 namespace Booking.Application.Services
 {
@@ -156,14 +156,6 @@ namespace Booking.Application.Services
             _logger.LogInformation("CreatePayment took {Elapsed} ms", sw.ElapsedMilliseconds);
             sw.Restart();
 
-            //if (string.IsNullOrEmpty(session))
-            //{
-            //    string[] parts = session.Split('/');
-            //    string sessionId = parts.Last();
-            //    await _ssePublisher.SendAsync(sessionId, "paymentUrl", new { PaymentUrl = response.PaymentUrl });
-            //    _logger.LogInformation("Sent PaymentUrl SSE to session {SessionId}", sessionId);
-            //}
-
             return new DialogflowResponse
             {
                 FulfillmentText = Messages.BookingInProgressMessage,
@@ -195,15 +187,10 @@ namespace Booking.Application.Services
             };
         }
 
-        public async Task<string> DetectIntentAsync(string sessionId, string text)
+        public async Task<(string FulfillmentText, object Payload)> DetectIntentWithPayloadAsync(string sessionId, string text)
         {
-            if (string.IsNullOrWhiteSpace(sessionId))
-                throw new ArgumentException("Session ID cannot be null or empty", nameof(sessionId));
-
-            if (string.IsNullOrWhiteSpace(text))
-                throw new ArgumentException("Text cannot be null or empty", nameof(text));
-
             var sessionName = SessionName.FromProjectSession(_projectId, sessionId);
+
             var request = new DetectIntentRequest
             {
                 SessionAsSessionName = sessionName,
@@ -217,10 +204,8 @@ namespace Booking.Application.Services
                 }
             };
 
-            _logger.LogDebug("Detecting intent for session: {SessionId}, text: {Text}", sessionId, text);
-
             var response = await _client.DetectIntentAsync(request);
-            return response.QueryResult.FulfillmentText;
+            return (response.QueryResult.FulfillmentText, response.QueryResult.WebhookPayload?.ToDictionary());
         }
 
         private (bool IsSuccess, DialogflowCreateTicketRequest BookingInfo, string ErrorMessage) ExtractBookingParameters(

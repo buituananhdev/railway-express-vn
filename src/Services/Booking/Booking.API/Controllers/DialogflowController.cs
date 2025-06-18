@@ -41,11 +41,13 @@ public class DialogflowController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] UserMessage request)
     {
-        if (string.IsNullOrWhiteSpace(request.Text))
-            return BadRequest("Text is required.");
+        var sessionReply = await _dialogflowService.DetectIntentWithPayloadAsync(request.SessionId, request.Text);
 
-        var reply = await _dialogflowService.DetectIntentAsync(request.SessionId, request.Text);
-        return Ok(new { reply });
+        return Ok(new
+        {
+            reply = sessionReply.FulfillmentText,
+            payload = sessionReply.Payload
+        });
     }
 
     public class UserMessage
