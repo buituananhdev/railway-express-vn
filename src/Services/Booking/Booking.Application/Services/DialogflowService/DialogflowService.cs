@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Text.Json;
 using Common.Protos;
+using System.Diagnostics;
+using System.Net.Sockets;
 
 namespace Booking.Application.Services
 {
@@ -69,48 +71,34 @@ namespace Booking.Application.Services
             _passengerInfoService = passengerInfoService ?? throw new ArgumentNullException(nameof(passengerInfoService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _paymentGrpcServiceClient = paymentGrpcServiceClient;
-            _projectId = configuration["Dialogflow:ProjectId"]
-                ?? throw new InvalidOperationException("Dialogflow:ProjectId not found in configuration.");
+            //_projectId = configuration["Dialogflow:ProjectId"]
+            //    ?? throw new InvalidOperationException("Dialogflow:ProjectId not found in configuration.");
 
-            _languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
+            //_languageCode = configuration["Dialogflow:LanguageCode"] ?? "vi";
 
-            var jsonCredentials = configuration["Dialogflow:JSON"]
-                ?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
+            //var jsonCredentials = configuration["Dialogflow:JSON"]
+            //    ?? throw new InvalidOperationException("Dialogflow:JSON not found in configuration.");
 
-            try
-            {
-                var builder = new SessionsClientBuilder
-                {
-                    JsonCredentials = jsonCredentials
-                };
-                _client = builder.Build();
+            //try
+            //{
+            //    var builder = new SessionsClientBuilder
+            //    {
+            //        JsonCredentials = jsonCredentials
+            //    };
+            //    _client = builder.Build();
 
-                _logger.LogInformation("DialogflowService initialized successfully for project: {ProjectId}", _projectId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to initialize DialogflowService");
-                throw;
-            }
+            //    _logger.LogInformation("DialogflowService initialized successfully for project: {ProjectId}", _projectId);
+            //}
+            //catch (Exception ex)
+            //{
+            //    _logger.LogError(ex, "Failed to initialize DialogflowService");
+            //    throw;
+            //}
         }
 
         public async Task<DialogflowResponse> HandleBookingTicket(Dictionary<string, object> parameters)
         {
-            _logger.LogInformation("Processing booking ticket request");
-            string paramJson = JsonSerializer.Serialize(parameters, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
-
-            _logger.LogInformation("Booking ticket body: {Parameters}", paramJson);
-
-            var missingFields = GetMissingFields(parameters);
-            if (missingFields.Count > 0)
-            {
-                _logger.LogWarning("Missing required fields: {MissingFields}", string.Join(", ", missingFields));
-                return CreateErrorResponse(string.Format(Messages.MissingFieldsTemplate, string.Join(", ", missingFields)));
-            }
-
+            
             var extractResult = ExtractBookingParameters(parameters);
             if (!extractResult.IsSuccess)
             {
@@ -119,35 +107,66 @@ namespace Booking.Application.Services
             }
 
             var bookingInfo = extractResult.BookingInfo;
-            _logger.LogInformation("Creating ticket for route: {Departure} -> {Arrival} on {Date}",
-                bookingInfo.DepartureStation, bookingInfo.ArrivalStation, bookingInfo.Date);
+
+            var sw = Stopwatch.StartNew();
+
+            _logger.LogInformation("Start HandleBookingTicket");
+            sw.Restart();
 
             var ticket = await _ticketService.CreateTicketForDialogfowAsync(bookingInfo);
+
+            _logger.LogInformation("CreateTicket took {Elapsed} ms", sw.ElapsedMilliseconds);
+            sw.Restart();
+
             if (ticket == null)
             {
                 _logger.LogError("Failed to create ticket for booking info: {BookingInfo}", bookingInfo);
                 return CreateErrorResponse("Không thể tạo vé. Vui lòng thử lại sau.");
             }
 
+            string fullName = parameters[ParameterKeys.PassengerName]?.ToString();
+            string firstName = null;
+            string lastName = null;
+
+            if (!string.IsNullOrWhiteSpace(fullName))
+            {
+                var nameParts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                firstName = nameParts.Length > 0 ? nameParts[0] : null;
+                lastName = nameParts.Length > 1 ? nameParts[1] : null;
+            }
+
             var addPassengerDto = new AddPassengerInfoDto
             {
                 IsMainPassenger = true,
                 AgeGroup = AgeGroupEnum.Adult,
-                FirstName = parameters[ParameterKeys.PassengerName]?.ToString(),
-                LastName = parameters[ParameterKeys.PassengerName]?.ToString(),
+                FirstName = firstName,
+                LastName = lastName,
                 Email = parameters[ParameterKeys.PassengerEmail]?.ToString(),
                 PhoneNumber = parameters[ParameterKeys.PassengerPhone]?.ToString(),
                 IdentityNumber = parameters[ParameterKeys.PassengerIdentity]?.ToString(),
+                TicketSeatId = ticket.TicketSeats?.FirstOrDefault()?.Id
             };
 
-            _passengerInfoService.AddPassengerInfoAsync(addPassengerDto);
+            var addPassengerDetails = new AddPassengerDetailsDto
+            {
+                TicketId = ticket.Id,
+                PassengerInfos = new List<AddPassengerInfoDto> { addPassengerDto }
+            };
+
+            await _passengerInfoService.AddPassengerDetailsAsync(addPassengerDetails);
+            _logger.LogInformation("AddPassengerInfo took {Elapsed} ms", sw.ElapsedMilliseconds);
+            sw.Restart();
+
             var request = new CreatePaymentRequest
             {
                 BookingOrderId = ticket.BookingOrderId.ToString(),
-                PaymentType = (int)parameters[ParameterKeys.PaymentType],
+                PaymentType = int.Parse(parameters[ParameterKeys.PaymentType].ToString()),
             };
 
             var response = await _paymentGrpcServiceClient.CreatePaymentAsync(request);
+            _logger.LogInformation("CreatePayment took {Elapsed} ms", sw.ElapsedMilliseconds);
+            sw.Restart();
+
             return new DialogflowResponse
             {
                 FulfillmentText = Messages.BookingInProgressMessage,
@@ -285,7 +304,8 @@ namespace Booking.Application.Services
                 Date = date.Date,
                 Time = timeDateTime.TimeOfDay,
                 PassengerName = passengerName?.Trim(),
-                PassengerEmail = passengerEmail?.Trim()
+                PassengerEmail = passengerEmail?.Trim(),
+                TicketType = TicketTypeEnum.Normal
             };
 
             return (true, bookingInfo, null);

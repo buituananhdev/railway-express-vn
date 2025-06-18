@@ -13,16 +13,19 @@ public class StationService : BaseService<Station, AddStationDto, AddStationDto,
 {
     private readonly IAdminUnitOfWork _adminUnitOfWork;
     private readonly IMapper _mapper;
+    private readonly ICacheService _cacheService;
 
     public StationService(
         IStationRepository repository,
         IAdminUnitOfWork unitOfWork,
         IMapper mapper,
-        IPaginationService paginationService
+        IPaginationService paginationService,
+        ICacheService cacheService
         ) : base(repository, unitOfWork, mapper, paginationService)
     {
         _adminUnitOfWork = unitOfWork;
         _mapper = mapper;
+        _cacheService = cacheService;
     }
 
     public async Task<StationDto> GetStationByNameAsync(string stationName)
@@ -33,6 +36,11 @@ public class StationService : BaseService<Station, AddStationDto, AddStationDto,
 
     public async Task<List<StationDto>> GetStations()
     {
+        const string cacheKey = "station:all";
+        var cached = await _cacheService.GetCacheAsync<List<StationDto>>(cacheKey);
+        if (cached is not null)
+            return cached;
+
         Func<IQueryable<Station>, IOrderedQueryable<Station>> orderBy = query =>
             query.OrderBy(station => station.StationOrder);
 
@@ -40,6 +48,9 @@ public class StationService : BaseService<Station, AddStationDto, AddStationDto,
         var stations = await _adminUnitOfWork.StationRepository
             .ToListAsync(includes: includes, orderBy: orderBy);
 
-        return _mapper.Map<List<StationDto>>(stations);
+        var mapped = _mapper.Map<List<StationDto>>(stations);
+        await _cacheService.SetCacheAsync(cacheKey, mapped, TimeSpan.FromDays(30));
+
+        return mapped;
     }
 }
