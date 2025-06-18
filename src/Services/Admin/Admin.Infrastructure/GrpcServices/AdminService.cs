@@ -38,15 +38,34 @@ public class AdminService : Common.Protos.AdminGrpcService.AdminGrpcServiceBase
         };
     }
 
-    public override async Task<GetTrainScheduleResponse> GetTrainSchedule(GetTrainScheduleRequest request, ServerCallContext context)
+    public override async Task<GetTrainScheduleResponse> GetTrainSchedule(
+    GetTrainScheduleRequest request,
+    ServerCallContext context)
     {
-        var results = await _trainScheduleService.GetTrainSchedulesAsync(_mapper.Map<GetTrainSchedulesDto>(request));
-        var schedule = results.OrderBy(s => Math.Abs((s.DepartureTime.TimeOfDay - request.DepartureTime.ToTimeSpan()).TotalMinutes)).First();
-        var response = new GetTrainScheduleResponse();
-        response.TrainScheduleId = schedule.Id.ToString();
-        response.TrainId = schedule.Train.Id.ToString();
-        response.BasePrice = (double)schedule.FromPrice;
-        return response;
+        var dto = new GetTrainSchedulesDto
+        {
+            DepartureStationId = Guid.Parse(request.DepartureStationId),
+            ArrivalStationId = Guid.Parse(request.ArrivalStationId),
+            DepartureDate = request.DepartureDate.ToDateTime()
+        };
+
+        var schedules = await _trainScheduleService.GetTrainSchedulesAsync(dto)
+                                                   .ConfigureAwait(false);
+
+        if (schedules.Count == 0)
+            throw new RpcException(new Status(StatusCode.NotFound,
+                               "Không tìm thấy lịch tàu phù hợp"));
+
+        var target = request.DepartureTime.ToTimeSpan();
+        var bestMatch = schedules.MinBy(s =>
+            Math.Abs((s.DepartureTime.TimeOfDay - target).TotalMinutes));
+
+        return new GetTrainScheduleResponse
+        {
+            TrainScheduleId = bestMatch.Id.ToString(),
+            TrainId = bestMatch.Train.Id.ToString(),
+            BasePrice = (double)bestMatch.FromPrice
+        };
     }
 
     public override async Task<GetRandomeAvailableSeatResponse> GetRandomeAvailableSeat(GetRandomeAvailableSeatRequest request, ServerCallContext context)

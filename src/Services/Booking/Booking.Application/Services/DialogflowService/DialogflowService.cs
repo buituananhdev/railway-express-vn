@@ -8,6 +8,7 @@ using System.Text.Json;
 using Common.Protos;
 using System.Diagnostics;
 using System.Net.Sockets;
+using Booking.Application.Interfaces;
 
 namespace Booking.Application.Services
 {
@@ -20,7 +21,7 @@ namespace Booking.Application.Services
         private readonly string _projectId;
         private readonly string _languageCode;
         private readonly PaymentGrpcService.PaymentGrpcServiceClient _paymentGrpcServiceClient;
-
+        private readonly ISSEPublisher _ssePublisher;
         private static class Messages
         {
             public const string MissingFieldsTemplate = "Vui lòng cung cấp thêm: {0}";
@@ -65,12 +66,14 @@ namespace Booking.Application.Services
             IPassengerInfoService passengerInfoService,
             IConfiguration configuration,
             ILogger<DialogflowService> logger,
-            PaymentGrpcService.PaymentGrpcServiceClient paymentGrpcServiceClient)
+            PaymentGrpcService.PaymentGrpcServiceClient paymentGrpcServiceClient,
+            ISSEPublisher ssePublisher)
         {
             _ticketService = ticketService ?? throw new ArgumentNullException(nameof(ticketService));
             _passengerInfoService = passengerInfoService ?? throw new ArgumentNullException(nameof(passengerInfoService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _paymentGrpcServiceClient = paymentGrpcServiceClient;
+            _ssePublisher = ssePublisher;
             _projectId = configuration["Dialogflow:ProjectId"]
                 ?? throw new InvalidOperationException("Dialogflow:ProjectId not found in configuration.");
 
@@ -166,6 +169,12 @@ namespace Booking.Application.Services
             var response = await _paymentGrpcServiceClient.CreatePaymentAsync(request);
             _logger.LogInformation("CreatePayment took {Elapsed} ms", sw.ElapsedMilliseconds);
             sw.Restart();
+
+            if (parameters.TryGetValue("sessionId", out var sidObj) && sidObj is string sessionId && !string.IsNullOrWhiteSpace(sessionId))
+            {
+                await _ssePublisher.SendAsync(sessionId, "paymentUrl", new { PaymentUrl = response.PaymentUrl });
+                _logger.LogInformation("Sent PaymentUrl SSE to session {SessionId}", sessionId);
+            }
 
             return new DialogflowResponse
             {
