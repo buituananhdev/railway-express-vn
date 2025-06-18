@@ -1,4 +1,6 @@
-﻿namespace Booking.Application.Dtos;
+﻿using Booking.Domain.Enums;
+
+namespace Booking.Application.Dtos;
 public class DialogflowCreateTicketRequest
 {
     public string DepartureStation { get; set; }
@@ -8,4 +10,5 @@ public class DialogflowCreateTicketRequest
     public TimeSpan Time { get; set; }
     public string PassengerName { get; set; }
     public string PassengerEmail { get; set; }
+    public TicketTypeEnum? TicketType { get; set; } = TicketTypeEnum.Normal;
 }

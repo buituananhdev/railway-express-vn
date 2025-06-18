@@ -10,6 +10,6 @@ public class AddTicketDto
     public Guid TrainScheduleId { get; set; }
     public decimal TotalPrice { get; set; }
     public DateTime JourneyDate { get; set; }
-    public TicketTypeEnum? TicketType { get; set; }
+    public TicketTypeEnum? TicketType { get; set; } = TicketTypeEnum.Normal;
     public Guid? BookingOrderId { get; set; }
 }
