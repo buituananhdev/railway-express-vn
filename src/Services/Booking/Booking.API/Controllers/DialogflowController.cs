@@ -26,15 +26,15 @@ public class DialogflowController : ControllerBase
                 var availabilityResult = await _dialogflowService.HandleCheckTicketAvailability(parameters, request.Session);
                 return Ok(availabilityResult);
 
-            case "BookTicket.PassengerInfo":
+            case "BookTicket.Confirm":
                 parameters = request.QueryResult.OutputContexts?
                     .FirstOrDefault(c => c.Name.EndsWith("available_route_confirmed")).Parameters;
-                var result1 = await _dialogflowService.HandleBookingTicket(parameters, request.Session);
-                return Ok(result1);
+                var createBookingResult = await _dialogflowService.HandleBookingTicket(parameters, request.Session);
+                return Ok(createBookingResult);
 
-            case "search_ticket":
-                var result2 = await _dialogflowService.HandleSearchTicket(parameters);
-                return Ok(result2);
+            case "SearchTicket":
+                var searchTicketResult = await _dialogflowService.HandleSearchTicket(parameters);
+                return Ok(searchTicketResult);
 
             default:
                 return Ok(new DialogflowResponse
