@@ -386,7 +386,6 @@ namespace Booking.Application.Services
 
         public async Task<TicketDto> CreateTicketForDialogfowAsync(DialogflowCreateTicketRequest request)
         {
-            var sw = Stopwatch.StartNew();
             const string cacheKey = "station:all";
             var cached = await _cacheService.GetCacheAsync<List<Booking.Application.Dtos.Station>>(cacheKey);
 
@@ -422,8 +421,6 @@ namespace Booking.Application.Services
                     new GetStationInformationRequest { StationName = request.ArrivalStation });
                 arrivalStationId = grpcResp.StationId;
             }
-            _logger.LogInformation("GetStationInformation took {Elapsed} ms", sw.ElapsedMilliseconds);
-            sw.Restart();
 
             var scheduleRequest = new GetTrainScheduleRequest
             {
@@ -435,9 +432,6 @@ namespace Booking.Application.Services
 
             var schedule = await _adminGrpcServiceClient.GetTrainScheduleAsync(scheduleRequest);
 
-            _logger.LogInformation("GetTrainScheduleAsync took {Elapsed} ms", sw.ElapsedMilliseconds);
-            sw.Restart();
-
             var seatIds = await _adminGrpcServiceClient.GetRandomeAvailableSeatAsync(new GetRandomeAvailableSeatRequest
             {
                 TrainId = schedule.TrainId,
@@ -445,8 +439,6 @@ namespace Booking.Application.Services
                 JourneyDate = Timestamp.FromDateTime(request.Date.ToUniversalTime()),
                 Quantity = request.Quantity
             });
-            _logger.LogInformation("GetRandomeAvailableSeatAsync took {Elapsed} ms", sw.ElapsedMilliseconds);
-            sw.Restart();
 
             var createDto = new AddTicketDto
             {
@@ -600,6 +592,65 @@ namespace Booking.Application.Services
                 TicketTypeEnum.Normal => "Vé thường",
                 TicketTypeEnum.Return => "Vé khứ hồi",
             };
+        }
+
+        public async Task<bool> CheckTrainAvailabilityAsync(CheckTrainAvailabilityDto checkTrainAvailabilityDto)
+        {
+            const string cacheKey = "station:all";
+            var cached = await _cacheService.GetCacheAsync<List<Booking.Application.Dtos.Station>>(cacheKey);
+
+            string? departureStationId = null;
+            string? arrivalStationId = null;
+
+            if (cached is not null)
+            {
+                string Normalize(string name) => name.Trim().ToLowerInvariant();
+
+                var normalizedDeparture = Normalize(checkTrainAvailabilityDto.DepartureStation);
+                var normalizedArrival = Normalize(checkTrainAvailabilityDto.ArrivalStation);
+
+                departureStationId = cached
+                    .FirstOrDefault(s => Normalize(s.StationName) == normalizedDeparture)
+                    ?.Id.ToString();
+
+                arrivalStationId = cached
+                    .FirstOrDefault(s => Normalize(s.StationName) == normalizedArrival)
+                    ?.Id.ToString();
+            }
+
+            if (string.IsNullOrEmpty(departureStationId))
+            {
+                var grpcResp = await _adminGrpcServiceClient.GetStationInformationAsync(
+                    new GetStationInformationRequest { StationName = checkTrainAvailabilityDto.DepartureStation });
+                departureStationId = grpcResp.StationId;
+            }
+
+            if (string.IsNullOrEmpty(arrivalStationId))
+            {
+                var grpcResp = await _adminGrpcServiceClient.GetStationInformationAsync(
+                    new GetStationInformationRequest { StationName = checkTrainAvailabilityDto.ArrivalStation });
+                arrivalStationId = grpcResp.StationId;
+            }
+
+            var scheduleRequest = new GetTrainScheduleRequest
+            {
+                DepartureStationId = departureStationId,
+                ArrivalStationId = arrivalStationId,
+                DepartureDate = Timestamp.FromDateTime(checkTrainAvailabilityDto.Date.ToUniversalTime()),
+                DepartureTime = Duration.FromTimeSpan(checkTrainAvailabilityDto.Time),
+            };
+
+            var schedule = await _adminGrpcServiceClient.GetTrainScheduleAsync(scheduleRequest);
+
+            var seatIds = await _adminGrpcServiceClient.GetRandomeAvailableSeatAsync(new GetRandomeAvailableSeatRequest
+            {
+                TrainId = schedule.TrainId,
+                ScheduleId = schedule.TrainScheduleId,
+                JourneyDate = Timestamp.FromDateTime(checkTrainAvailabilityDto.Date.ToUniversalTime()),
+                Quantity = checkTrainAvailabilityDto.Quantity
+            });
+
+            return seatIds.SeatIds.Count == checkTrainAvailabilityDto.Quantity;
         }
     }
 }
