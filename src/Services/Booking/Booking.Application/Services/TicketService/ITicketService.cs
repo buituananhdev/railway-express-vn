@@ -25,4 +25,5 @@ public interface ITicketService
     Task<double> GetTicketPricesByBookingOrderAsync(Guid bookingOrderId);
     Task CancelTicketAsync(Guid ticketId);
     Task SendETicketAsync(Guid bookingOrderId);
+    Task<bool> CheckTrainAvailabilityAsync(CheckTrainAvailabilityDto checkTrainAvailabilityDto);
 }

@@ -22,7 +22,13 @@ public class DialogflowController : ControllerBase
 
         switch (intentName)
         {
-            case "booking_ticket":
+            case "BookTicket.CheckRouteAvailability":
+                var availabilityResult = await _dialogflowService.HandleCheckTicketAvailability(parameters, request.Session);
+                return Ok(availabilityResult);
+
+            case "BookTicket.PassengerInfo":
+                parameters = request.QueryResult.OutputContexts?
+                    .FirstOrDefault(c => c.Name.EndsWith("available_route_confirmed")).Parameters;
                 var result1 = await _dialogflowService.HandleBookingTicket(parameters, request.Session);
                 return Ok(result1);
 

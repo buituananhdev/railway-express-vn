@@ -92,15 +92,7 @@ public class DialogflowService : IDialogflowService
 
         var bookingInfo = extractResult.BookingInfo;
 
-        var sw = Stopwatch.StartNew();
-
-        _logger.LogInformation("Start HandleBookingTicket");
-        sw.Restart();
-
         var ticket = await _ticketService.CreateTicketForDialogfowAsync(bookingInfo);
-
-        _logger.LogInformation("CreateTicket took {Elapsed} ms", sw.ElapsedMilliseconds);
-        sw.Restart();
 
         if (ticket == null)
         {
@@ -137,9 +129,6 @@ public class DialogflowService : IDialogflowService
         };
 
         await _passengerInfoService.AddPassengerDetailsAsync(addPassengerDetails);
-        _logger.LogInformation("AddPassengerInfo took {Elapsed} ms", sw.ElapsedMilliseconds);
-        sw.Restart();
-
         var request = new CreatePaymentRequest
         {
             BookingOrderId = ticket.BookingOrderId.ToString(),
@@ -147,8 +136,6 @@ public class DialogflowService : IDialogflowService
         };
 
         var response = await _paymentGrpcServiceClient.CreatePaymentAsync(request);
-        _logger.LogInformation("CreatePayment took {Elapsed} ms", sw.ElapsedMilliseconds);
-        sw.Restart();
 
         return new DialogflowResponse
         {
@@ -179,6 +166,72 @@ public class DialogflowService : IDialogflowService
         {
             FulfillmentText = message
         };
+    }
+
+    public async Task<DialogflowResponse> HandleCheckTicketAvailability(Dictionary<string, object> parameters, string session)
+    {
+        var departure = ExtractStringParameter(parameters, ParameterKeys.DepartureStation);
+        var arrival = ExtractStringParameter(parameters, ParameterKeys.ArrivalStation);
+        var quantityStr = ExtractStringParameter(parameters, ParameterKeys.Quantity);
+        var dateStr = ExtractStringParameter(parameters, ParameterKeys.Date);
+        var timeStr = ExtractStringParameter(parameters, ParameterKeys.Time);
+
+        if (!double.TryParse(parameters[ParameterKeys.Quantity]?.ToString(), out var quantity) ||
+            quantity <= 0 ||
+            quantity % 1 != 0)
+        {
+            return CreateErrorResponse("Số lượng không hợp lệ.");
+        }
+
+        if (!DateTime.TryParse(dateStr, out var date))
+        {
+            return CreateErrorResponse(Messages.InvalidDateMessage);
+        }
+
+        if (!DateTime.TryParse(timeStr, out var time))
+        {
+            return CreateErrorResponse(Messages.InvalidTimeMessage);
+        }
+
+        var availableTrips = await _ticketService.CheckTrainAvailabilityAsync(new CheckTrainAvailabilityDto
+        {
+            DepartureStation = departure,
+            ArrivalStation = arrival,
+            Date = date.Date,
+            Time = time.TimeOfDay,
+            Quantity = (int)quantity
+        });
+
+        if (availableTrips)
+        {
+            return new DialogflowResponse
+            {
+                FulfillmentText = "Chuyến tàu phù hợp đã được tìm thấy. Quý khách vui lòng cung cấp thông tin hành khách: họ và tên, email, số CCCD/Passport và số điện thoại để tiến hành đặt vé",
+                OutputContexts = new List<DialogflowContext>
+                {
+                    new DialogflowContext
+                    {
+                        Name = $"{session}/contexts/available_route_confirmed",
+                        LifespanCount = 5,
+                        Parameters = new Dictionary<string, object>
+                        {
+                            ["departure_station"] = departure,
+                            ["arrival_station"] = arrival,
+                            ["date"] = date,
+                            ["time"] = time,
+                            ["quantity"] = quantity
+                        }
+                    }
+                }
+            };
+        }
+        else
+        {
+            return new DialogflowResponse
+            {
+                FulfillmentText = "Chúng tôi rất tiếc, hiện không tìm thấy chuyến tàu phù hợp với thông tin quý khách đã cung cấp. Quý khách vui lòng thử lại với thời gian khác."
+            };
+        }
     }
 
     public async Task<(string FulfillmentText, object Payload)> DetectIntentWithPayloadAsync(string sessionId, string text)

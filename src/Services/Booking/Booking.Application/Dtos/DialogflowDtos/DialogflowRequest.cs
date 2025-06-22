@@ -1,22 +1,31 @@
 ﻿using Newtonsoft.Json;
 
-namespace Booking.Application.Dtos;
-public class DialogflowRequest
+namespace Booking.Application.Dtos
 {
-    [JsonProperty("queryResult")]
-    public QueryResult QueryResult { get; set; }
+    public class DialogflowRequest
+    {
+        [JsonProperty("queryResult")]
+        public QueryResult QueryResult { get; set; }
 
-    [JsonProperty("session")]
-    public string Session { get; set; }
-}
+        [JsonProperty("session")]
+        public string Session { get; set; }
+    }
 
-public class QueryResult
-{
-    public Dictionary<string, object> Parameters { get; set; }
-    public Intent Intent { get; set; }
-}
+    public class QueryResult
+    {
+        [JsonProperty("parameters")]
+        public Dictionary<string, object> Parameters { get; set; }
 
-public class Intent
-{
-    public string DisplayName { get; set; }
+        [JsonProperty("intent")]
+        public Intent Intent { get; set; }
+
+        [JsonProperty("outputContexts")]
+        public List<DialogflowContext> OutputContexts { get; set; }
+    }
+
+    public class Intent
+    {
+        [JsonProperty("displayName")]
+        public string DisplayName { get; set; }
+    }
 }
