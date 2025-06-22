@@ -265,6 +265,12 @@ public class DialogflowService : IDialogflowService
                 return CreateErrorResponse(timeValidation.ErrorMessage);
             }
 
+            var dateTimeValidation = ValidateDateTime(dateValidation.Date, timeValidation.Time);
+            if (!dateTimeValidation.IsValid)
+            {
+                return CreateErrorResponse(dateTimeValidation.ErrorMessage);
+            }
+
             var availableTrips = await _ticketService.CheckTrainAvailabilityAsync(new CheckTrainAvailabilityDto
             {
                 DepartureStation = departure,
@@ -388,6 +394,12 @@ public class DialogflowService : IDialogflowService
             if (!timeValidation.IsValid)
             {
                 return (false, null, timeValidation.ErrorMessage);
+            }
+
+            var dateTimeValidation = ValidateDateTime(dateValidation.Date, timeValidation.Time);
+            if (!dateTimeValidation.IsValid)
+            {
+                return (false, null, dateTimeValidation.ErrorMessage);
             }
 
             // Extract and validate passenger name
@@ -617,6 +629,24 @@ public class DialogflowService : IDialogflowService
         }
 
         return (true, paymentType, null);
+    }
+
+    private (bool IsValid, string ErrorMessage) ValidateDateTime(DateTime date, DateTime time)
+    {
+        var currentDate = DateTime.Today;
+        var now = DateTime.Now;
+
+        if (date.Date < currentDate)
+        {
+            return (false, Messages.PastDateMessage);
+        }
+
+        if (date.Date == currentDate && time.TimeOfDay <= now.TimeOfDay)
+        {
+            return (false, "Giờ khởi hành phải lớn hơn giờ hiện tại.");
+        }
+
+        return (true, null);
     }
 
     private string ExtractStringParameter(Dictionary<string, object> parameters, string key)
