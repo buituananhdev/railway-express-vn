@@ -54,7 +54,7 @@ public class AutoMapperProfile : Profile
                 opt => opt.MapFrom(src => Guid.Parse(src.DepartureStationId)))
             .ForMember(dest => dest.ArrivalStationId,
                 opt => opt.MapFrom(src => Guid.Parse(src.ArrivalStationId)))
-            .ForMember(dest => dest.DepartureDate,
+            .ForMember(dest => dest.DepartureTime,
                 opt => opt.MapFrom(src => src.DepartureDate.ToDateTime()));
 
         CreateMap<GetTrainScheduleInformationResponse, TrainScheduleDto>()

@@ -46,7 +46,7 @@ public class AdminService : Common.Protos.AdminGrpcService.AdminGrpcServiceBase
         {
             DepartureStationId = Guid.Parse(request.DepartureStationId),
             ArrivalStationId = Guid.Parse(request.ArrivalStationId),
-            DepartureDate = request.DepartureDate.ToDateTime()
+            DepartureTime= request.DepartureDate.ToDateTime()
         };
         var target = request.DepartureTime.ToTimeSpan();
         var schedule = await _trainScheduleService.GetTrainScheduleClosestTimeAsync(dto, target);
