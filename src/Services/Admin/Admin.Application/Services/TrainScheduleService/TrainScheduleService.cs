@@ -101,7 +101,7 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
             return null;
         }
 
-        var pricingContext = CalculatePricingContext(request.DepartureDate, request.ReturnDate);
+        var pricingContext = CalculatePricingContext(request.DepartureTime, request.ReturnTime);
         var result = MapScheduleToDto(closestSchedule, pricingContext);
 
         await _cacheService.SetCacheAsync(cacheKey, result, CacheDuration);
@@ -118,11 +118,11 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
 
     private static string GenerateClosestTimeCacheKey(GetTrainSchedulesDto request, TimeSpan target)
     {
-        var key = $"{TRAIN_SCHEDULE_CLOSEST_TIME_CACHE_KEY}:{request.DepartureStationId}:{request.ArrivalStationId}:{request.DepartureDate:yyyyMMdd}:{target:hhmm}";
+        var key = $"{TRAIN_SCHEDULE_CLOSEST_TIME_CACHE_KEY}:{request.DepartureStationId}:{request.ArrivalStationId}:{request.DepartureTime:yyyyMMdd}:{target:hhmm}";
 
-        if (request.ReturnDate.HasValue)
+        if (request.ReturnTime.HasValue)
         {
-            key += $":{request.ReturnDate.Value:yyyyMMdd}";
+            key += $":{request.ReturnTime.Value:yyyyMMdd}";
         }
 
         return key;
@@ -130,20 +130,29 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
 
     private async Task<List<TrainSchedule>> FetchSchedulesFromDatabase(GetTrainSchedulesDto request)
     {
-        var specification = new AndSpecification<TrainSchedule>(
-            new DepartureStationIdSpecification(request.DepartureStationId),
-            new ArrivalStationIdSpecification(request.ArrivalStationId)
+        var specifications = new List<Specification<TrainSchedule>> {
+                new DepartureStationIdSpecification(request.DepartureStationId),
+                new ArrivalStationIdSpecification(request.ArrivalStationId),
+        };
+
+        if (request.DepartureTime.Date == DateTime.UtcNow.Date)
+        {
+            specifications.Add(new DepartureTimeSpecification());
+        }
+
+        var andSpecs = new AndSpecificationMultiple<TrainSchedule>(
+            specifications
         );
 
         return await _adminUnitOfWork.TrainScheduleRepository
-            .ToListAsync(spec: specification, includes: DefaultIncludes);
+            .ToListAsync(spec: andSpecs, includes: DefaultIncludes);
     }
 
     private List<TrainScheduleDto> ProcessSchedules(
         List<TrainSchedule> schedules,
         GetTrainSchedulesDto request)
     {
-        var pricingContext = CalculatePricingContext(request.DepartureDate, request.ReturnDate);
+        var pricingContext = CalculatePricingContext(request.DepartureTime, request.ReturnTime);
         return schedules.Select(schedule => MapScheduleToDto(schedule, pricingContext)).ToList();
     }
 
@@ -170,11 +179,11 @@ public class TrainScheduleService : BaseService<TrainSchedule, AddTrainScheduleD
 
     private static string GenerateSchedulesCacheKey(GetTrainSchedulesDto request)
     {
-        var key = $"{TRAIN_SCHEDULES_CACHE_KEY}:{request.DepartureStationId}:{request.ArrivalStationId}:{request.DepartureDate:yyyyMMdd}";
+        var key = $"{TRAIN_SCHEDULES_CACHE_KEY}:{request.DepartureStationId}:{request.ArrivalStationId}:{request.DepartureTime:yyyyMMdd}";
 
-        if (request.ReturnDate.HasValue)
+        if (request.ReturnTime.HasValue)
         {
-            key += $":{request.ReturnDate.Value:yyyyMMdd}";
+            key += $":{request.ReturnTime.Value:yyyyMMdd}";
         }
 
         return key;
